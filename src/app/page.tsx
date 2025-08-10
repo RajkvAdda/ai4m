@@ -33,7 +33,7 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/auth/signin">
+              <Link href="/auth/login">
                 <Button>Sign in</Button>
               </Link>
             </div>
@@ -58,7 +58,7 @@ export default function Home() {
                 </p>
                 <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                   <div className="rounded-md shadow">
-                    <Link href="/auth/signin">
+                    <Link href="/auth/login">
                       <Button
                         size="lg"
                         className="w-full bg-blue-600 hover:bg-blue-700"

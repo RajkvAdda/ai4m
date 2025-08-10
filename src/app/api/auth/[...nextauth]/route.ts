@@ -4,6 +4,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
 const handler = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "demo-client-id",
@@ -39,17 +40,22 @@ const handler = NextAuth({
       return true;
     },
     async session({ session, token }) {
-      console.log("rj-session", { session, token });
-      if (session.user?.email) {
-        const user = session.user;
-        if (user) {
-          (session.user as any).id = user.id;
-          (session.user as any).role = user.role;
-        }
+      console.log("rj-session-1", { session, token });
+      if (token && session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
       }
       return session;
     },
     async jwt({ token, user }) {
+      if (user) {
+        await connectToDatabase();
+        const dbUser = await User.findOne({ email: user.email });
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+        }
+      }
       return token;
     },
   },

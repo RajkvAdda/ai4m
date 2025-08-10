@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import {
   Card,
@@ -12,6 +13,9 @@ import { Progress } from "@/components/ui/progress";
 import { Table, Armchair, Users, ArrowRight } from "lucide-react";
 import { getRooms } from "@/lib/data";
 import { Room, RoomType } from "@/types";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <Table className="h-6 w-6" />,
@@ -61,7 +65,7 @@ function RoomCard({ room }: { room: Room }) {
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full" variant="default">
-          <Link href={`/dashboard/rooms/${room.id}`}>
+          <Link href={`/rooms/${room.id}`}>
             View & Book <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
@@ -70,15 +74,32 @@ function RoomCard({ room }: { room: Room }) {
   );
 }
 
-export default async function DashboardPage() {
-  const user = {};
-  const rooms = await getRooms();
+export default function DashboardPage() {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  console.log("rj-session", { session, status });
+  useEffect(() => {
+    if (session) {
+      const fetchRooms = async () => {
+        const data = await getRooms();
+        setRooms(data);
+      };
+      fetchRooms();
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+    }
+  }, [status]);
 
   return (
-    <div className="container py-8">
+    <div className="container p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight font-headline">
-          Welcome, {user?.firstName || "User"}!
+          Welcome, {session?.user?.name || "User"}!
         </h1>
         <p className="text-muted-foreground">
           Choose a room to see details and book your seat.

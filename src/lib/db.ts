@@ -21,13 +21,9 @@ export async function connectToDatabase() {
     const opts = {
       bufferCommands: true,
       maxPoolSize: 10,
-      // useNewUrlParser: true,
-      // useCreateIndex: true,
-      // useFindAndModify: false,
-      // useUnifiedTopology: true,
     };
 
-    mongoose
+    cached.promise = mongoose
       .connect(MONGODB_URI + "/ai4m", opts)
       .then(() => mongoose.connection);
   }

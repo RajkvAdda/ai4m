@@ -23,9 +23,9 @@ export default async function RoomDetailsPage({
   }
 
   return (
-    <div className="container py-8">
-      <Card className="mb-8 overflow-hidden shadow-lg">
-        <div className="bg-primary/10 p-6 flex items-center gap-4">
+    <div className="container p-8">
+      <Card className="mb-8 overflow-hidden shadow-lg bg-primary/7">
+        <div className=" p-2 px-4 flex items-center gap-4">
           <div className="text-primary">{roomIcons[room.type]}</div>
           <div>
             <CardTitle className="text-3xl font-headline">

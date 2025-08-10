@@ -1,21 +1,28 @@
-// import { checkUserRole } from "@/lib/roles";
-// import { redirect } from "next/navigation";
+"use client";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 
-export default async function AdminLayout({
+import { useRouter } from "next/navigation";
+
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  //   const role = await checkUserRole();
+  const router = useRouter();
+  const { data: session } = useSession();
 
-  //   if (role !== "admin") {
-  //     redirect("/dashboard");
-  //   }
+  useEffect(() => {
+    if (!session?.user || session.user.role !== "admin") {
+      router.push("/bookings");
+    }
+  }, [session, router]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col p-8">
       <main className="flex-1">
         <div className="container py-8">
           <Alert className="mb-8 border-primary/50 bg-primary/5 text-primary">

@@ -56,7 +56,7 @@ export default function BookingClient({ room }: { room: Room }) {
       </CardHeader>
       <CardContent>
         <div className="p-4 border-2 border-dashed rounded-lg bg-muted/20">
-          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3">
+          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-8">
             {Array.from({ length: room.totalCapacity }, (_, i) => i + 1).map(
               (seatNumber) => {
                 const isBooked = bookedSeatNumbers.has(seatNumber);
@@ -73,7 +73,7 @@ export default function BookingClient({ room }: { room: Room }) {
                     }
                     size="icon"
                     className={cn(
-                      "h-12 w-12 text-sm font-semibold transition-all duration-200",
+                      "h-16 w-16 text-sm font-semibold transition-all duration-200",
                       isSelected &&
                         "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg",
                       isBooked &&
