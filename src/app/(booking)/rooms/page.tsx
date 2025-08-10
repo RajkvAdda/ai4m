@@ -11,11 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, Armchair, Users, ArrowRight } from "lucide-react";
-import { getRooms } from "@/lib/data";
+// import { getRooms } from "@/lib/data";
 import { Room, RoomType } from "@/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { IRoom } from "@/modals/Room";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <Table className="h-6 w-6" />,
@@ -30,8 +31,9 @@ const roomDescriptions: Record<RoomType, string> = {
 };
 
 function RoomCard({ room }: { room: Room }) {
-  const availableSeats = room.totalCapacity - room.bookings.length;
-  const progressValue = (availableSeats / room.totalCapacity) * 100;
+  const totalCapacity = room.units * room.seatsPerUnit;
+  const availableSeats = totalCapacity - (room.bookings?.length ?? 0);
+  const progressValue = (availableSeats / totalCapacity) * 100;
 
   return (
     <Card className="flex flex-col transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300">
@@ -53,19 +55,19 @@ function RoomCard({ room }: { room: Room }) {
             <p className="text-lg font-semibold">
               {availableSeats}
               <span className="text-sm font-normal text-muted-foreground">
-                /{room.totalCapacity} Seats
+                /{totalCapacity} Seats
               </span>
             </p>
           </div>
           <Progress
             value={progressValue}
-            aria-label={`${availableSeats} of ${room.totalCapacity} seats available`}
+            aria-label={`${availableSeats} of ${totalCapacity} seats available`}
           />
         </div>
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full" variant="default">
-          <Link href={`/rooms/${room.id}`}>
+          <Link href={`/rooms/${room._id}`}>
             View & Book <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
@@ -74,16 +76,21 @@ function RoomCard({ room }: { room: Room }) {
   );
 }
 
-export default function DashboardPage() {
-  const [rooms, setRooms] = useState<Room[]>([]);
+export default function Rooms() {
+  const [rooms, setRooms] = useState<IRoom[]>([]);
   const router = useRouter();
   const { data: session, status } = useSession();
   console.log("rj-session", { session, status });
   useEffect(() => {
     if (session) {
       const fetchRooms = async () => {
-        const data = await getRooms();
-        setRooms(data);
+        try {
+          const res = await fetch("/api/rooms");
+          const data = await res.json();
+          setRooms(data);
+        } catch (err) {
+          // Optionally handle error
+        }
       };
       fetchRooms();
     }
@@ -107,7 +114,7 @@ export default function DashboardPage() {
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {rooms.map((room) => (
-          <RoomCard key={room.id} room={room} />
+          <RoomCard key={room._id} room={room} />
         ))}
       </div>
     </div>

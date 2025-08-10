@@ -15,12 +15,12 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/bookings");
+    if (status === "authenticated") {
+      router.push("/rooms");
     }
   }, [status]);
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/bookings" });
+    signIn("google", { callbackUrl: "/rooms" });
   };
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">

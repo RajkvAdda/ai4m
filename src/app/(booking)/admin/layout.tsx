@@ -1,26 +1,11 @@
-"use client";
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useEffect } from "react";
-
-import { useRouter } from "next/navigation";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const { data: session } = useSession();
-
-  useEffect(() => {
-    if (!session?.user || session.user.role !== "admin") {
-      router.push("/bookings");
-    }
-  }, [session, router]);
-
   return (
     <div className="min-h-screen flex flex-col p-8">
       <main className="flex-1">

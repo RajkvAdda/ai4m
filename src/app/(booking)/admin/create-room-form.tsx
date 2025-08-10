@@ -1,12 +1,13 @@
 "use client";
 
-import { useFormState } from "react-dom";
+// import { useFormState } from "react-dom";
+import type { IRoom } from "@/modals/Room";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
-import { createRoomAction } from "@/app/actions";
+// import { createRoomAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,9 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const roomSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
-  type: z.enum(["table", "bench", "free_area"], {
-    required_error: "Please select a room type.",
-  }),
+  type: z.enum(["table", "bench", "free_area"]),
   units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
   seatsPerUnit: z.coerce
     .number()
@@ -46,32 +45,82 @@ const roomSchema = z.object({
     .min(1, "Must have at least 1 seat per unit"),
 });
 
-export default function CreateRoomForm() {
-  const [state, formAction] = useFormState(createRoomAction, { message: "" });
+export default function CreateRoomForm({ room }: { room?: IRoom }) {
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof roomSchema>>({
     resolver: zodResolver(roomSchema),
-    defaultValues: {
-      name: "",
-      units: 1,
-      seatsPerUnit: 1,
-    },
+    defaultValues: room
+      ? {
+          name: room.name,
+          type: room.type,
+          units: room.units,
+          seatsPerUnit: room.seatsPerUnit,
+        }
+      : {
+          name: "",
+          type: "table",
+          units: 1,
+          seatsPerUnit: 1,
+        },
   });
 
-  useEffect(() => {
-    if (state.message && !state.errors) {
+  async function onSubmit(values: z.infer<typeof roomSchema>) {
+    try {
+      let res, data;
+      if (room && room._id) {
+        res = await fetch(`/api/rooms/${room._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+        data = await res.json();
+        if (res.ok) {
+          toast({
+            title: "Room Updated",
+            description: data.message,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: data.error
+              ? JSON.stringify(data.error)
+              : "Failed to update room.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        res = await fetch("/api/rooms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+        data = await res.json();
+        if (res.ok) {
+          toast({
+            title: "Room Created",
+            description: data.message,
+          });
+          form.reset();
+        } else {
+          toast({
+            title: "Error",
+            description: data.error
+              ? JSON.stringify(data.error)
+              : "Failed to create room.",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (err) {
       toast({
-        title: "Room Created",
-        description: state.message,
+        title: "Error",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
       });
-      form.reset();
     }
-    if (state.errors) {
-      // You can add more specific error handling here if needed
-    }
-  }, [state, form, toast]);
+  }
 
   return (
     <Card className="shadow-lg">
@@ -82,7 +131,11 @@ export default function CreateRoomForm() {
         </CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form ref={formRef} action={formAction} className="space-y-4">
+        <form
+          ref={formRef}
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
@@ -160,7 +213,13 @@ export default function CreateRoomForm() {
               className="w-full"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Creating..." : "Create Room"}
+              {form.formState.isSubmitting
+                ? room
+                  ? "Updating..."
+                  : "Creating..."
+                : room
+                ? "Update Room"
+                : "Create Room"}
             </Button>
           </CardFooter>
         </form>

@@ -1,5 +1,6 @@
+"use client";
 import CreateRoomForm from "./create-room-form";
-import { getRooms } from "@/lib/data";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -17,14 +18,37 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-export default async function AdminPage() {
-  const rooms = [];
+import { IRoom } from "@/modals/Room";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+
+export default function AdminPage() {
+  const [rooms, setRooms] = useState<IRoom[]>([]);
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  useEffect(() => {
+    if (session) {
+      const fetchRooms = async () => {
+        try {
+          const res = await fetch("/api/rooms");
+          const data = await res.json();
+          setRooms(data);
+        } catch (err) {
+          // Optionally handle error
+        }
+      };
+      fetchRooms();
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+    }
+  }, [status]);
 
   return (
     <div className="grid gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-1">
-        <CreateRoomForm />
-      </div>
       <div className="lg:col-span-2">
         <Card className="shadow-lg">
           <CardHeader>
@@ -44,13 +68,15 @@ export default async function AdminPage() {
               </TableHeader>
               <TableBody>
                 {rooms.map((room) => (
-                  <TableRow key={room.id}>
+                  <TableRow key={room._id || room.id}>
                     <TableCell className="font-medium">{room.name}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">{room.type}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {room.totalCapacity}
+                      {room.units && room.seatsPerUnit
+                        ? room.units * room.seatsPerUnit
+                        : 0}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -58,6 +84,9 @@ export default async function AdminPage() {
             </Table>
           </CardContent>
         </Card>
+      </div>
+      <div className="lg:col-span-1">
+        <CreateRoomForm />
       </div>
     </div>
   );
