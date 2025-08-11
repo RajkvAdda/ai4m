@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { Room, roomZodSchema } from "@/app/api/rooms/RoomModal";
 import { Types } from "mongoose";
+import { Booking, BookingZodSchema } from "../BookingModal";
 
 export async function GET(
   request: Request,
@@ -9,14 +9,17 @@ export async function GET(
 ) {
   try {
     if (!Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: "Invalid room ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid booking ID" },
+        { status: 400 }
+      );
     }
     await connectToDatabase();
-    const room = await Room.findById(params.id);
-    if (!room) {
-      return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    const booking = await Booking.findById(params.id);
+    if (!booking) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
-    return NextResponse.json(room);
+    return NextResponse.json(booking);
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) errorMsg = error.message;
@@ -30,19 +33,26 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const result = roomZodSchema.safeParse(body);
+    const result = BookingZodSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: result.error.issues }, { status: 400 });
     }
     await connectToDatabase();
-    const updateResult = await Room.findByIdAndUpdate(params.id, result.data, {
-      new: true,
-    });
+    const updateResult = await Booking.findByIdAndUpdate(
+      params.id,
+      result.data,
+      {
+        new: true,
+      }
+    );
     if (!updateResult) {
-      return NextResponse.json({ error: "Room not found" }, { status: 404 });
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
-    const room = updateResult.toObject();
-    return NextResponse.json({ message: "Room updated successfully", room });
+    const booking = updateResult.toObject();
+    return NextResponse.json({
+      message: "Booking updated successfully",
+      booking,
+    });
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) errorMsg = error.message;
@@ -56,12 +66,15 @@ export async function DELETE(
 ) {
   try {
     await connectToDatabase();
-    const deleteResult = await Room.findByIdAndDelete(params.id);
+    const deleteResult = await Booking.findByIdAndDelete(params.id);
     if (!deleteResult) {
-      return NextResponse.json({ error: "Room not found" }, { status: 404 });
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
-    const room = deleteResult.toObject();
-    return NextResponse.json({ message: "Room deleted successfully", room });
+    const booking = deleteResult.toObject();
+    return NextResponse.json({
+      message: "Booking deleted successfully",
+      booking,
+    });
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) errorMsg = error.message;

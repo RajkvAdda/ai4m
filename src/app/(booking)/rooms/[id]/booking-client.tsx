@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import type { Room } from "@/types";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -11,40 +10,96 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useFormState } from "react-dom";
-import { bookSeatAction } from "@/app/actions";
+// ...existing code...
 import { useToast } from "@/hooks/use-toast";
+import { IRoom } from "@/app/api/rooms/RoomModal";
+import { useSession } from "next-auth/react";
 
-export default function BookingClient({ room }: { room: Room }) {
+export default function BookingClient({
+  room,
+  date,
+}: {
+  room: IRoom;
+  date: string;
+}) {
+  const { data: session, status } = useSession();
+
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
 
-  const [state, formAction] = useFormState(bookSeatAction, {
-    success: false,
-    message: "",
-  });
+  // Booked seats state (should be fetched from API)
+  const [bookedSeatNumbers, setBookedSeatNumbers] = useState<Set<number>>(
+    new Set()
+  );
 
+  // Fetch booked seats for this room
   useEffect(() => {
-    if (state.message) {
-      toast({
-        title: state.success ? "Success!" : "Error",
-        description: state.message,
-        variant: state.success ? "default" : "destructive",
-      });
-      if (state.success) {
-        setSelectedSeat(null);
+    type Booking = {
+      roomId: string;
+      seatNumber: number;
+      // ...other fields as needed
+    };
+    async function fetchBookings() {
+      try {
+        const res = await fetch(`/api/bookings`);
+        const bookings: Booking[] = await res.json();
+        const booked = bookings
+          .filter((b) => b.roomId === room.id)
+          .map((b) => b.seatNumber);
+        setBookedSeatNumbers(new Set(booked));
+      } catch {
+        // Optionally handle error
       }
     }
-  }, [state, toast]);
+    fetchBookings();
+  }, [room.id]);
 
-  const bookedSeatNumbers = new Set(room.bookings.map((b) => b.seatNumber));
-
-  const handleFormSubmit = (formData: FormData) => {
-    startTransition(() => {
-      formAction(formData);
-    });
+  const handleBooking = async () => {
+    if (!selectedSeat) return;
+    setIsPending(true);
+    try {
+      const res = await fetch(`/api/bookings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: room.id,
+          seatNumber: selectedSeat,
+          userId: session?.user?.id,
+          userName: session?.user?.name,
+          startDate: date,
+          endDate: date,
+          status: "pending",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({
+          title: "Success!",
+          description: `Seat ${selectedSeat} booked successfully!`,
+          variant: "default",
+        });
+        setBookedSeatNumbers((prev) => new Set([...prev, selectedSeat]));
+        setSelectedSeat(null);
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Booking failed.",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "Network error.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPending(false);
+    }
   };
+
+  // ...existing code...
 
   return (
     <Card className="shadow-lg">
@@ -94,17 +149,13 @@ export default function BookingClient({ room }: { room: Room }) {
             )}
           </div>
         </div>
-        <form action={handleFormSubmit} className="mt-6">
-          <input type="hidden" name="roomId" value={room.id} />
-          <input type="hidden" name="seatNumber" value={selectedSeat ?? ""} />
-          <Button
-            type="submit"
-            className="w-full sm:w-auto"
-            disabled={!selectedSeat || isPending}
-          >
-            {isPending ? "Booking..." : `Book Seat ${selectedSeat || ""}`}
-          </Button>
-        </form>
+        <Button
+          className="w-full sm:w-auto mt-6"
+          disabled={!selectedSeat || isPending}
+          onClick={handleBooking}
+        >
+          {isPending ? "Booking..." : `Book Seat ${selectedSeat || ""}`}
+        </Button>
       </CardContent>
     </Card>
   );

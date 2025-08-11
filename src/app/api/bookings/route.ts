@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { Room, roomZodSchema } from "@/app/api/rooms/RoomModal";
+import { Booking, BookingZodSchema } from "./BookingModal";
 
 export async function GET() {
   try {
     await connectToDatabase();
-    const allRooms = await Room.find({}).exec();
-    const roomsWithVirtuals = allRooms.map((room) =>
-      room.toObject({ virtuals: true })
-    );
-    return NextResponse.json(roomsWithVirtuals);
+    const allBookings = await Booking.find({}).exec();
+    return NextResponse.json(allBookings);
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) {
@@ -22,18 +19,18 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const result = roomZodSchema.safeParse(body);
+    const result = BookingZodSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: result.error.issues }, { status: 400 });
     }
 
     await connectToDatabase();
-    const newRoom = new Room(result.data);
-    await newRoom.save();
+    const newBooking = new Booking(result.data);
+    await newBooking.save();
 
     return NextResponse.json({
-      message: "Room created successfully",
-      id: newRoom._id,
+      message: "Booking created successfully",
+      id: newBooking._id,
     });
   } catch (error) {
     let errorMsg = "Unknown error";

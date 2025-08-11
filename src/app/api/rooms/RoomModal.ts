@@ -1,23 +1,35 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import { z } from "zod";
+
+export const roomTypeEnum = {
+  table: "table",
+  bench: "bench",
+  free_area: "free_area",
+};
 
 export type RoomType = "table" | "bench" | "free_area";
-export interface Booking {
-  seatNumber: number;
-  userId: string;
-  userName: string;
-}
 
 export interface IRoom extends Document {
   name: string;
   type: "table" | "bench" | "free_area";
   units: number;
   seatsPerUnit: number;
-  Bookings: Booking[];
+  totalCapacity?: number;
 }
+
+export const roomZodSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters"),
+  type: z.enum(["table", "bench", "free_area"]),
+  units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
+  seatsPerUnit: z.coerce
+    .number()
+    .int()
+    .min(1, "Must have at least 1 seat per unit"),
+});
 
 const RoomSchema: Schema = new Schema(
   {
-    name: { type: String, required: true, minlength: 3 },
+    name: { type: String, required: true, minlength: 3, unique: true },
     type: {
       type: String,
       enum: ["table", "bench", "free_area"],
@@ -25,13 +37,6 @@ const RoomSchema: Schema = new Schema(
     },
     units: { type: Number, required: true, min: 1 },
     seatsPerUnit: { type: Number, required: true, min: 1 },
-    Bookings: [
-      {
-        seatNumber: { type: Number, required: true },
-        userId: { type: String, required: true },
-        userName: { type: String, required: true },
-      },
-    ],
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

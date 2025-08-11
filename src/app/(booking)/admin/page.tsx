@@ -18,16 +18,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-import { IRoom } from "@/modals/Room";
+import { IRoom } from "@/app/api/rooms/RoomModal";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { Edit, Trash } from "lucide-react";
 
 export default function AdminPage() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const router = useRouter();
   const { data: session, status } = useSession();
   useEffect(() => {
-    if (session) {
+    if (session?.user) {
       const fetchRooms = async () => {
         try {
           const res = await fetch("/api/rooms");
@@ -39,7 +40,7 @@ export default function AdminPage() {
       };
       fetchRooms();
     }
-  }, [session]);
+  }, [session?.user]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -47,7 +48,32 @@ export default function AdminPage() {
     }
   }, [status]);
 
-  console.log("rj-rooms", rooms);
+  console.log("rj-rooms-2", rooms);
+
+  // Handler for deleting a room
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this room?")) return;
+    try {
+      const res = await fetch(`/api/rooms/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        setRooms((prev) =>
+          prev.filter((room) => room._id !== id && room.id !== id)
+        );
+      } else {
+        alert(data.error || "Failed to delete room");
+      }
+    } catch (err) {
+      alert("Error deleting room");
+    }
+  };
+
+  // Handler for editing a room (stub)
+  const handleEdit = (room: IRoom) => {
+    // You can open a modal or navigate to an edit page here
+    alert(`Edit room: ${room.name}`);
+    // Example: router.push(`/booking/admin/edit/${room._id || room.id}`);
+  };
 
   return (
     <div className="grid gap-8 lg:grid-cols-3">
@@ -66,6 +92,7 @@ export default function AdminPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead className="text-right">Capacity</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -76,9 +103,23 @@ export default function AdminPage() {
                       <Badge variant="secondary">{room.type}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {room.units && room.seatsPerUnit
-                        ? room.units * room.seatsPerUnit
-                        : 0}
+                      {room?.totalCapacity}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(room)}
+                          aria-label="Edit Room"
+                        >
+                          <Edit />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(room._id || room.id)}
+                          aria-label="Delete Room"
+                        >
+                          <Trash size={20} />
+                        </button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

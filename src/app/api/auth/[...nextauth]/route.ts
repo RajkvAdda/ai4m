@@ -1,5 +1,5 @@
 import { connectToDatabase } from "@/lib/db";
-import User from "@/modals/User";
+import User from "@/app/api/auth/UserModal";
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 

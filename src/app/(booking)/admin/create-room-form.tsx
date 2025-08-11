@@ -1,7 +1,7 @@
 "use client";
 
 // import { useFormState } from "react-dom";
-import type { IRoom } from "@/modals/Room";
+import type { IRoom, roomZodSchema } from "@/app/api/rooms/RoomModal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -35,22 +35,12 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 
-const roomSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  type: z.enum(["table", "bench", "free_area"]),
-  units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
-  seatsPerUnit: z.coerce
-    .number()
-    .int()
-    .min(1, "Must have at least 1 seat per unit"),
-});
-
 export default function CreateRoomForm({ room }: { room?: IRoom }) {
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof roomSchema>>({
-    resolver: zodResolver(roomSchema),
+  const form = useForm<z.infer<typeof roomZodSchema>>({
+    resolver: zodResolver(roomZodSchema),
     defaultValues: room
       ? {
           name: room.name,
@@ -66,7 +56,7 @@ export default function CreateRoomForm({ room }: { room?: IRoom }) {
         },
   });
 
-  async function onSubmit(values: z.infer<typeof roomSchema>) {
+  async function onSubmit(values: z.infer<typeof roomZodSchema>) {
     try {
       let res, data;
       if (room && room._id) {

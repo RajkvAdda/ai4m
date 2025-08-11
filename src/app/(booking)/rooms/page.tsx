@@ -16,7 +16,7 @@ import { Room, RoomType } from "@/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { IRoom } from "@/modals/Room";
+import { IRoom } from "@/app/api/rooms/RoomModal";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <Table className="h-6 w-6" />,
@@ -30,9 +30,17 @@ const roomDescriptions: Record<RoomType, string> = {
   free_area: "Open area for flexible work",
 };
 
-function RoomCard({ room }: { room: Room }) {
+function RoomCard({
+  room,
+  selectedDate,
+  bookingCount,
+}: {
+  room: Room;
+  selectedDate: string;
+  bookingCount: number;
+}) {
   const totalCapacity = room.totalCapacity;
-  const availableSeats = totalCapacity - (room.bookings?.length ?? 0);
+  const availableSeats = totalCapacity - bookingCount;
   const progressValue = (availableSeats / totalCapacity) * 100;
 
   return (
@@ -63,11 +71,18 @@ function RoomCard({ room }: { room: Room }) {
             value={progressValue}
             aria-label={`${availableSeats} of ${totalCapacity} seats available`}
           />
+          <p className="text-xs text-muted-foreground mt-2">
+            Bookings for {selectedDate}: {bookingCount}
+          </p>
         </div>
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full" variant="default">
-          <Link href={`/rooms/${room._id}`}>
+          <Link
+            href={
+              selectedDate ? `/rooms/${room._id}?date=${selectedDate}` : "#"
+            }
+          >
             View & Book <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
@@ -78,9 +93,11 @@ function RoomCard({ room }: { room: Room }) {
 
 export default function Rooms() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [bookings, setBookings] = useState<any[]>([]);
   const router = useRouter();
   const { data: session, status } = useSession();
-  console.log("rj-session", { session, status });
+
   useEffect(() => {
     if (session) {
       const fetchRooms = async () => {
@@ -97,24 +114,69 @@ export default function Rooms() {
   }, [session]);
 
   useEffect(() => {
+    if (selectedDate) {
+      const fetchBookings = async () => {
+        try {
+          const res = await fetch(`/api/bookings`);
+          const data = await res.json();
+          setBookings(data);
+        } catch (err) {
+          // Optionally handle error
+        }
+      };
+      fetchBookings();
+    } else {
+      setBookings([]);
+    }
+  }, [selectedDate]);
+
+  useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
     }
   }, [status]);
 
+  // Helper to get booking count for a room and date
+  const getBookingCount = (roomId: string) => {
+    return bookings.filter(
+      (b) => b.roomId === roomId && b.startDate?.slice(0, 10) === selectedDate
+    ).length;
+  };
+
   return (
     <div className="container p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">
-          Welcome, {session?.user?.name || "User"}!
-        </h1>
-        <p className="text-muted-foreground">
-          Choose a room to see details and book your seat.
-        </p>
+      <div className="mb-8 grid grid-cols-2">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">
+            Welcome, {session?.user?.name || "User"}!
+          </h1>
+          <p className="text-muted-foreground">
+            Choose a room to see details and book your seat.
+          </p>
+        </div>
+        {/* handle the selected date */}
+        <div className="flex flex-col items-end justify-center">
+          <label htmlFor="booking-date" className="mb-2 font-medium">
+            Select Date
+          </label>
+          <input
+            id="booking-date"
+            type="date"
+            className="border rounded px-3 py-2"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            min={new Date().toISOString().split("T")[0]}
+          />
+        </div>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {rooms.map((room) => (
-          <RoomCard key={room._id} room={room} />
+          <RoomCard
+            key={room._id}
+            room={room}
+            selectedDate={selectedDate}
+            bookingCount={getBookingCount(room._id)}
+          />
         ))}
       </div>
     </div>

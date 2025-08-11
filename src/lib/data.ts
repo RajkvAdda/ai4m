@@ -1,4 +1,4 @@
-import { Room } from "@/modals/Room";
+import { Room } from "@/app/api/rooms/RoomModal";
 import { connectToDatabase } from "@/lib/db";
 import type { RoomType } from "@/types";
 

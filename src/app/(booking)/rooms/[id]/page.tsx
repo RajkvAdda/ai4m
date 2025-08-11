@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import BookingClient from "./booking-client";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Table, Armchair, Users } from "lucide-react";
-import type { RoomType } from "@/types";
-import { IRoom } from "@/modals/Room";
+import { IRoom, RoomType } from "@/app/api/rooms/RoomModal";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <Table className="h-8 w-8" />,
@@ -14,7 +13,9 @@ const roomIcons: Record<RoomType, React.ReactNode> = {
 // Server Component
 export default async function RoomDetailsPage({
   params,
+  searchParams,
 }: {
+  searchParams: any;
   params: { id: string };
 }) {
   const res = await fetch(
@@ -32,15 +33,12 @@ export default async function RoomDetailsPage({
   if (!room) {
     notFound();
   }
-
-  // Log the full room object to verify totalCapacity
-  console.log("rj-room", JSON.stringify(room, null, 2));
-
-  return <RoomDetails room={room} />;
+  console.log("ej-date", searchParams?.date, params);
+  return <RoomDetails room={room} date={searchParams?.date} />;
 }
 
 // Client Component
-function RoomDetails({ room }: { room: IRoom }) {
+function RoomDetails({ room, date }: { room: IRoom; date: string }) {
   return (
     <div className="container p-8">
       <Card className="mb-8 overflow-hidden shadow-lg bg-primary/7">
@@ -65,7 +63,7 @@ function RoomDetails({ room }: { room: IRoom }) {
         </div>
       </Card>
 
-      {/* <BookingClient room={room} /> */}
+      <BookingClient room={room} date={date} />
     </div>
   );
 }
