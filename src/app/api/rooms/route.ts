@@ -14,7 +14,9 @@ export async function GET() {
   try {
     await connectToDatabase();
     const allRooms = await Room.find({}).exec();
-    const roomsWithVirtuals = allRooms.map((room) => room.toObject());
+    const roomsWithVirtuals = allRooms.map((room) =>
+      room.toObject({ virtuals: true })
+    );
     return NextResponse.json(roomsWithVirtuals);
   } catch (error) {
     let errorMsg = "Unknown error";

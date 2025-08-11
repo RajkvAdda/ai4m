@@ -33,6 +33,9 @@ export default async function RoomDetailsPage({
     notFound();
   }
 
+  // Log the full room object to verify totalCapacity
+  console.log("rj-room", JSON.stringify(room, null, 2));
+
   return <RoomDetails room={room} />;
 }
 
@@ -50,7 +53,7 @@ function RoomDetails({ room }: { room: IRoom }) {
               {room.name}
             </CardTitle>
             <CardDescription className="text-base">
-              Capacity: {room.totalCapacity} seats ({room.units}{" "}
+              Capacity: {room?.totalCapacity} seats ({room.units}{" "}
               {room.type === "table"
                 ? "tables"
                 : room.type === "bench"
@@ -62,7 +65,7 @@ function RoomDetails({ room }: { room: IRoom }) {
         </div>
       </Card>
 
-      <BookingClient room={room} />
+      {/* <BookingClient room={room} /> */}
     </div>
   );
 }

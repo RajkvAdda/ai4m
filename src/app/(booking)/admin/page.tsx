@@ -47,6 +47,8 @@ export default function AdminPage() {
     }
   }, [status]);
 
+  console.log("rj-rooms", rooms);
+
   return (
     <div className="grid gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2">

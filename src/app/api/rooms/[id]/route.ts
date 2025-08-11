@@ -13,11 +13,10 @@ export async function GET(
       return NextResponse.json({ error: "Invalid room ID" }, { status: 400 });
     }
     await connectToDatabase();
-    const roomDoc = await Room.findById(params.id);
-    if (!roomDoc) {
+    const room = await Room.findById(params.id);
+    if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
-    const room = roomDoc.toObject();
     return NextResponse.json(room);
   } catch (error) {
     let errorMsg = "Unknown error";
