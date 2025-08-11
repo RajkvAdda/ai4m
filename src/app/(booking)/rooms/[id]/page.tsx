@@ -1,5 +1,3 @@
-"use client";
-
 import { notFound } from "next/navigation";
 import BookingClient from "./booking-client";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -19,7 +17,13 @@ export default async function RoomDetailsPage({
 }: {
   params: { id: string };
 }) {
-  const res = await fetch(`/api/rooms/${params?.id}`);
+  const res = await fetch(
+    `${process.env.NEXTAUTH_URL}/api/rooms/${params?.id}`,
+    {
+      // Ensure this is a server-side fetch
+      cache: "no-store",
+    }
+  );
   if (!res.ok) {
     notFound();
   }
@@ -46,7 +50,7 @@ function RoomDetails({ room }: { room: IRoom }) {
               {room.name}
             </CardTitle>
             <CardDescription className="text-base">
-              Capacity: {room.units * room.seatsPerUnit} seats ({room.units}{" "}
+              Capacity: {room.totalCapacity} seats ({room.units}{" "}
               {room.type === "table"
                 ? "tables"
                 : room.type === "bench"

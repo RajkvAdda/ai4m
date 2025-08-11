@@ -14,5 +14,12 @@ const RoomSchema: Schema = new Schema({
   seatsPerUnit: { type: Number, required: true, min: 1 },
 });
 
+RoomSchema.virtual("totalCapacity").get(function (this: IRoom) {
+  return this.units * this.seatsPerUnit;
+});
+
+RoomSchema.set("toJSON", { virtuals: true });
+RoomSchema.set("toObject", { virtuals: true });
+
 export const Room: Model<IRoom> =
   mongoose.models.Room || mongoose.model<IRoom>("Room", RoomSchema);

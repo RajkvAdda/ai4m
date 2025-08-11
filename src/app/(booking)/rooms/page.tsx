@@ -31,7 +31,7 @@ const roomDescriptions: Record<RoomType, string> = {
 };
 
 function RoomCard({ room }: { room: Room }) {
-  const totalCapacity = room.units * room.seatsPerUnit;
+  const totalCapacity = room.totalCapacity;
   const availableSeats = totalCapacity - (room.bookings?.length ?? 0);
   const progressValue = (availableSeats / totalCapacity) * 100;
 

@@ -13,8 +13,9 @@ export const roomSchema = z.object({
 export async function GET() {
   try {
     await connectToDatabase();
-    const allRooms = await Room.find({}).lean();
-    return NextResponse.json(allRooms);
+    const allRooms = await Room.find({}).exec();
+    const roomsWithVirtuals = allRooms.map((room) => room.toObject());
+    return NextResponse.json(roomsWithVirtuals);
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) {

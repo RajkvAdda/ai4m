@@ -13,10 +13,11 @@ export async function GET(
       return NextResponse.json({ error: "Invalid room ID" }, { status: 400 });
     }
     await connectToDatabase();
-    const room = await Room.findById(params.id).lean();
-    if (!room) {
+    const roomDoc = await Room.findById(params.id);
+    if (!roomDoc) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
+    const room = roomDoc.toObject();
     return NextResponse.json(room);
   } catch (error) {
     let errorMsg = "Unknown error";
@@ -42,7 +43,8 @@ export async function PUT(
     if (!updateResult) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
-    return NextResponse.json({ message: "Room updated successfully" });
+    const room = updateResult.toObject();
+    return NextResponse.json({ message: "Room updated successfully", room });
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) errorMsg = error.message;
@@ -60,7 +62,8 @@ export async function DELETE(
     if (!deleteResult) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
-    return NextResponse.json({ message: "Room deleted successfully" });
+    const room = deleteResult.toObject();
+    return NextResponse.json({ message: "Room deleted successfully", room });
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) errorMsg = error.message;
