@@ -3,15 +3,15 @@ import { z } from "zod";
 
 export const roomTypeEnum = {
   table: "table",
-  bench: "bench",
+  row: "row",
   free_area: "free_area",
 };
 
-export type RoomType = "table" | "bench" | "free_area";
+export type RoomType = "table" | "row" | "free_area";
 
 export interface IRoom extends Document {
   name: string;
-  type: "table" | "bench" | "free_area";
+  type: RoomType;
   units: number;
   seatsPerUnit: number;
   totalCapacity?: number;
@@ -19,7 +19,7 @@ export interface IRoom extends Document {
 
 export const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
-  type: z.enum(["table", "bench", "free_area"]),
+  type: z.enum(["table", "row", "free_area"]),
   units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
   seatsPerUnit: z.coerce
     .number()
@@ -32,7 +32,7 @@ const RoomSchema: Schema = new Schema(
     name: { type: String, required: true, minlength: 3, unique: true },
     type: {
       type: String,
-      enum: ["table", "bench", "free_area"],
+      enum: ["table", "row", "free_area"],
       required: true,
     },
     units: { type: Number, required: true, min: 1 },

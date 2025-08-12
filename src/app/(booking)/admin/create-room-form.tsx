@@ -36,7 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { IRoom } from "@/modals/Room";
 const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
-  type: z.enum(["table", "bench", "free_area"]),
+  type: z.enum(["table", "row", "free_area"]),
   units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
   seatsPerUnit: z.coerce
     .number()
@@ -175,7 +175,7 @@ export default function CreateRoomForm({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="table">Table</SelectItem>
-                      <SelectItem value="bench">Bench</SelectItem>
+                      <SelectItem value="row">Row</SelectItem>
                       <SelectItem value="free_area">Free Area</SelectItem>
                     </SelectContent>
                   </Select>

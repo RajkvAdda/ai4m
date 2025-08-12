@@ -10,22 +10,22 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Table, Armchair, Users, ArrowRight } from "lucide-react";
+import { Table, Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
 // import { getRooms } from "@/lib/data";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { IRoom, RoomType } from "@/modals/Room";
 
-const roomIcons: Record<RoomType, React.ReactNode> = {
-  table: <Table className="h-6 w-6" />,
-  bench: <Armchair className="h-6 w-6" />,
+export const roomIcons: Record<RoomType, React.ReactNode> = {
+  table: <TableRowsSplit className="h-6 w-6" />,
+  row: <Rows className="h-6 w-6" />,
   free_area: <Users className="h-6 w-6" />,
 };
 
 const roomDescriptions: Record<RoomType, string> = {
   table: "Group tables for collaboration",
-  bench: "Individual bench-style seating",
+  row: "Individual row-style seating",
   free_area: "Open area for flexible work",
 };
 
@@ -48,7 +48,7 @@ function RoomCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="font-headline text-2xl">{room.name}</CardTitle>
-          <div className="p-2 bg-accent/20 text-accent rounded-lg">
+          <div className="p-2 bg-accent/10 text-accent rounded-lg">
             {roomIcons[room.type]}
           </div>
         </div>
@@ -69,11 +69,12 @@ function RoomCard({
           </div>
           <Progress
             value={progressValue}
+            color=""
             aria-label={`${availableSeats} of ${totalCapacity} seats available`}
           />
-          <p className="text-xs text-muted-foreground mt-2">
+          {/* <p className="text-xs text-muted-foreground mt-2">
             Bookings for {selectedDate}: {bookingCount}
-          </p>
+          </p> */}
         </div>
       </CardContent>
       <CardFooter>
