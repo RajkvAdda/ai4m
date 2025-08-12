@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { Room, roomZodSchema } from "@/app/api/rooms/RoomModal";
+import { Room, roomZodSchema } from "@/modals/Room";
 
 export async function GET() {
   try {

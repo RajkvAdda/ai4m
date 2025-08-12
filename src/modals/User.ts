@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Model, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 
 export interface IUser {
@@ -34,6 +34,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-const User = models?.User || model<IUser>("User", userSchema);
+export const User: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>("User", userSchema);
 
 export default User;

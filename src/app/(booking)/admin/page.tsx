@@ -17,27 +17,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-import { IRoom } from "@/app/api/rooms/RoomModal";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Edit, Trash } from "lucide-react";
+import { IRoom } from "@/modals/Room";
 
 export default function AdminPage() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const router = useRouter();
   const { data: session, status } = useSession();
+  const fetchRooms = async () => {
+    try {
+      const res = await fetch("/api/rooms");
+      const data = await res.json();
+      setRooms(data);
+    } catch (err) {
+      // Optionally handle error
+    }
+  };
+
   useEffect(() => {
     if (session?.user) {
-      const fetchRooms = async () => {
-        try {
-          const res = await fetch("/api/rooms");
-          const data = await res.json();
-          setRooms(data);
-        } catch (err) {
-          // Optionally handle error
-        }
-      };
       fetchRooms();
     }
   }, [session?.user]);
@@ -129,7 +129,7 @@ export default function AdminPage() {
         </Card>
       </div>
       <div className="lg:col-span-1">
-        <CreateRoomForm />
+        <CreateRoomForm onRoomChange={fetchRooms} />
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 // import { useFormState } from "react-dom";
-import type { IRoom, roomZodSchema } from "@/app/api/rooms/RoomModal";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -34,8 +33,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { IRoom } from "@/modals/Room";
+const roomZodSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters"),
+  type: z.enum(["table", "bench", "free_area"]),
+  units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
+  seatsPerUnit: z.coerce
+    .number()
+    .int()
+    .min(1, "Must have at least 1 seat per unit"),
+});
 
-export default function CreateRoomForm({ room }: { room?: IRoom }) {
+export default function CreateRoomForm({
+  room,
+  onRoomChange,
+}: {
+  room?: IRoom;
+  onRoomChange?: () => void;
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
 
@@ -71,6 +86,7 @@ export default function CreateRoomForm({ room }: { room?: IRoom }) {
             title: "Room Updated",
             description: data.message,
           });
+          if (onRoomChange) onRoomChange();
         } else {
           toast({
             title: "Error",
@@ -93,6 +109,7 @@ export default function CreateRoomForm({ room }: { room?: IRoom }) {
             description: data.message,
           });
           form.reset();
+          if (onRoomChange) onRoomChange();
         } else {
           toast({
             title: "Error",

@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 // ...existing code...
 import { useToast } from "@/hooks/use-toast";
-import { IRoom } from "@/app/api/rooms/RoomModal";
 import { useSession } from "next-auth/react";
-import { IBooking } from "@/app/api/bookings/BookingModal";
+import { IBooking } from "@/modals/Booking";
+import { IRoom } from "@/modals/Room";
 
 export default function BookingClient({
   room,
@@ -35,27 +35,25 @@ export default function BookingClient({
   );
 
   // Fetch booked seats for this room
-  useEffect(() => {
-    async function fetchBookings() {
-      try {
-        const res = await fetch(
-          `/api/bookings?date=${date}&roomId=${room?.id}`
-        );
-        const bookings: IBooking[] = await res.json();
-        const booked = bookings.map((b) => {
-          if (b?.userId == session?.user?.id) {
-            setexistingBookings(b?._id);
-          }
-
-          return b.seatNumber;
-        });
-
-        setBookedSeatNumbers(new Set(booked));
-      } catch {
-        // Optionally handle error
-      }
+  const fetchBookings = async () => {
+    try {
+      const res = await fetch(`/api/bookings?date=${date}&roomId=${room?.id}`);
+      const bookings: IBooking[] = await res.json();
+      const booked = bookings.map((b) => {
+        if (b?.userId == session?.user?.id) {
+          setexistingBookings(b?._id);
+        }
+        return b.seatNumber;
+      });
+      setBookedSeatNumbers(new Set(booked));
+    } catch {
+      // Optionally handle error
     }
+  };
+
+  useEffect(() => {
     if (room.id && date) fetchBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room.id, date, session?.user?.id]);
 
   const handleBooking = async () => {
@@ -63,7 +61,7 @@ export default function BookingClient({
     setIsPending(true);
     try {
       if (existingBookings) {
-        fetch(`/api/bookings/${existingBookings}`, {
+        await fetch(`/api/bookings/${existingBookings}`, {
           method: "DELETE",
         });
       }
@@ -88,8 +86,8 @@ export default function BookingClient({
           description: `Seat ${selectedSeat} booked successfully!`,
           variant: "default",
         });
-        setBookedSeatNumbers((prev) => new Set([...prev, selectedSeat]));
         setSelectedSeat(null);
+        await fetchBookings(); // Refetch bookings after booking
       } else {
         toast({
           title: "Error",

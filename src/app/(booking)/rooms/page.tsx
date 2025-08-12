@@ -12,11 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, Armchair, Users, ArrowRight } from "lucide-react";
 // import { getRooms } from "@/lib/data";
-import { Room, RoomType } from "@/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { IRoom } from "@/app/api/rooms/RoomModal";
+import { IRoom, RoomType } from "@/modals/Room";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <Table className="h-6 w-6" />,
@@ -35,13 +34,14 @@ function RoomCard({
   selectedDate,
   bookingCount,
 }: {
-  room: Room;
+  room: IRoom;
   selectedDate: string;
   bookingCount: number;
 }) {
-  const totalCapacity = room.totalCapacity;
+  const totalCapacity = room.totalCapacity || 0;
   const availableSeats = totalCapacity - bookingCount;
-  const progressValue = (availableSeats / totalCapacity) * 100;
+  const progressValue =
+    totalCapacity > 0 ? (availableSeats / totalCapacity) * 100 : 0;
 
   return (
     <Card className="flex flex-col transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300">
@@ -93,7 +93,8 @@ function RoomCard({
 
 export default function Rooms() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
-  const [selectedDate, setSelectedDate] = useState("");
+  const today = new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState(today);
   const [bookings, setBookings] = useState<any[]>([]);
   const router = useRouter();
   const { data: session, status } = useSession();

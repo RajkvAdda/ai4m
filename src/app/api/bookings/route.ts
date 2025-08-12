@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { Booking, BookingZodSchema } from "./BookingModal";
+import { Booking, BookingZodSchema } from "@/modals/Booking";
 
 export async function GET(request: Request) {
   try {

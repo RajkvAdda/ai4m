@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import BookingClient from "./booking-client";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Table, Armchair, Users } from "lucide-react";
-import { IRoom, RoomType } from "@/app/api/rooms/RoomModal";
+import { IRoom, RoomType } from "@/modals/Room";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <Table className="h-8 w-8" />,
