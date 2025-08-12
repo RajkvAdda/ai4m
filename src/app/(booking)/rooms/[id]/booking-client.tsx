@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { IRoom } from "@/app/api/rooms/RoomModal";
 import { useSession } from "next-auth/react";
+import { IBooking } from "@/app/api/bookings/BookingModal";
 
 export default function BookingClient({
   room,
@@ -27,7 +28,7 @@ export default function BookingClient({
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
-
+  const [existingBookings, setexistingBookings] = useState(0);
   // Booked seats state (should be fetched from API)
   const [bookedSeatNumbers, setBookedSeatNumbers] = useState<Set<number>>(
     new Set()
@@ -35,30 +36,38 @@ export default function BookingClient({
 
   // Fetch booked seats for this room
   useEffect(() => {
-    type Booking = {
-      roomId: string;
-      seatNumber: number;
-      // ...other fields as needed
-    };
     async function fetchBookings() {
       try {
-        const res = await fetch(`/api/bookings`);
-        const bookings: Booking[] = await res.json();
-        const booked = bookings
-          .filter((b) => b.roomId === room.id)
-          .map((b) => b.seatNumber);
+        const res = await fetch(
+          `/api/bookings?date=${date}&roomId=${room?.id}`
+        );
+        const bookings: IBooking[] = await res.json();
+        const booked = bookings.map((b) => {
+          if (b?.userId == session?.user?.id) {
+            setexistingBookings(b?._id);
+          }
+
+          return b.seatNumber;
+        });
+
         setBookedSeatNumbers(new Set(booked));
       } catch {
         // Optionally handle error
       }
     }
-    fetchBookings();
-  }, [room.id]);
+    if (room.id && date) fetchBookings();
+  }, [room.id, date, session?.user?.id]);
 
   const handleBooking = async () => {
     if (!selectedSeat) return;
     setIsPending(true);
     try {
+      if (existingBookings) {
+        fetch(`/api/bookings/${existingBookings}`, {
+          method: "DELETE",
+        });
+      }
+      // 3. Add new booking
       const res = await fetch(`/api/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -98,7 +107,7 @@ export default function BookingClient({
       setIsPending(false);
     }
   };
-
+  console.log("existingBookings", existingBookings);
   // ...existing code...
 
   return (

@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Booking, BookingZodSchema } from "./BookingModal";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDatabase();
-    const allBookings = await Booking.find({}).exec();
-    return NextResponse.json(allBookings);
+    const { searchParams } = new URL(request.url);
+    const roomId = searchParams.get("roomId");
+    const date = searchParams.get("date");
+
+    let query: any = {};
+    if (roomId) query.roomId = roomId;
+    if (date) query.startDate = date;
+
+    const bookings = await Booking.find(query).exec();
+    return NextResponse.json(bookings);
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) {

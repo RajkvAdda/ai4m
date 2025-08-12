@@ -104,7 +104,7 @@ export default function Rooms() {
         try {
           const res = await fetch("/api/rooms");
           const data = await res.json();
-          setRooms(data);
+          if (data?.length) setRooms(data);
         } catch (err) {
           // Optionally handle error
         }
@@ -117,7 +117,7 @@ export default function Rooms() {
     if (selectedDate) {
       const fetchBookings = async () => {
         try {
-          const res = await fetch(`/api/bookings`);
+          const res = await fetch(`/api/bookings?date=${selectedDate}`);
           const data = await res.json();
           setBookings(data);
         } catch (err) {
@@ -138,9 +138,7 @@ export default function Rooms() {
 
   // Helper to get booking count for a room and date
   const getBookingCount = (roomId: string) => {
-    return bookings.filter(
-      (b) => b.roomId === roomId && b.startDate?.slice(0, 10) === selectedDate
-    ).length;
+    return bookings.filter((b) => b.roomId === roomId).length;
   };
 
   return (
@@ -157,7 +155,7 @@ export default function Rooms() {
         {/* handle the selected date */}
         <div className="flex flex-col items-end justify-center">
           <label htmlFor="booking-date" className="mb-2 font-medium">
-            Select Date
+            Date For booking
           </label>
           <input
             id="booking-date"
@@ -170,7 +168,7 @@ export default function Rooms() {
         </div>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {rooms.map((room) => (
+        {rooms?.map((room) => (
           <RoomCard
             key={room._id}
             room={room}
