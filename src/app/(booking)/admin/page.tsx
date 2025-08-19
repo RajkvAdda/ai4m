@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Pencil, Trash } from "lucide-react";
 import { IRoom } from "@/modals/Room";
 
 export default function AdminPage() {
@@ -111,7 +111,7 @@ export default function AdminPage() {
                           onClick={() => handleEdit(room)}
                           aria-label="Edit Room"
                         >
-                          <Edit />
+                          <Pencil size={20} />
                         </button>
                         <button
                           onClick={() => handleDelete(room._id || room.id)}
