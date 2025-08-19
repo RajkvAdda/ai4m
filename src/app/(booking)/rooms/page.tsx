@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Table, Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
+import { Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
 // import { getRooms } from "@/lib/data";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";

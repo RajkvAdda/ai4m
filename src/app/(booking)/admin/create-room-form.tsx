@@ -130,7 +130,9 @@ export default function CreateRoomForm({
     }
   }
 
-  console.log("rj-admin", form);
+  const formState = form.getValues();
+
+  console.log("rj-admin", form, formState);
 
   return (
     <Card className="shadow-lg">
@@ -186,42 +188,45 @@ export default function CreateRoomForm({
                 </FormItem>
               )}
             />
-            {form.getValues("type") == "table" ? (
+            {/* {form.getValues("type") == "table" ? (
               <BookingTable
-                units={form.getValues("units")}
-                seatsPerUnit={form.getValues("seatsPerUnit")}
+                units={formState?.units}
+                seatsPerUnit={formState?.seatsPerUnit}
+                onAddUnit={() => {
+                  form.setValue("units", formState?.units + 1);
+                }}
               />
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="units"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Units</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            ) : ( */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="units"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Units</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="seatsPerUnit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Seats/Unit</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
+              <FormField
+                control={form.control}
+                name="seatsPerUnit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Seats/Unit</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            {/* )} */}
           </CardContent>
           <CardFooter>
             <Button

@@ -19,8 +19,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Edit, Pencil, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import { IRoom } from "@/modals/Room";
+import { IconButton } from "@/components/ui/icon";
 
 export default function AdminPage() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
@@ -92,7 +93,7 @@ export default function AdminPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead className="text-right">Capacity</TableHead>
-                  <TableHead>Action</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,20 +107,11 @@ export default function AdminPage() {
                       {room?.totalCapacity}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(room)}
-                          aria-label="Edit Room"
-                        >
-                          <Pencil size={20} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(room._id || room.id)}
-                          aria-label="Delete Room"
-                        >
-                          <Trash size={20} />
-                        </button>
-                      </div>
+                      <IconButton
+                        iconName="Trash"
+                        onClick={() => handleDelete(room._id || room.id)}
+                        aria-label="Delete Room"
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

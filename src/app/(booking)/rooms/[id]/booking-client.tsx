@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-// ...existing code...
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 import { IBooking } from "@/modals/Booking";
