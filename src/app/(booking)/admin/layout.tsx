@@ -13,7 +13,7 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen flex flex-col p-8">
       <main className="flex-1">
-        <div className="container py-8">
+        <div className="container">
           <Alert className="mb-8 border-primary/50 bg-primary/5 text-primary">
             <AlertTitle className="text-3xl font-bold tracking-tight font-headline">
               Welcome, {session?.user?.name || "User"}!

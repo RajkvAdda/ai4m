@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { IRoom } from "@/modals/Room";
+import BookingTable from "../(component)/table";
 const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   type: z.enum(["table", "row", "free_area"]),
@@ -129,6 +130,8 @@ export default function CreateRoomForm({
     }
   }
 
+  console.log("rj-admin", form);
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -183,36 +186,42 @@ export default function CreateRoomForm({
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="units"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Units</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            {form.getValues("type") == "table" ? (
+              <BookingTable
+                units={form.getValues("units")}
+                seatsPerUnit={form.getValues("seatsPerUnit")}
               />
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="units"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Units</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="1" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="seatsPerUnit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Seats/Unit</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="seatsPerUnit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Seats/Unit</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="1" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
           </CardContent>
           <CardFooter>
             <Button

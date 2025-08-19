@@ -38,12 +38,7 @@ export const Icon = React.forwardRef<HTMLSpanElement, IconProps>(
     return (
       <span className={cn("", className)}>
         {IconComponent ? (
-          <IconComponent
-            ref={ref}
-            role="icon"
-            className={"w-4 h-4"}
-            {...props}
-          />
+          <IconComponent ref={ref} role="icon" {...props} />
         ) : null}
       </span>
     );
