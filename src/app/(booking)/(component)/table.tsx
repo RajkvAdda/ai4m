@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon";
 import { Armchair, Plus } from "lucide-react";
 import React from "react";
@@ -5,16 +6,21 @@ import React from "react";
 export default function BookingTable({
   units,
   seatsPerUnit,
-  onAddUnit,
+  onHandleUnit,
+  onHandleSeatPerUnit,
 }: {
   units: number;
   seatsPerUnit: number;
-  onAddUnit: () => void;
+  onHandleUnit: (units: number) => void;
+  onHandleSeatPerUnit: (seatsPerUnit: number) => void;
 }) {
   return (
     <div>
-      {Array.from({ length: units })?.map((index) => (
-        <div key={index} className="flex flex-wrap items-center gap-4 mb-4">
+      {Array.from({ length: units })?.map((_, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-2 mb-4 p-2 rounded-sm bg-gray-100"
+        >
           <div className="grid flex-1">
             <div className=" rounded-lg p-1 px-3 flex gap-4 justify-between">
               <Armchair size={30} />
@@ -26,7 +32,9 @@ export default function BookingTable({
               <div
                 className="p-0 bg-gray-200 rounded-lg text-2xl"
                 contentEditable
-              ></div>
+              >
+                Table {index + 1}
+              </div>
             </div>
             <div className="rounded-lg p-1 px-3 flex gap-4 justify-between rotate-180">
               <Armchair size={30} />
@@ -35,11 +43,15 @@ export default function BookingTable({
               <Armchair size={30} />
             </div>
           </div>
-          {units - 1 == index ? (
-            <IconButton iconName="Plus" onClick={() => onAddUnit()} />
-          ) : null}
         </div>
       ))}
+      <Button
+        onClick={() => onHandleUnit(units + 1)}
+        className="w-full"
+        variant={"outline"}
+      >
+        Add Table
+      </Button>
     </div>
   );
 }

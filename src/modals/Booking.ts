@@ -6,6 +6,7 @@ export interface IBooking extends Document {
   seatNumber: number;
   userId: string;
   userName: string;
+  avator: any;
   startDate: string;
   endDate: string;
   status: "pending" | "confirmed" | "cancelled";
@@ -15,6 +16,7 @@ const BookingSchema: Schema = new Schema({
   seatNumber: { type: Number, required: true },
   userId: { type: String, required: true },
   userName: { type: String, required: true },
+  avator: { type: String },
   startDate: { type: String, required: true },
   endDate: { type: String, required: true },
   status: {
@@ -33,6 +35,7 @@ export const BookingZodSchema = z.object({
   seatNumber: z.number(),
   userId: z.string(),
   userName: z.string(),
+  avator: z.any(),
   startDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid start date format",
   }),

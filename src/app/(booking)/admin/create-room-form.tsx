@@ -43,6 +43,7 @@ const roomZodSchema = z.object({
     .number()
     .int()
     .min(1, "Must have at least 1 seat per unit"),
+  seatingDetails: z.json(),
 });
 
 export default function CreateRoomForm({
@@ -162,7 +163,6 @@ export default function CreateRoomForm({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="type"
@@ -192,8 +192,11 @@ export default function CreateRoomForm({
               <BookingTable
                 units={formState?.units}
                 seatsPerUnit={formState?.seatsPerUnit}
-                onAddUnit={() => {
-                  form.setValue("units", formState?.units + 1);
+                onHandleUnit={(units) => {
+                  form.setValue("units", units);
+                }}
+                onHandleSeatPerUnit={(seatsPerUnit) => {
+                  form.setValue("seatsPerUnit", seatsPerUnit);
                 }}
               />
             ) : ( */}

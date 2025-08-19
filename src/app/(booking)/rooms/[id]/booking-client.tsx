@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 import { IBooking } from "@/modals/Booking";
 import { IRoom } from "@/modals/Room";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 export default function BookingClient({
   room,
@@ -29,9 +30,7 @@ export default function BookingClient({
   const { toast } = useToast();
   const [existingBookings, setexistingBookings] = useState(0);
   // Booked seats state (should be fetched from API)
-  const [bookedSeatNumbers, setBookedSeatNumbers] = useState<Set<number>>(
-    new Set()
-  );
+  const [bookedSeats, setBookedSeats] = useState<IBooking[]>([]);
 
   // Fetch booked seats for this room
   const fetchBookings = async () => {
@@ -42,9 +41,9 @@ export default function BookingClient({
         if (b?.userId == session?.user?.id) {
           setexistingBookings(b?._id);
         }
-        return b.seatNumber;
+        return b;
       });
-      setBookedSeatNumbers(new Set(booked));
+      setBookedSeats(booked);
     } catch {
       // Optionally handle error
     }
@@ -73,6 +72,7 @@ export default function BookingClient({
           seatNumber: selectedSeat,
           userId: session?.user?.id,
           userName: session?.user?.name,
+          avator: session?.user?.image,
           startDate: date,
           endDate: date,
           status: "pending",
@@ -104,7 +104,7 @@ export default function BookingClient({
       setIsPending(false);
     }
   };
-  console.log("existingBookings", existingBookings);
+  console.log("existingBookings", existingBookings, bookedSeats);
   // ...existing code...
 
   return (
@@ -120,7 +120,9 @@ export default function BookingClient({
           <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-8">
             {Array.from({ length: room.totalCapacity }, (_, i) => i + 1).map(
               (seatNumber) => {
-                const isBooked = bookedSeatNumbers.has(seatNumber);
+                const isBooked = bookedSeats.find(
+                  (list) => list?.seatNumber == seatNumber
+                );
                 const isSelected = selectedSeat === seatNumber;
                 return (
                   <Button
@@ -148,6 +150,18 @@ export default function BookingClient({
                         : `Select seat ${seatNumber}`
                     }
                   >
+                    {isBooked ? (
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage
+                          src={isBooked.avator}
+                          alt={isBooked.userName}
+                        />
+                        <AvatarFallback className="rounded-lg">
+                          {isBooked?.userName.slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : null}
+
                     {seatNumber}
                   </Button>
                 );
