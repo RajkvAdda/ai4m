@@ -63,7 +63,7 @@ export default function AdminPage() {
       } else {
         alert(data.error || "Failed to delete room");
       }
-    } catch () {
+    } catch (_err) {
       alert("Error deleting room");
     }
   };
