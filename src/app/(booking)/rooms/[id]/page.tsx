@@ -5,23 +5,20 @@ import { IRoom, RoomType } from "@/modals/Room";
 import { roomIcons } from "../page";
 import { BackButton } from "@/components/ui/button";
 
-type PageProps = {
-  params: { id: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-};
-
+type TSearchParams = { [key: string]: string | string[] | undefined };
 // Server Component
 export default async function RoomDetailsPage({
   params,
   searchParams,
-}: PageProps) {
-  const res = await fetch(
-    `${process.env.NEXTAUTH_URL}/api/rooms/${params?.id}`,
-    {
-      // Ensure this is a server-side fetch
-      cache: "no-store",
-    }
-  );
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: TSearchParams;
+}) {
+  const { id } = await params;
+  const res = await fetch(`${process.env.NEXTAUTH_URL}/api/rooms/${id}`, {
+    // Ensure this is a server-side fetch
+    cache: "no-store",
+  });
   if (!res.ok) {
     notFound();
   }
