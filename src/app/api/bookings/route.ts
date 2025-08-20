@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const roomId = searchParams.get("roomId");
     const date = searchParams.get("date");
 
-    let query: any = {};
+    const query: Record<string, unknown> = {};
     if (roomId) query.roomId = roomId;
     if (date) query.startDate = date;
 

@@ -6,7 +6,7 @@ export interface IBooking extends Document {
   seatNumber: number;
   userId: string;
   userName: string;
-  avator: any;
+  avator: string;
   startDate: string;
   endDate: string;
   status: "pending" | "confirmed" | "cancelled";

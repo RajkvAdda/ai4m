@@ -8,7 +8,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   return (
     <div className="min-h-screen flex flex-col p-8">

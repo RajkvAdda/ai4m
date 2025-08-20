@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import "./globals.css";
 import AuthProviders from "@/components/auth-providers";
 import { Toaster } from "@/components/ui/toaster";
+import { Inter } from "next/font/google";
 
 export const metadata: Metadata = {
   title: "RoomBook - Smart Workspace Booking",
   description: "Book your perfect workspace with intelligent room management",
 };
+
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -14,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.className}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

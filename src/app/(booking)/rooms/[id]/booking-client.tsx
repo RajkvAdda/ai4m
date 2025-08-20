@@ -15,13 +15,12 @@ import { useSession } from "next-auth/react";
 import { IBooking } from "@/modals/Booking";
 import { IRoom } from "@/modals/Room";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { H4, H5, H6 } from "@/components/ui/typography";
+import { H4, H5 } from "@/components/ui/typography";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
 
 export default function BookingClient({
   room,
@@ -30,7 +29,7 @@ export default function BookingClient({
   room: IRoom;
   date: string;
 }) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [isPending, setIsPending] = useState(false);

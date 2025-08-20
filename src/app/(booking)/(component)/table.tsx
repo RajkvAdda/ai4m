@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon";
 import { Armchair, Plus } from "lucide-react";
 import React from "react";
 
 export default function BookingTable({
   units,
-  seatsPerUnit,
+  _seatsPerUnit,
   onHandleUnit,
-  onHandleSeatPerUnit,
+  _onHandleSeatPerUnit,
 }: {
   units: number;
   seatsPerUnit: number;

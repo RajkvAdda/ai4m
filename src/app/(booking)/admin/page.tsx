@@ -19,7 +19,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Trash } from "lucide-react";
 import { IRoom } from "@/modals/Room";
 import { IconButton } from "@/components/ui/icon";
 
@@ -32,7 +31,7 @@ export default function AdminPage() {
       const res = await fetch("/api/rooms");
       const data = await res.json();
       setRooms(data);
-    } catch (err) {
+    } catch (_err) {
       // Optionally handle error
     }
   };
@@ -47,7 +46,7 @@ export default function AdminPage() {
     if (status === "unauthenticated") {
       router.push("/auth/login");
     }
-  }, [status]);
+  }, [router, status]);
 
   console.log("rj-rooms-2", rooms);
 
@@ -64,7 +63,7 @@ export default function AdminPage() {
       } else {
         alert(data.error || "Failed to delete room");
       }
-    } catch (err) {
+    } catch () {
       alert("Error deleting room");
     }
   };

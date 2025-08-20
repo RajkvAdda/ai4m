@@ -19,6 +19,7 @@ import { IRoom, RoomType } from "@/modals/Room";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getNameFistKey } from "@/lib/utils";
 import { H5 } from "@/components/ui/typography";
+import { IBooking } from "@/modals/Booking";
 
 export const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
@@ -99,7 +100,7 @@ export default function Rooms() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const today = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(today);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<IBooking[]>([]);
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -110,7 +111,7 @@ export default function Rooms() {
           const res = await fetch("/api/rooms");
           const data = await res.json();
           if (data?.length) setRooms(data);
-        } catch (err) {
+        } catch (_err) {
           // Optionally handle error
         }
       };
@@ -125,7 +126,7 @@ export default function Rooms() {
           const res = await fetch(`/api/bookings?date=${selectedDate}`);
           const data = await res.json();
           setBookings(data);
-        } catch (err) {
+        } catch (_err) {
           // Optionally handle error
         }
       };
@@ -139,7 +140,7 @@ export default function Rooms() {
     if (status === "unauthenticated") {
       router.push("/auth/login");
     }
-  }, [status]);
+  }, [router, status]);
 
   console.log("rj-session", session);
 

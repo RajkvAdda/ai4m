@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { IRoom } from "@/modals/Room";
-import BookingTable from "../(component)/table";
+
 const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   type: z.enum(["table", "row", "free_area"]),
