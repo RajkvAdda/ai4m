@@ -3,6 +3,8 @@ import BookingClient from "./booking-client";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { IRoom, RoomType } from "@/modals/Room";
 import { roomIcons } from "../page";
+import { BackButton, Button } from "@/components/ui/button";
+import { MoveLeft, StepBack } from "lucide-react";
 
 // Server Component
 export default async function RoomDetailsPage({
@@ -54,6 +56,8 @@ function RoomDetails({ room, date }: { room: IRoom; date: string }) {
               )
             </CardDescription>
           </div>
+          <div className="flex-1"></div>
+          <BackButton />
         </div>
       </Card>
 

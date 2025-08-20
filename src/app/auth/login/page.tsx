@@ -6,19 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
-import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/rooms");
-    }
-  }, [status]);
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/rooms" });
   };

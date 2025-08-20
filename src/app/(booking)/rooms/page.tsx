@@ -16,6 +16,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { IRoom, RoomType } from "@/modals/Room";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getNameFistKey } from "@/lib/utils";
+import { H5 } from "@/components/ui/typography";
 
 export const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
@@ -138,6 +141,8 @@ export default function Rooms() {
     }
   }, [status]);
 
+  console.log("rj-session", session);
+
   // Helper to get booking count for a room and date
   const getBookingCount = (roomId: string) => {
     return bookings.filter((b) => b.roomId === roomId).length;
@@ -146,13 +151,25 @@ export default function Rooms() {
   return (
     <div className="container p-8">
       <div className="mb-8 grid grid-cols-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">
-            Welcome, {session?.user?.name || "User"}!
-          </h1>
-          <p className="text-muted-foreground">
-            Choose a room to see details and book your seat.
-          </p>
+        <div className="flex gap-4">
+          <Avatar className="w-15 h-15 rounded-lg">
+            <AvatarImage
+              className="rounded-lg"
+              src={session?.user?.image}
+              alt={session?.user?.name}
+            />
+            <AvatarFallback className="rounded-lg">
+              <H5>{getNameFistKey(session?.user?.name)}</H5>
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">
+              Welcome, {session?.user?.name || "User"}!
+            </h1>
+            <p className="text-muted-foreground">
+              Choose a room to see details and book your seat.
+            </p>
+          </div>
         </div>
         {/* handle the selected date */}
         <div className="flex flex-col items-end justify-center">

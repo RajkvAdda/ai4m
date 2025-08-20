@@ -9,12 +9,19 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getNameFistKey } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 import { IBooking } from "@/modals/Booking";
 import { IRoom } from "@/modals/Room";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { H4, H5, H6 } from "@/components/ui/typography";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 export default function BookingClient({
   room,
@@ -54,22 +61,27 @@ export default function BookingClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room.id, date, session?.user?.id]);
 
-  const handleBooking = async () => {
-    if (!selectedSeat) return;
+  async function deleteBooking(id: string) {
+    return await fetch(`/api/bookings/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  const handleBooking = async (seat = selectedSeat) => {
+    if (!seat) return;
     setIsPending(true);
     try {
       if (existingBookings) {
-        await fetch(`/api/bookings/${existingBookings}`, {
-          method: "DELETE",
-        });
+        await deleteBooking(existingBookings);
       }
+
       // 3. Add new booking
       const res = await fetch(`/api/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           roomId: room.id,
-          seatNumber: selectedSeat,
+          seatNumber: seat,
           userId: session?.user?.id,
           userName: session?.user?.name,
           avator: session?.user?.image,
@@ -109,21 +121,68 @@ export default function BookingClient({
 
   return (
     <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle className="font-headline">Select a Seat</CardTitle>
-        <CardDescription>
-          Click on an available seat to make a reservation.
-        </CardDescription>
+      <CardHeader className="flex items-center">
+        <div>
+          <CardTitle className="font-headline">Select a Seat</CardTitle>
+          <CardDescription>
+            Click on an available seat to make a reservation.
+          </CardDescription>
+        </div>
+        <div className="flex-1"></div>
+        <div>
+          <Button disabled={!selectedSeat || isPending} onClick={handleBooking}>
+            {isPending ? "Booking..." : `Book Seat ${selectedSeat || ""}`}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="p-4 border-2 border-dashed rounded-lg bg-muted/20">
-          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-8">
+          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-8 items-center justify-center">
             {Array.from({ length: room.totalCapacity }, (_, i) => i + 1).map(
               (seatNumber) => {
                 const isBooked = bookedSeats.find(
                   (list) => list?.seatNumber == seatNumber
                 );
+
+                console.log("rj-isBooked", isBooked);
                 const isSelected = selectedSeat === seatNumber;
+                if (isBooked) {
+                  return (
+                    <div
+                      key={seatNumber}
+                      className={cn(
+                        "h-16 w-16 overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer",
+                        isBooked?._id == existingBookings &&
+                          "bg-blue-200 text-blue-900"
+                      )}
+                      {...(isBooked?._id == existingBookings
+                        ? {
+                            onDoubleClick: async () => {
+                              await deleteBooking(existingBookings);
+                              await fetchBookings();
+                            },
+                          }
+                        : {})}
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar color="bg-blue-200">
+                            <AvatarImage
+                              src={isBooked.avator}
+                              alt={isBooked.userName}
+                            />
+                            <AvatarFallback className="rounded-lg">
+                              <H5>{getNameFistKey(isBooked?.userName)}</H5>
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{isBooked?.userName}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  );
+                }
                 return (
                   <Button
                     key={seatNumber}
@@ -138,44 +197,26 @@ export default function BookingClient({
                     className={cn(
                       "h-16 w-16 text-sm font-semibold transition-all duration-200",
                       isSelected &&
-                        "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg",
-                      isBooked &&
-                        "cursor-not-allowed bg-muted text-muted-foreground"
+                        "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg"
                     )}
                     disabled={isBooked}
-                    onClick={() => !isBooked && setSelectedSeat(seatNumber)}
+                    onClick={() => setSelectedSeat(seatNumber)}
+                    onDoubleClick={() => {
+                      handleBooking(seatNumber);
+                    }}
                     aria-label={
                       isBooked
                         ? `Seat ${seatNumber} is booked`
                         : `Select seat ${seatNumber}`
                     }
                   >
-                    {isBooked ? (
-                      <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarImage
-                          src={isBooked.avator}
-                          alt={isBooked.userName}
-                        />
-                        <AvatarFallback className="rounded-lg">
-                          {isBooked?.userName.slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : null}
-
-                    {seatNumber}
+                    <H4>{seatNumber}</H4>
                   </Button>
                 );
               }
             )}
           </div>
         </div>
-        <Button
-          className="w-full sm:w-auto mt-6"
-          disabled={!selectedSeat || isPending}
-          onClick={handleBooking}
-        >
-          {isPending ? "Booking..." : `Book Seat ${selectedSeat || ""}`}
-        </Button>
       </CardContent>
     </Card>
   );
