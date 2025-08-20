@@ -3,17 +3,18 @@ import BookingClient from "./booking-client";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { IRoom, RoomType } from "@/modals/Room";
 import { roomIcons } from "../page";
-import { BackButton, Button } from "@/components/ui/button";
-import { MoveLeft, StepBack } from "lucide-react";
+import { BackButton } from "@/components/ui/button";
+
+type PageProps = {
+  params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
 
 // Server Component
 export default async function RoomDetailsPage({
   params,
   searchParams,
-}: {
-  searchParams: any;
-  params: { id: string };
-}) {
+}: PageProps) {
   const res = await fetch(
     `${process.env.NEXTAUTH_URL}/api/rooms/${params?.id}`,
     {
