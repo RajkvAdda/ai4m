@@ -5,16 +5,17 @@ import { IRoom, RoomType } from "@/modals/Room";
 import { roomIcons } from "../page";
 import { BackButton } from "@/components/ui/button";
 
-type TSearchParams = { [key: string]: string | string[] | undefined };
-// Server Component
+type SearchParams = Record<string, string | string[] | undefined>;
+
 export default async function RoomDetailsPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: TSearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
+  const sp = (searchParams ? await searchParams : undefined) ?? {};
   const res = await fetch(`${process.env.NEXTAUTH_URL}/api/rooms/${id}`, {
     // Ensure this is a server-side fetch
     cache: "no-store",
@@ -27,8 +28,8 @@ export default async function RoomDetailsPage({
   if (!room) {
     notFound();
   }
-  console.log("ej-date", searchParams?.date, params);
-  return <RoomDetails room={room} date={searchParams?.date} />;
+  console.log("ej-date", sp?.date);
+  return <RoomDetails room={room} date={sp?.date} />;
 }
 
 // Client Component

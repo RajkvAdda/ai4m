@@ -15,7 +15,7 @@ const eslintConfig = [
   // ⬇️ Add this block
   {
     files: ["**/*.{ts,tsx,js,jsx}"],
-    plugins: { "unused-imports": require("eslint-plugin-unused-imports") },
+    plugins: { "unused-imports": import("eslint-plugin-unused-imports") },
     rules: {
       // warn on unused vars but allow `_` prefix
       "@typescript-eslint/no-unused-vars": [
