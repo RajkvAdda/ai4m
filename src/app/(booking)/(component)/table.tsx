@@ -1,18 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { Armchair, Plus } from "lucide-react";
+import { Armchair } from "lucide-react";
 import React from "react";
 
 export default function BookingTable({
   units,
-  _seatsPerUnit,
+  seatsPerUnit,
   onHandleUnit,
-  _onHandleSeatPerUnit,
+  onHandleSeatPerUnit,
 }: {
   units: number;
   seatsPerUnit: number;
   onHandleUnit: (units: number) => void;
   onHandleSeatPerUnit: (seatsPerUnit: number) => void;
 }) {
+  console.log("object", seatsPerUnit, onHandleSeatPerUnit);
   return (
     <div>
       {Array.from({ length: units })?.map((_, index) => (
