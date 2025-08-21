@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import {
   Card,
   CardContent,
@@ -34,7 +34,7 @@ export default function BookingClient({
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
-  const [existingBookings, setexistingBookings] = useState(0);
+  const [existingBooking, setexistingBooking] = useState<string | null>(null);
   // Booked seats state (should be fetched from API)
   const [bookedSeats, setBookedSeats] = useState<IBooking[]>([]);
 
@@ -44,8 +44,8 @@ export default function BookingClient({
       const res = await fetch(`/api/bookings?date=${date}&roomId=${room?.id}`);
       const bookings: IBooking[] = await res.json();
       const booked = bookings.map((b) => {
-        if (b?.userId == session?.user.id) {
-          setexistingBookings(b?._id);
+        if (b?.userId == session?.user?.id) {
+          setexistingBooking((b?._id as string) || "");
         }
         return b;
       });
@@ -60,7 +60,11 @@ export default function BookingClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room.id, date, session?.user?.id]);
 
-  async function deleteBooking(id: string) {
+  async function deleteBooking(id: string | null) {
+    if (!id) {
+      alert("invalid Id");
+      return;
+    }
     return await fetch(`/api/bookings/${id}`, {
       method: "DELETE",
     });
@@ -70,8 +74,8 @@ export default function BookingClient({
     if (!seat) return;
     setIsPending(true);
     try {
-      if (existingBookings) {
-        await deleteBooking(existingBookings);
+      if (existingBooking) {
+        await deleteBooking(existingBooking);
       }
 
       // 3. Add new booking
@@ -115,7 +119,7 @@ export default function BookingClient({
       setIsPending(false);
     }
   };
-  console.log("existingBookings", existingBookings, bookedSeats);
+  console.log("existingBookings", existingBooking, bookedSeats);
   // ...existing code...
 
   return (
@@ -129,7 +133,10 @@ export default function BookingClient({
         </div>
         <div className="flex-1"></div>
         <div>
-          <Button disabled={!selectedSeat || isPending} onClick={handleBooking}>
+          <Button
+            disabled={!selectedSeat || isPending}
+            onClick={() => handleBooking(selectedSeat)}
+          >
             {isPending ? "Booking..." : `Book Seat ${selectedSeat || ""}`}
           </Button>
         </div>
@@ -148,16 +155,16 @@ export default function BookingClient({
                 if (isBooked) {
                   return (
                     <div
-                      key={seatNumber}
+                      key={seatNumber as string}
                       className={cn(
                         "h-16 w-16 overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer",
-                        isBooked?._id == existingBookings &&
+                        isBooked?._id == existingBooking &&
                           "bg-blue-200 text-blue-900"
                       )}
-                      {...(isBooked?._id == existingBookings
+                      {...(isBooked?._id == existingBooking
                         ? {
                             onDoubleClick: async () => {
-                              await deleteBooking(existingBookings);
+                              await deleteBooking(existingBooking);
                               await fetchBookings();
                             },
                           }
@@ -184,7 +191,7 @@ export default function BookingClient({
                 }
                 return (
                   <Button
-                    key={seatNumber}
+                    key={seatNumber as string}
                     variant={
                       isSelected
                         ? "default"
@@ -199,9 +206,9 @@ export default function BookingClient({
                         "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg"
                     )}
                     disabled={isBooked}
-                    onClick={() => setSelectedSeat(seatNumber)}
+                    onClick={() => setSelectedSeat(seatNumber as number)}
                     onDoubleClick={() => {
-                      handleBooking(seatNumber);
+                      handleBooking(seatNumber as number);
                     }}
                     aria-label={
                       isBooked
@@ -209,7 +216,7 @@ export default function BookingClient({
                         : `Select seat ${seatNumber}`
                     }
                   >
-                    <H4>{seatNumber}</H4>
+                    <H4>{seatNumber as ReactNode}</H4>
                   </Button>
                 );
               }
