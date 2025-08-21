@@ -3,6 +3,7 @@ import "./globals.css";
 import AuthProviders from "@/components/auth-providers";
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "RoomBook - Smart Workspace Booking",
@@ -34,6 +35,7 @@ export default function RootLayout({
         <AuthProviders>
           {children}
           <Toaster />
+          <SpeedInsights />
         </AuthProviders>
       </body>
     </html>
