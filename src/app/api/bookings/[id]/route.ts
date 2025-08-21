@@ -5,17 +5,18 @@ import { Booking, BookingZodSchema } from "@/modals/Booking";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!Types.ObjectId.isValid(params.id)) {
+    const { id } = await params;
+    if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: "Invalid booking ID" },
         { status: 400 }
       );
     }
     await connectToDatabase();
-    const booking = await Booking.findById(params.id);
+    const booking = await Booking.findById(id);
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
@@ -29,22 +30,25 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    if (!Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid booking ID" },
+        { status: 400 }
+      );
+    }
     const body = await request.json();
     const result = BookingZodSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: result.error.issues }, { status: 400 });
     }
     await connectToDatabase();
-    const updateResult = await Booking.findByIdAndUpdate(
-      params.id,
-      result.data,
-      {
-        new: true,
-      }
-    );
+    const updateResult = await Booking.findByIdAndUpdate(id, result.data, {
+      new: true,
+    });
     if (!updateResult) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
@@ -62,11 +66,18 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    if (!Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid booking ID" },
+        { status: 400 }
+      );
+    }
     await connectToDatabase();
-    const deleteResult = await Booking.findByIdAndDelete(params.id);
+    const deleteResult = await Booking.findByIdAndDelete(id);
     if (!deleteResult) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }

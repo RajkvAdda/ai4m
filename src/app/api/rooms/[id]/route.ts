@@ -5,14 +5,15 @@ import { Room, roomZodSchema } from "@/modals/Room";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!Types.ObjectId.isValid(params.id)) {
+    const { id } = await params;
+    if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid room ID" }, { status: 400 });
     }
     await connectToDatabase();
-    const room = await Room.findById(params.id);
+    const room = await Room.findById(id);
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
@@ -26,16 +27,23 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    if (!Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid booking ID" },
+        { status: 400 }
+      );
+    }
     const body = await request.json();
     const result = roomZodSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: result.error.issues }, { status: 400 });
     }
     await connectToDatabase();
-    const updateResult = await Room.findByIdAndUpdate(params.id, result.data, {
+    const updateResult = await Room.findByIdAndUpdate(id, result.data, {
       new: true,
     });
     if (!updateResult) {
@@ -52,11 +60,12 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectToDatabase();
-    const deleteResult = await Room.findByIdAndDelete(params.id);
+    const deleteResult = await Room.findByIdAndDelete(id);
     if (!deleteResult) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
