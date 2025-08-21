@@ -2,10 +2,16 @@ import { notFound } from "next/navigation";
 import BookingClient from "./booking-client";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { IRoom, RoomType } from "@/modals/Room";
-import { roomIcons } from "../page";
 import { BackButton } from "@/components/ui/button";
+import { Rows, TableRowsSplit, Users } from "lucide-react";
 
 type SearchParams = Record<string, string | string[] | undefined>;
+
+const roomIcons: Record<RoomType, React.ReactNode> = {
+  table: <TableRowsSplit className="h-6 w-6" />,
+  row: <Rows className="h-6 w-6" />,
+  free_area: <Users className="h-6 w-6" />,
+};
 
 export default async function RoomDetailsPage({
   params,

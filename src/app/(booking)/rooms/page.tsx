@@ -21,7 +21,7 @@ import { getNameFistKey } from "@/lib/utils";
 import { H5 } from "@/components/ui/typography";
 import { IBooking } from "@/modals/Booking";
 
-export const roomIcons: Record<RoomType, React.ReactNode> = {
+const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
   row: <Rows className="h-6 w-6" />,
   free_area: <Users className="h-6 w-6" />,
