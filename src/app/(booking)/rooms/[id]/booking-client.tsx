@@ -44,7 +44,7 @@ export default function BookingClient({
       const res = await fetch(`/api/bookings?date=${date}&roomId=${room?.id}`);
       const bookings: IBooking[] = await res.json();
       const booked = bookings.map((b) => {
-        if (b?.userId == session?.user?.id) {
+        if (b?.userId == session?.user.id) {
           setexistingBookings(b?._id);
         }
         return b;
