@@ -21,6 +21,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { IconButton } from "@/components/ui/icon";
+import { Pencil, Trash } from "lucide-react";
 
 export default function BookingClient({
   room,
@@ -148,43 +157,95 @@ export default function BookingClient({
               { length: room.totalCapacity || 0 },
               (_, i) => i + 1
             ).map((seatNumber) => {
-              const isBooked = bookedSeats.find(
-                (list) => list?.seatNumber == seatNumber
-              );
+              const isBooked =
+                bookedSeats.find((list) => list?.seatNumber == seatNumber) ||
+                null;
 
               console.log("rj-isBooked", isBooked);
               const isSelected = selectedSeat === seatNumber;
-              if (isBooked) {
+              if (isBooked?._id == existingBooking && existingBooking) {
                 return (
                   <div
                     key={seatNumber as number}
                     className={cn(
-                      "h-16 w-16 overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer",
-                      isBooked?._id == existingBooking &&
-                        "bg-blue-200 text-blue-900"
+                      "h-16 w-16 overflow-hidden bg-blue-200 text-blue-900 border flex items-center justify-center rounded-lg relative cursor-pointer"
                     )}
-                    {...(isBooked?._id == existingBooking
-                      ? {
-                          onDoubleClick: async () => {
-                            await deleteBooking(existingBooking);
-                            await fetchBookings();
-                          },
-                        }
-                      : {})}
+                    onDoubleClick={async () => {
+                      await deleteBooking(existingBooking);
+                      await fetchBookings();
+                    }}
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <ContextMenu>
+                          <ContextMenuTrigger>
+                            <Avatar color="bg-blue-200">
+                              <AvatarImage
+                                src={isBooked?.avator}
+                                alt={isBooked?.userName}
+                              />
+                              <AvatarFallback className="rounded-lg">
+                                <H5>{getNameFistKey(isBooked?.userName)}</H5>
+                              </AvatarFallback>
+                            </Avatar>
+                          </ContextMenuTrigger>
+                          <ContextMenuContent>
+                            <ContextMenuItem
+                              onClick={async () => {
+                                await deleteBooking(existingBooking);
+                                await fetchBookings();
+                              }}
+                            >
+                              <Trash size={14} className="mr-2" />
+                              Delete
+                            </ContextMenuItem>
+                            <ContextMenuItem>
+                              <Pencil size={14} className="mr-2" />
+                              Remarks
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
+                      </TooltipTrigger>
+                      <TooltipContent className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className="text-white min-w-5 h-5 flex justify-center items-center px-1 rounded-lg font-mono tabular-nums"
+                        >
+                          {seatNumber as ReactNode}
+                        </Badge>
+                        <p>{isBooked?.userName}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                );
+              }
+              if (isBooked?._id) {
+                return (
+                  <div
+                    key={seatNumber as number}
+                    className={cn(
+                      "h-16 w-16 overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer"
+                    )}
                   >
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Avatar color="bg-blue-200">
                           <AvatarImage
-                            src={isBooked.avator}
-                            alt={isBooked.userName}
+                            src={isBooked?.avator}
+                            alt={isBooked?.userName}
                           />
                           <AvatarFallback className="rounded-lg">
                             <H5>{getNameFistKey(isBooked?.userName)}</H5>
                           </AvatarFallback>
                         </Avatar>
                       </TooltipTrigger>
-                      <TooltipContent>
+                      <TooltipContent className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className="text-white min-w-5 h-5 flex justify-center items-center px-1 rounded-lg font-mono tabular-nums"
+                        >
+                          {seatNumber as ReactNode}
+                        </Badge>
                         <p>{isBooked?.userName}</p>
                       </TooltipContent>
                     </Tooltip>
@@ -194,25 +255,18 @@ export default function BookingClient({
               return (
                 <Button
                   key={seatNumber as number}
-                  variant={
-                    isSelected ? "default" : isBooked ? "secondary" : "outline"
-                  }
+                  variant={isSelected ? "default" : "outline"}
                   size="icon"
                   className={cn(
                     "h-16 w-16 text-sm font-semibold transition-all duration-200",
                     isSelected &&
                       "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg"
                   )}
-                  disabled={isBooked ? true : false}
                   onClick={() => setSelectedSeat(seatNumber as number)}
                   onDoubleClick={() => {
                     handleBooking(seatNumber as number);
                   }}
-                  aria-label={
-                    isBooked
-                      ? `Seat ${seatNumber} is booked`
-                      : `Select seat ${seatNumber}`
-                  }
+                  aria-label={`Select seat ${seatNumber}`}
                 >
                   <H4>{seatNumber as ReactNode}</H4>
                 </Button>

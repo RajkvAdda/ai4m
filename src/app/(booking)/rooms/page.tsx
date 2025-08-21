@@ -19,6 +19,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getNameFistKey } from "@/lib/utils";
 import { H5 } from "@/components/ui/typography";
 import { IBooking } from "@/modals/Booking";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
@@ -100,23 +103,25 @@ export default function Rooms() {
   const today = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(today);
   const [bookings, setBookings] = useState<IBooking[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    if (session) {
-      const fetchRooms = async () => {
-        try {
-          const res = await fetch("/api/rooms");
-          const data = await res.json();
-          if (data?.length) setRooms(data);
-        } catch (_err) {
-          // Optionally handle error
-        }
-      };
-      fetchRooms();
-    }
-  }, [session]);
+    const fetchRooms = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/rooms");
+        const data = await res.json();
+        if (data?.length) setRooms(data);
+      } catch (_err) {
+        // Optionally handle error
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRooms();
+  }, []);
 
   useEffect(() => {
     if (selectedDate) {
@@ -150,33 +155,31 @@ export default function Rooms() {
 
   return (
     <div className="container p-8">
-      <div className="mb-8 grid grid-cols-2">
-        <div className="flex gap-4">
-          <Avatar className="w-15 h-15 rounded-lg">
-            <AvatarImage
-              className="rounded-lg"
-              src={session?.user?.image}
-              alt={session?.user?.name}
-            />
-            <AvatarFallback className="rounded-lg">
-              <H5>{getNameFistKey(session?.user?.name)}</H5>
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight font-headline">
-              Welcome, {session?.user?.name || "User"}!
-            </h1>
-            <p className="text-muted-foreground">
-              Choose a room to see details and book your seat.
-            </p>
-          </div>
+      <Alert className="mb-8 border-primary/50 text-primary flex gap-3">
+        <Avatar className="w-15 h-15 rounded-lg">
+          <AvatarImage
+            className="rounded-lg"
+            src={session?.user?.image}
+            alt={session?.user?.name}
+          />
+          <AvatarFallback className="rounded-lg">
+            <H5>{getNameFistKey(session?.user?.name)}</H5>
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <AlertTitle className="text-3xl font-bold tracking-tight font-headline">
+            Welcome, {session?.user?.name || "User"}!
+          </AlertTitle>
+          <AlertDescription>
+            Choose a room to see details and book your seat.
+          </AlertDescription>
         </div>
-        {/* handle the selected date */}
-        <div className="flex flex-col items-end justify-center">
-          <label htmlFor="booking-date" className="mb-2 font-medium">
+        <div className="flex-1"></div>
+        <div>
+          <Label htmlFor="booking-date" className="mb-1 font-medium">
             Date For booking
-          </label>
-          <input
+          </Label>
+          <Input
             id="booking-date"
             type="date"
             className="border rounded px-3 py-2"
@@ -185,17 +188,25 @@ export default function Rooms() {
             min={new Date().toISOString().split("T")[0]}
           />
         </div>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {rooms?.map((room: IRoom) => (
-          <RoomCard
-            key={room._id}
-            room={room}
-            selectedDate={selectedDate}
-            bookingCount={getBookingCount(room._id)}
-          />
-        ))}
-      </div>
+      </Alert>
+      {/* handle the selected date */}
+      {loading ? (
+        <div className="flex items-center justify-center mt-10 p-10">
+          <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mr-2"></span>
+          <span className="text-lg font-semibold ">Loading...</span>
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {rooms?.map((room: IRoom) => (
+            <RoomCard
+              key={room._id}
+              room={room}
+              selectedDate={selectedDate}
+              bookingCount={getBookingCount(room._id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

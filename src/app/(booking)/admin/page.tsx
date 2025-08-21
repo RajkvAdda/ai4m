@@ -25,23 +25,25 @@ import { IconButton } from "@/components/ui/icon";
 
 export default function AdminPage() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const fetchRooms = async () => {
     try {
+      setLoading(false);
       const res = await fetch("/api/rooms");
       const data = await res.json();
       setRooms(data);
     } catch (_err) {
       // Optionally handle error
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (session?.user) {
-      fetchRooms();
-    }
-  }, [session?.user]);
+    fetchRooms();
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -69,12 +71,13 @@ export default function AdminPage() {
     }
   };
 
-  // Handler for editing a room (stub)
-  const handleEdit = (room: IRoom) => {
-    // You can open a modal or navigate to an edit page here
-    alert(`Edit room: ${room.name}`);
-    // Example: router.push(`/booking/admin/edit/${room._id || room.id}`);
-  };
+  if (loading)
+    return (
+      <div className="flex items-center justify-center mt-10 p-10">
+        <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mr-2"></span>
+        <span className="text-lg font-semibold ">Loading...</span>
+      </div>
+    );
 
   return (
     <div className="grid gap-8 lg:grid-cols-3">

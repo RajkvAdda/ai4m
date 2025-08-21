@@ -43,7 +43,6 @@ const roomZodSchema = z.object({
     .number()
     .int()
     .min(1, "Must have at least 1 seat per unit"),
-  seatingDetails: z.json(),
 });
 
 export default function CreateRoomForm({
@@ -131,9 +130,7 @@ export default function CreateRoomForm({
     }
   }
 
-  const formState = form.getValues();
-
-  console.log("rj-admin", form, formState);
+  console.log("rj-admin", form);
 
   return (
     <Card className="shadow-lg">
@@ -188,18 +185,7 @@ export default function CreateRoomForm({
                 </FormItem>
               )}
             />
-            {/* {form.getValues("type") == "table" ? (
-              <BookingTable
-                units={formState?.units}
-                seatsPerUnit={formState?.seatsPerUnit}
-                onHandleUnit={(units) => {
-                  form.setValue("units", units);
-                }}
-                onHandleSeatPerUnit={(seatsPerUnit) => {
-                  form.setValue("seatsPerUnit", seatsPerUnit);
-                }}
-              />
-            ) : ( */}
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -229,7 +215,6 @@ export default function CreateRoomForm({
                 )}
               />
             </div>
-            {/* )} */}
           </CardContent>
           <CardFooter>
             <Button

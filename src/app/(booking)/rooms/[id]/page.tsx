@@ -4,6 +4,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { IRoom, RoomType } from "@/modals/Room";
 import { BackButton } from "@/components/ui/button";
 import { Rows, TableRowsSplit, Users } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -42,8 +43,8 @@ export default async function RoomDetailsPage({
 function RoomDetails({ room, date }: { room: IRoom; date: string }) {
   return (
     <div className="container p-8">
-      <Card className="mb-8 overflow-hidden shadow-lg bg-primary/7">
-        <div className=" p-2 px-4 flex items-center gap-4">
+      <Alert className="mb-8 border-primary/50 text-primary flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="text-primary">
             {roomIcons[room.type as RoomType] || ""}
           </div>
@@ -61,10 +62,10 @@ function RoomDetails({ room, date }: { room: IRoom; date: string }) {
               )
             </CardDescription>
           </div>
-          <div className="flex-1"></div>
-          <BackButton />
         </div>
-      </Card>
+        <div className="flex-1"></div>
+        <BackButton />
+      </Alert>
 
       <BookingClient room={room} date={date} />
     </div>
