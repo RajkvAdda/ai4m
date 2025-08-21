@@ -35,7 +35,7 @@ export default async function RoomDetailsPage({
     notFound();
   }
   console.log("ej-date", sp?.date);
-  return <RoomDetails room={room} date={sp?.date} />;
+  return <RoomDetails room={room} date={sp?.date as string} />;
 }
 
 // Client Component

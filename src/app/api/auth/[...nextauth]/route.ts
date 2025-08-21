@@ -39,7 +39,7 @@ const handler = NextAuth({
       }
       return true;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       console.log("rj-session-1", { session, token });
       if (token && session.user) {
         session.user.id = token.id;

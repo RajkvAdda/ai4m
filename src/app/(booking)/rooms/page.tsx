@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
-// import { getRooms } from "@/lib/data";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -188,7 +187,7 @@ export default function Rooms() {
         </div>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {rooms?.map((room) => (
+        {rooms?.map((room: IRoom) => (
           <RoomCard
             key={room._id}
             room={room}

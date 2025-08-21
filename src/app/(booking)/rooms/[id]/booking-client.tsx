@@ -144,83 +144,80 @@ export default function BookingClient({
       <CardContent>
         <div className="p-4 border-2 border-dashed rounded-lg bg-muted/20">
           <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-8 items-center justify-center">
-            {Array.from({ length: room.totalCapacity }, (_, i) => i + 1).map(
-              (seatNumber) => {
-                const isBooked = bookedSeats.find(
-                  (list) => list?.seatNumber == seatNumber
-                );
+            {Array.from(
+              { length: room.totalCapacity || 0 },
+              (_, i) => i + 1
+            ).map((seatNumber) => {
+              const isBooked = bookedSeats.find(
+                (list) => list?.seatNumber == seatNumber
+              );
 
-                console.log("rj-isBooked", isBooked);
-                const isSelected = selectedSeat === seatNumber;
-                if (isBooked) {
-                  return (
-                    <div
-                      key={seatNumber as string}
-                      className={cn(
-                        "h-16 w-16 overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer",
-                        isBooked?._id == existingBooking &&
-                          "bg-blue-200 text-blue-900"
-                      )}
-                      {...(isBooked?._id == existingBooking
-                        ? {
-                            onDoubleClick: async () => {
-                              await deleteBooking(existingBooking);
-                              await fetchBookings();
-                            },
-                          }
-                        : {})}
-                    >
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Avatar color="bg-blue-200">
-                            <AvatarImage
-                              src={isBooked.avator}
-                              alt={isBooked.userName}
-                            />
-                            <AvatarFallback className="rounded-lg">
-                              <H5>{getNameFistKey(isBooked?.userName)}</H5>
-                            </AvatarFallback>
-                          </Avatar>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{isBooked?.userName}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  );
-                }
+              console.log("rj-isBooked", isBooked);
+              const isSelected = selectedSeat === seatNumber;
+              if (isBooked) {
                 return (
-                  <Button
-                    key={seatNumber as string}
-                    variant={
-                      isSelected
-                        ? "default"
-                        : isBooked
-                        ? "secondary"
-                        : "outline"
-                    }
-                    size="icon"
+                  <div
+                    key={seatNumber as number}
                     className={cn(
-                      "h-16 w-16 text-sm font-semibold transition-all duration-200",
-                      isSelected &&
-                        "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg"
+                      "h-16 w-16 overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer",
+                      isBooked?._id == existingBooking &&
+                        "bg-blue-200 text-blue-900"
                     )}
-                    disabled={isBooked}
-                    onClick={() => setSelectedSeat(seatNumber as number)}
-                    onDoubleClick={() => {
-                      handleBooking(seatNumber as number);
-                    }}
-                    aria-label={
-                      isBooked
-                        ? `Seat ${seatNumber} is booked`
-                        : `Select seat ${seatNumber}`
-                    }
+                    {...(isBooked?._id == existingBooking
+                      ? {
+                          onDoubleClick: async () => {
+                            await deleteBooking(existingBooking);
+                            await fetchBookings();
+                          },
+                        }
+                      : {})}
                   >
-                    <H4>{seatNumber as ReactNode}</H4>
-                  </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar color="bg-blue-200">
+                          <AvatarImage
+                            src={isBooked.avator}
+                            alt={isBooked.userName}
+                          />
+                          <AvatarFallback className="rounded-lg">
+                            <H5>{getNameFistKey(isBooked?.userName)}</H5>
+                          </AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{isBooked?.userName}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 );
               }
-            )}
+              return (
+                <Button
+                  key={seatNumber as number}
+                  variant={
+                    isSelected ? "default" : isBooked ? "secondary" : "outline"
+                  }
+                  size="icon"
+                  className={cn(
+                    "h-16 w-16 text-sm font-semibold transition-all duration-200",
+                    isSelected &&
+                      "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg"
+                  )}
+                  disabled={isBooked ? true : false}
+                  onClick={() => setSelectedSeat(seatNumber as number)}
+                  onDoubleClick={() => {
+                    handleBooking(seatNumber as number);
+                  }}
+                  aria-label={
+                    isBooked
+                      ? `Seat ${seatNumber} is booked`
+                      : `Select seat ${seatNumber}`
+                  }
+                >
+                  <H4>{seatNumber as ReactNode}</H4>
+                </Button>
+              );
+            })}
           </div>
         </div>
       </CardContent>

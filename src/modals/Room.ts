@@ -10,6 +10,7 @@ export const roomTypeEnum = {
 export type RoomType = "table" | "row" | "free_area";
 
 export interface IRoom extends Document {
+  _id: string;
   name: string;
   type: RoomType;
   units: number;

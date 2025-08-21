@@ -1,13 +1,13 @@
 "use client";
 import { cn } from "@/lib/utils";
 import React from "react";
-import * as LucideIcons from "lucide-react";
-import { Button, ButtonProps } from "./button";
+import type { LucideIcon } from "lucide-react";
+import { Button } from "./button";
+import { ButtonProps } from "react-day-picker";
 
-export type IconName = keyof typeof LucideIcons;
-interface GetIcon {
-  (iconName: IconName): Promise<React.ComponentType | null>;
-}
+type IconName = keyof typeof import("lucide-react")["icons"];
+
+export type GetIcon = (iconName?: IconName) => Promise<LucideIcon | null>;
 
 export const getIcon: GetIcon = async (iconName) => {
   if (!iconName) return null;
