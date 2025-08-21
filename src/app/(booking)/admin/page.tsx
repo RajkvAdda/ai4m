@@ -81,7 +81,7 @@ export default function AdminPage() {
 
   return (
     <div className="grid gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 w-full overflow-auto">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline">Existing Rooms</CardTitle>

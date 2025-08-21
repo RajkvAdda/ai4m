@@ -54,8 +54,8 @@ function RoomCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="font-headline text-2xl">{room.name}</CardTitle>
-          <div className="p-2 bg-accent/10 text-accent rounded-lg">
-            {roomIcons[room.type]}
+          <div className="p-2 opacity-30 rounded-lg">
+            {roomIcons[room.type as RoomType] || ""}
           </div>
         </div>
         <CardDescription>{roomDescriptions[room.type]}</CardDescription>
@@ -155,24 +155,26 @@ export default function Rooms() {
 
   return (
     <div className="container p-8">
-      <Alert className="mb-8 border-primary/50 text-primary flex gap-3">
-        <Avatar className="w-15 h-15 rounded-lg">
-          <AvatarImage
-            className="rounded-lg"
-            src={session?.user?.image}
-            alt={session?.user?.name}
-          />
-          <AvatarFallback className="rounded-lg">
-            <H5>{getNameFistKey(session?.user?.name)}</H5>
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <AlertTitle className="text-3xl font-bold tracking-tight font-headline">
-            Welcome, {session?.user?.name || "User"}!
-          </AlertTitle>
-          <AlertDescription>
-            Choose a room to see details and book your seat.
-          </AlertDescription>
+      <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap justify-center gap-5">
+        <div className="flex gap-3">
+          <Avatar className="w-15 h-15 rounded-lg">
+            <AvatarImage
+              className="rounded-lg"
+              src={session?.user?.image}
+              alt={session?.user?.name}
+            />
+            <AvatarFallback className="rounded-lg">
+              <H5>{getNameFistKey(session?.user?.name)}</H5>
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <AlertTitle className="text-3xl font-bold tracking-tight font-headline">
+              Welcome, {session?.user?.name || "User"}!
+            </AlertTitle>
+            <AlertDescription>
+              Choose a room to see details and book your seat.
+            </AlertDescription>
+          </div>
         </div>
         <div className="flex-1"></div>
         <div>

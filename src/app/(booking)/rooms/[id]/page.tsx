@@ -43,9 +43,9 @@ export default async function RoomDetailsPage({
 function RoomDetails({ room, date }: { room: IRoom; date: string }) {
   return (
     <div className="container p-8">
-      <Alert className="mb-8 border-primary/50 text-primary flex items-center gap-3">
+      <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-4">
-          <div className="text-primary">
+          <div className="text-primary opacity-50">
             {roomIcons[room.type as RoomType] || ""}
           </div>
           <div>

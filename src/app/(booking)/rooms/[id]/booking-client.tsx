@@ -28,7 +28,6 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { IconButton } from "@/components/ui/icon";
 import { Pencil, Trash } from "lucide-react";
 
 export default function BookingClient({
@@ -152,7 +151,7 @@ export default function BookingClient({
       </CardHeader>
       <CardContent>
         <div className="p-4 border-2 border-dashed rounded-lg bg-muted/20">
-          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-8 items-center justify-center">
+          <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 md:gap-8 gap-4  items-center justify-center">
             {Array.from(
               { length: room.totalCapacity || 0 },
               (_, i) => i + 1
@@ -175,47 +174,34 @@ export default function BookingClient({
                       await fetchBookings();
                     }}
                   >
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <ContextMenu>
-                          <ContextMenuTrigger>
-                            <Avatar color="bg-blue-200">
-                              <AvatarImage
-                                src={isBooked?.avator}
-                                alt={isBooked?.userName}
-                              />
-                              <AvatarFallback className="rounded-lg">
-                                <H5>{getNameFistKey(isBooked?.userName)}</H5>
-                              </AvatarFallback>
-                            </Avatar>
-                          </ContextMenuTrigger>
-                          <ContextMenuContent>
-                            <ContextMenuItem
-                              onClick={async () => {
-                                await deleteBooking(existingBooking);
-                                await fetchBookings();
-                              }}
-                            >
-                              <Trash size={14} className="mr-2" />
-                              Delete
-                            </ContextMenuItem>
-                            <ContextMenuItem>
-                              <Pencil size={14} className="mr-2" />
-                              Remarks
-                            </ContextMenuItem>
-                          </ContextMenuContent>
-                        </ContextMenu>
-                      </TooltipTrigger>
-                      <TooltipContent className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-white min-w-5 h-5 flex justify-center items-center px-1 rounded-lg font-mono tabular-nums"
+                    <ContextMenu>
+                      <ContextMenuTrigger>
+                        <Avatar color="bg-blue-200">
+                          <AvatarImage
+                            src={isBooked?.avator}
+                            alt={isBooked?.userName}
+                          />
+                          <AvatarFallback className="rounded-lg">
+                            <H5>{getNameFistKey(isBooked?.userName)}</H5>
+                          </AvatarFallback>
+                        </Avatar>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem
+                          onClick={async () => {
+                            await deleteBooking(existingBooking);
+                            await fetchBookings();
+                          }}
                         >
-                          {seatNumber as ReactNode}
-                        </Badge>
-                        <p>{isBooked?.userName}</p>
-                      </TooltipContent>
-                    </Tooltip>
+                          <Trash size={14} className="mr-2" />
+                          Delete
+                        </ContextMenuItem>
+                        <ContextMenuItem>
+                          <Pencil size={14} className="mr-2" />
+                          Remarks
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
                   </div>
                 );
               }
