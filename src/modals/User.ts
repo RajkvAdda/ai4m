@@ -1,5 +1,6 @@
 import mongoose, { Model, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 
 export interface IUser {
   id: string;
@@ -12,6 +13,15 @@ export interface IUser {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export const userZodSchema = z.object({
+  id: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().min(1),
+  avator: z.string().optional(),
+  role: z.string().min(1),
+});
 
 const userSchema = new Schema<IUser>(
   {

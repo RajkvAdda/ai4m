@@ -158,7 +158,10 @@ export default function Rooms() {
     <div className="container p-8 m-auto">
       <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap justify-center gap-5">
         <div className="flex gap-3">
-          <Avatar className="w-15 h-15 rounded-lg">
+          <Avatar
+            className="w-15 h-15 rounded-lg cursor-pointer hover:border-2 hover:border-gray-200"
+            onClick={() => router.push("/users/" + session?.user?.id)}
+          >
             <AvatarImage
               className="rounded-lg"
               src={session?.user?.image}
