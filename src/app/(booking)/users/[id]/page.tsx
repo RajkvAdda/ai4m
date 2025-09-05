@@ -131,7 +131,7 @@ export default function EditProfilePage({
         }),
       });
       console.log("Profile updated:", data);
-      // router.back(); // Redirect to profile view
+      router.back(); // Redirect to profile view
     } catch (error) {
       console.error("Failed to update profile:", error);
       setFetchError("Failed to update profile. Please try again.");
