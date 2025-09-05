@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  cn,
   getDateFormat,
   getMonthDays,
   getMonthFormat,
@@ -76,7 +77,7 @@ export default function UserCalender({
               return (
                 <div
                   key={i}
-                  className="bg-muted/50 aspect-square rounded-xl p-2 text-shadow-lg flex items-center justify-center"
+                  className="bg-emerald-50 text-emerald-500 border border-emerald-400 aspect-square rounded-xl p-2 text-shadow-lg flex items-center text-md text-center justify-center"
                 >
                   {room.name} Seat({dayBooking.seatNumber})
                 </div>
@@ -85,9 +86,14 @@ export default function UserCalender({
             return (
               <div
                 key={i}
-                className="bg-muted/50 aspect-square rounded-xl p-4  flex items-center justify-center text-2xl"
+                className={cn(
+                  "bg-muted/30 aspect-square rounded-xl p-4 text-shadow-lg flex items-center text-center justify-center text-md",
+                  ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
+                    ? "bg-yellow-50 border-yellow-400 border text-yellow-700"
+                    : "border"
+                )}
               >
-                {day.getDate()}
+                {getDateFormat(day, "EEE d")}
               </div>
             );
           })}

@@ -64,10 +64,13 @@ export function getMonthDays(
 export function getMonthFormat(date: Date = new Date()) {
   return format(date, "MMM");
 }
-export function getDateFormat(date: Date = new Date()) {
-  return format(date, "yyyy-MM-dd");
+export function getDateFormat(
+  date: Date = new Date(),
+  formatStr: string = "yyyy-MM-dd"
+) {
+  return format(date, formatStr);
 }
 
 export function getIsBeforeDate(date1: string, date2: string) {
-  return new Date(date1) < new Date(date2);
+  return new Date(date1) <= new Date(date2);
 }
