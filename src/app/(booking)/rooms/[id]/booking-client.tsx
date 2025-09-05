@@ -9,7 +9,12 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn, getNameFistKey, getTodayOrNextDate } from "@/lib/utils";
+import {
+  cn,
+  getIsBeforeDate,
+  getNameFistKey,
+  getTodayOrNextDate,
+} from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 import { IBooking } from "@/modals/Booking";
@@ -87,6 +92,15 @@ export default function BookingClient({
     if (!seat) return;
     setIsPending(true);
     try {
+      if (!getIsBeforeDate(getTodayOrNextDate(), selectedDate)) {
+        toast({
+          title: "Invalid Date",
+          description: "You can only book for today or future dates.",
+          variant: "destructive",
+        });
+        setIsPending(false);
+        return;
+      }
       if (existingBooking) {
         await deleteBooking(existingBooking);
       }
@@ -103,10 +117,9 @@ export default function BookingClient({
           avator: session?.user?.image,
           startDate: selectedDate,
           endDate: selectedDate,
-          status: "pending",
+          status: "booked",
         }),
       });
-      const data = await res.json();
       if (res.ok) {
         toast({
           title: "Success!",
@@ -118,7 +131,7 @@ export default function BookingClient({
       } else {
         toast({
           title: "Error",
-          description: data.error || "Booking failed.",
+          description: "Booking failed.",
           variant: "destructive",
         });
       }
