@@ -1,6 +1,12 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { z } from "zod";
 
+export type TBookingStatus =
+  | "booked"
+  | "cancelled"
+  | "booked_by_admin"
+  | "cancelled_by_admin"
+  | "not_came";
 export interface IBooking extends Document {
   roomId: string;
   seatNumber: number;
@@ -9,7 +15,7 @@ export interface IBooking extends Document {
   avator: string;
   startDate: string;
   endDate: string;
-  status: "pending" | "confirmed" | "cancelled";
+  status: TBookingStatus;
 }
 const BookingSchema: Schema = new Schema({
   roomId: { type: String, required: true },
@@ -21,7 +27,13 @@ const BookingSchema: Schema = new Schema({
   endDate: { type: String, required: true },
   status: {
     type: String,
-    enum: ["pending", "confirmed", "cancelled"],
+    enum: [
+      "booked",
+      "cancelled",
+      "booked_by_admin",
+      "cancelled_by_admin",
+      "not_came",
+    ],
     required: true,
   },
 });
@@ -42,5 +54,13 @@ export const BookingZodSchema = z.object({
   endDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid end date format",
   }),
-  status: z.enum(["pending", "confirmed", "cancelled"]),
+  status: z
+    .enum([
+      "booked",
+      "cancelled",
+      "booked_by_admin",
+      "cancelled_by_admin",
+      "not_came",
+    ])
+    .default("booked"),
 });

@@ -9,7 +9,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn, getNameFistKey } from "@/lib/utils";
+import { cn, getNameFistKey, getTodayOrNextDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 import { IBooking } from "@/modals/Booking";
@@ -29,6 +29,9 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Pencil, Trash } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Flex } from "@/components/ui/flex";
 
 export default function BookingClient({
   room,
@@ -38,6 +41,7 @@ export default function BookingClient({
   date: string;
 }) {
   const { data: session } = useSession();
+  const [selectedDate, setSelectedDate] = useState(date);
 
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -49,13 +53,14 @@ export default function BookingClient({
   // Fetch booked seats for this room
   const fetchBookings = async () => {
     try {
-      const res = await fetch(`/api/bookings?date=${date}&roomId=${room?.id}`);
+      const res = await fetch(`/api/bookings?date=${selectedDate}`);
       const bookings: IBooking[] = await res.json();
-      const booked = bookings.map((b) => {
+      const booked: IBooking[] = [];
+      bookings.forEach((b) => {
         if (b?.userId == session?.user?.id) {
           setexistingBooking((b?._id as string) || "");
         }
-        return b;
+        if (b?.roomId == room?.id) booked.push(b);
       });
       setBookedSeats(booked);
     } catch {
@@ -64,9 +69,9 @@ export default function BookingClient({
   };
 
   useEffect(() => {
-    if (room.id && date) fetchBookings();
+    if (room.id && selectedDate) fetchBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room.id, date, session?.user?.id]);
+  }, [room.id, selectedDate, session?.user?.id]);
 
   async function deleteBooking(id: string | null) {
     if (!id) {
@@ -96,8 +101,8 @@ export default function BookingClient({
           userId: session?.user?.id,
           userName: session?.user?.name,
           avator: session?.user?.image,
-          startDate: date,
-          endDate: date,
+          startDate: selectedDate,
+          endDate: selectedDate,
           status: "pending",
         }),
       });
@@ -140,14 +145,30 @@ export default function BookingClient({
           </CardDescription>
         </div>
         <div className="flex-1"></div>
-        <div>
+        <Flex>
+          <Flex>
+            <Label
+              htmlFor="booking-date"
+              className="mb-1 font-medium whitespace-nowrap"
+            >
+              Date for booking
+            </Label>
+            <Input
+              id="booking-date"
+              type="date"
+              className="border rounded px-3 py-2"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              min={getTodayOrNextDate()}
+            />
+          </Flex>
           <Button
             disabled={!selectedSeat || isPending}
             onClick={() => handleBooking(selectedSeat)}
           >
             {isPending ? "Booking..." : `Book Seat ${selectedSeat || ""}`}
           </Button>
-        </div>
+        </Flex>
       </CardHeader>
       <CardContent>
         <div className="p-4 border-2 border-dashed rounded-lg bg-muted/20">

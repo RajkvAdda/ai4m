@@ -23,37 +23,8 @@ export default function LoginPage() {
                   <div className="flex flex-col items-center text-center">
                     <h1 className="text-2xl font-bold">Welcome back</h1>
                     <p className="text-muted-foreground text-balance">
-                      Login to your Acme Inc account
+                      Login to your Seat Booking account
                     </p>
-                  </div>
-                  <div className="grid gap-3">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-3">
-                    <div className="flex items-center">
-                      <Label htmlFor="password">Password</Label>
-                      <a
-                        href="#"
-                        className="ml-auto text-sm underline-offset-2 hover:underline"
-                      >
-                        Forgot your password?
-                      </a>
-                    </div>
-                    <Input id="password" type="password" required />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    Login
-                  </Button>
-                  <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                    <span className="bg-card text-muted-foreground relative z-10 px-2">
-                      Or continue with
-                    </span>
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <Button
@@ -83,15 +54,39 @@ export default function LoginPage() {
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
+                  <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                    <span className="bg-card text-muted-foreground relative z-10 px-2">
+                      Or continue with
+                    </span>
+                  </div>
+
+                  <div className="grid gap-3">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="m@example.com"
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-3">
+                    <div className="flex items-center">
+                      <Label htmlFor="password">Password</Label>
+                      <a
+                        href="#"
+                        className="ml-auto text-sm underline-offset-2 hover:underline"
+                      >
+                        Forgot your password?
+                      </a>
+                    </div>
+                    <Input id="password" type="password" required />
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Login
+                  </Button>
                 </div>
               </form>
-              <div className="bg-blue-200 relative hidden md:block">
-                {/* <img
-                  src=""
-                  alt="Image"
-                  className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-                /> */}
-              </div>
+              <div className="bg-blue-200 relative hidden md:block"></div>
             </CardContent>
           </Card>
           <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

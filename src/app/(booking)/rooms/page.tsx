@@ -16,12 +16,13 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { IRoom, RoomType } from "@/modals/Room";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getNameFistKey } from "@/lib/utils";
+import { getNameFistKey, getTodayOrNextDate } from "@/lib/utils";
 import { H5 } from "@/components/ui/typography";
 import { IBooking } from "@/modals/Booking";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import UserCalender from "./UserCalender";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
@@ -100,8 +101,8 @@ function RoomCard({
 
 export default function Rooms() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
-  const today = new Date().toISOString().split("T")[0];
-  const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedDate, setSelectedDate] = useState(getTodayOrNextDate());
+
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -154,7 +155,7 @@ export default function Rooms() {
   };
 
   return (
-    <div className="container p-8">
+    <div className="container p-8 m-auto">
       <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap justify-center gap-5">
         <div className="flex gap-3">
           <Avatar className="w-15 h-15 rounded-lg">
@@ -179,7 +180,7 @@ export default function Rooms() {
         <div className="flex-1"></div>
         <div>
           <Label htmlFor="booking-date" className="mb-1 font-medium">
-            Date For booking
+            Date for booking
           </Label>
           <Input
             id="booking-date"
@@ -187,7 +188,7 @@ export default function Rooms() {
             className="border rounded px-3 py-2"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            min={new Date().toISOString().split("T")[0]}
+            min={getTodayOrNextDate()}
           />
         </div>
       </Alert>
@@ -198,15 +199,18 @@ export default function Rooms() {
           <span className="text-lg font-semibold ">Loading...</span>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {rooms?.map((room: IRoom) => (
-            <RoomCard
-              key={room._id}
-              room={room}
-              selectedDate={selectedDate}
-              bookingCount={getBookingCount(room._id)}
-            />
-          ))}
+        <div className="space-y-5">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {rooms?.map((room: IRoom) => (
+              <RoomCard
+                key={room._id}
+                room={room}
+                selectedDate={selectedDate}
+                bookingCount={getBookingCount(room._id)}
+              />
+            ))}
+          </div>
+          <UserCalender userId={session?.user?.id} rooms={rooms} />
         </div>
       )}
     </div>
