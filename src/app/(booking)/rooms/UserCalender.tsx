@@ -46,7 +46,6 @@ export default function UserCalender({
     };
     fetchBookings();
   }, [fromDate, toDate, userId]);
-  console.log("bookings", bookings, userId, rooms);
   return (
     <Card>
       <CardHeader>
