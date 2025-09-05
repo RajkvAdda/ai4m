@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   cn,
+  getDateFormat,
   getIsBeforeDate,
   getNameFistKey,
   getTodayOrNextDate,
@@ -152,7 +153,10 @@ export default function BookingClient({
     <Card className="shadow-lg">
       <CardHeader className="flex items-center">
         <div>
-          <CardTitle className="font-headline">Select a Seat</CardTitle>
+          <CardTitle className="font-headline">
+            Select a Seat for{" "}
+            <b>{`(${getDateFormat(selectedDate, "EEE dd MMM, yyyy")})`}</b>
+          </CardTitle>
           <CardDescription>
             Click on an available seat to make a reservation.
           </CardDescription>
