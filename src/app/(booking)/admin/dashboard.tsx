@@ -61,7 +61,7 @@ export default function Dashboard({
   return (
     <Card>
       <CardContent>
-        <div className="grid sm:grid-cols-3 md:grid-cols-7 ">
+        <div className="grid gap-1 sm:grid-cols-3 md:grid-cols-7 ">
           {days.map((day, i) => {
             const dayBookings = bookings?.filter(
               (b) => b.startDate === getDateFormat(day)

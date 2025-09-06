@@ -151,7 +151,7 @@ export default function BookingClient({
 
   return (
     <Card className="shadow-lg">
-      <CardHeader className="flex items-center">
+      <CardHeader className="flex items-center flex-wrap ">
         <div>
           <CardTitle className="font-headline">
             Select a Seat for{" "}
@@ -162,8 +162,8 @@ export default function BookingClient({
           </CardDescription>
         </div>
         <div className="flex-1"></div>
-        <Flex>
-          <Flex>
+        <Flex className="flex-wrap">
+          <Flex className="flex-wrap gap-0">
             <Label
               htmlFor="booking-date"
               className="mb-1 font-medium whitespace-nowrap"
@@ -189,7 +189,7 @@ export default function BookingClient({
       </CardHeader>
       <CardContent>
         <div className="p-4 border-2 border-dashed rounded-lg bg-muted/20">
-          <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 md:gap-8 gap-4  items-center justify-center">
+          <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 md:gap-8 gap-4 items-center justify-center">
             {Array.from(
               { length: room.totalCapacity || 0 },
               (_, i) => i + 1
@@ -248,7 +248,7 @@ export default function BookingClient({
                   <div
                     key={seatNumber as number}
                     className={cn(
-                      "h-16 w-16 overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer"
+                      "h-16 w-16 aspect-square overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer"
                     )}
                   >
                     <Tooltip>
@@ -282,7 +282,7 @@ export default function BookingClient({
                   variant={isSelected ? "default" : "outline"}
                   size="icon"
                   className={cn(
-                    "h-16 w-16 text-sm font-semibold transition-all duration-200",
+                    "h-full w-full aspect-square text-sm font-semibold transition-all duration-200",
                     isSelected &&
                       "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg"
                   )}

@@ -19,25 +19,27 @@ export default function AdminLayout({
     <div className="min-h-screen flex flex-col p-8">
       <main className="flex-1">
         <div className="container">
-          <Alert className="mb-4 border-primary/50 text-primary flex gap-3 items-center">
-            <Avatar className="w-15 h-15 rounded-lg">
-              <AvatarImage
-                className="rounded-lg"
-                src={session?.user?.image}
-                alt={session?.user?.name}
-              />
-              <AvatarFallback className="rounded-lg">
-                <H5>{getNameFistKey(session?.user?.name)}</H5>
-              </AvatarFallback>
-            </Avatar>
-            <div className="gap-3">
-              <AlertTitle className="text-3xl font-bold tracking-tight font-headline">
-                Welcome, {session?.user?.name || "User"}!
-              </AlertTitle>
-              <AlertDescription>
-                You have administrative privileges. Changes made here will
-                affect all users.
-              </AlertDescription>
+          <Alert className="mb-4 border-primary/50 text-primary flex gap-3 items-center flex-wrap">
+            <div className="gap-3 flex">
+              <Avatar className="w-15 h-15 rounded-lg">
+                <AvatarImage
+                  className="rounded-lg"
+                  src={session?.user?.image}
+                  alt={session?.user?.name}
+                />
+                <AvatarFallback className="rounded-lg">
+                  <H5>{getNameFistKey(session?.user?.name)}</H5>
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <AlertTitle className="text-3xl font-bold tracking-tight font-headline">
+                  Welcome, {session?.user?.name || "User"}!
+                </AlertTitle>
+                <AlertDescription>
+                  You have administrative privileges. Changes made here will
+                  affect all users.
+                </AlertDescription>
+              </div>
             </div>
             <div className="flex-1"></div>
             <BackButton />

@@ -72,7 +72,7 @@ export default function UserCalender({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid auto-rows-min gap-4 sm:grid-cols-3 md:grid-cols-10">
+        <div className="grid auto-rows-min gap-4 grid-cols-3 md:grid-cols-10">
           {days.map((day, i) => {
             const dayBooking = bookings?.find(
               (b) => b.startDate === getDateFormat(day)
