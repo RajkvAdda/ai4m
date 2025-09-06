@@ -60,6 +60,7 @@ export default function BookingClient({
   const fetchBookings = async () => {
     try {
       setLoading(true);
+      setexistingBooking(null);
       const res = await fetch(`/api/bookings?date=${selectedDate}`);
       const bookings: IBooking[] = await res.json();
       const booked: IBooking[] = [];
