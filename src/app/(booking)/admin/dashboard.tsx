@@ -68,10 +68,7 @@ export default function Dashboard({
             );
             if (dayBookings.length > 0) {
               return (
-                <div
-                  key={i}
-                  className="bg-emerald-50  border border-emerald-400"
-                >
+                <div key={i} className=" border border-emerald-400">
                   <BookingDetails
                     bookings={dayBookings}
                     rooms={rooms}
@@ -145,13 +142,13 @@ function BookingDetails({
                     </Avatar>
                   </div>
                   <div className="space-y-1">
-                    <div className="bg-emerald-50 p-0.5 pl-2 rounded-lg">
+                    <div className="bg-emerald-50 p-0.5 pl-2 ">
                       {user?.name}
                     </div>
-                    <div className="bg-emerald-50 p-0.5 pl-2 rounded-lg">
+                    <div className="bg-emerald-50 p-0.5 pl-2 ">
                       {room?.name}
                     </div>
-                    <div className="bg-emerald-50 p-0.5 pl-2 rounded-lg">
+                    <div className="bg-emerald-50 p-0.5 pl-2 ">
                       Seat: {booking.seatNumber}
                     </div>
                   </div>
