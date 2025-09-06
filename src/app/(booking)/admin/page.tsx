@@ -116,18 +116,20 @@ export default function AdminPage() {
             ))}
           </TabsList>
           <div>
-            <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
-              <TabsList>
-                {months.map((month) => (
-                  <TabsTrigger
-                    key={month.getTime()}
-                    value={getMonthFormat(month)}
-                  >
-                    {getMonthFormat(month)}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            {activeTab === "Dashboard" && (
+              <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
+                <TabsList>
+                  {months.map((month) => (
+                    <TabsTrigger
+                      key={month.getTime()}
+                      value={getMonthFormat(month)}
+                    >
+                      {getMonthFormat(month)}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            )}
           </div>
         </div>
         <TabsContent value="Dashboard">
