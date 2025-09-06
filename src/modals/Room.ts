@@ -12,6 +12,7 @@ export type RoomType = "table" | "row" | "free_area";
 export interface IRoom extends Document {
   _id: string;
   name: string;
+  description: string;
   type: RoomType;
   units: number;
   seatsPerUnit: number;
@@ -20,6 +21,7 @@ export interface IRoom extends Document {
 
 export const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
   type: z.enum(["table", "row", "free_area"]),
   units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
   seatsPerUnit: z.coerce
@@ -31,6 +33,7 @@ export const roomZodSchema = z.object({
 const RoomSchema: Schema = new Schema(
   {
     name: { type: String, required: true, minlength: 3, unique: true },
+    description: { type: String, required: true, minlength: 10 },
     type: {
       type: String,
       enum: ["table", "row", "free_area"],

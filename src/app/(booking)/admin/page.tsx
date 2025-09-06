@@ -1,36 +1,27 @@
 "use client";
 
-import CreateRoomForm from "./create-room-form";
-import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import React, { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { IRoom } from "@/modals/Room";
-import { IconButton } from "@/components/ui/icon";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Rooms from "./rooms";
+import Users from "./users";
+import { IUser } from "../users/[id]/page";
 
 export default function AdminPage() {
+  const [activeTab, setActiveTab] = React.useState("Dashboard");
   const [rooms, setRooms] = useState<IRoom[]>([]);
+  const [users, setUsers] = useState<IUser[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
+
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const { status } = useSession();
   const fetchRooms = async () => {
     try {
-      setLoading(false);
+      setLoading(true);
       const res = await fetch("/api/rooms");
       const data = await res.json();
       setRooms(data);
@@ -40,9 +31,34 @@ export default function AdminPage() {
       setLoading(false);
     }
   };
-
+  async function fetchUsers() {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/users");
+      const data = await res.json();
+      setUsers(data);
+    } catch (_err) {
+      // Optionally handle error
+    } finally {
+      setLoading(false);
+    }
+  }
+  async function fetchBookings() {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/bookings");
+      const data = await res.json();
+      setBookings(data);
+    } catch (_err) {
+      // Optionally handle error
+    } finally {
+      setLoading(false);
+    }
+  }
   useEffect(() => {
     fetchRooms();
+    fetchUsers();
+    fetchBookings();
   }, []);
 
   useEffect(() => {
@@ -80,52 +96,29 @@ export default function AdminPage() {
     );
 
   return (
-    <div className="grid gap-8 lg:grid-cols-3">
-      <div className="lg:col-span-2 w-full overflow-auto">
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="font-headline">Existing Rooms</CardTitle>
-            <CardDescription>
-              A list of all currently configured rooms.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Capacity</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rooms.map((room) => (
-                  <TableRow key={room._id || room.id}>
-                    <TableCell className="font-medium">{room.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{room.type}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {room?.totalCapacity}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <IconButton
-                        iconName="Trash"
-                        onClick={() => handleDelete(room._id || room.id)}
-                        aria-label="Delete Room"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="lg:col-span-1">
-        <CreateRoomForm onRoomChange={fetchRooms} />
-      </div>
-    </div>
+    <>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-2">
+          {["Dashboard", "Rooms", "Users"].map((tab) => (
+            <TabsTrigger key={tab} value={tab}>
+              {tab}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="Dashboard">
+          Make changes to your account here.
+        </TabsContent>
+        <TabsContent value="Rooms">
+          <Rooms
+            rooms={rooms}
+            handleDelete={handleDelete}
+            fetchRooms={fetchRooms}
+          />
+        </TabsContent>
+        <TabsContent value="Users">
+          <Users users={users} />
+        </TabsContent>
+      </Tabs>
+    </>
   );
 }

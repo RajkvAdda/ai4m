@@ -6,10 +6,7 @@ export async function GET() {
   try {
     await connectToDatabase();
     const allUsers = await User.find({}).exec();
-    const usersWithVirtuals = allUsers.map((user) =>
-      user.toObject({ virtuals: true })
-    );
-    return NextResponse.json(usersWithVirtuals);
+    return NextResponse.json(allUsers);
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) {

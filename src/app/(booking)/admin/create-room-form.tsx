@@ -37,6 +37,7 @@ import { IRoom } from "@/modals/Room";
 
 const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
   type: z.enum(["table", "row", "free_area"]),
   units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
   seatsPerUnit: z.coerce
@@ -61,6 +62,7 @@ export default function CreateRoomForm({
       ? {
           name: room.name,
           type: room.type,
+          description: room.description,
           units: room.units,
           seatsPerUnit: room.seatsPerUnit,
         }
@@ -156,6 +158,47 @@ export default function CreateRoomForm({
                   <FormControl>
                     <Input placeholder="e.g., The Library" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Room Description</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g., A cozy library with books."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Room Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a room type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="table">Table</SelectItem>
+                      <SelectItem value="row">Row</SelectItem>
+                      <SelectItem value="free_area">Free Area</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
