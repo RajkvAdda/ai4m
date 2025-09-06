@@ -163,7 +163,7 @@ export default function BookingClient({
         </div>
         <div className="flex-1"></div>
         <Flex className="flex-wrap">
-          <Flex className="flex-wrap gap-0">
+          <Flex className="gap-1">
             <Label
               htmlFor="booking-date"
               className="mb-1 font-medium whitespace-nowrap"
