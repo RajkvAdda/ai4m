@@ -10,6 +10,8 @@ import Rooms from "./rooms";
 import Users from "./users";
 import { IUser } from "../users/[id]/page";
 import { IBooking } from "@/modals/Booking";
+import Dashboard from "./dashboard";
+import { getMonthFormat, getPreviousAndNextMonths } from "@/lib/utils";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = React.useState("Dashboard");
@@ -89,6 +91,11 @@ export default function AdminPage() {
     }
   };
 
+  const months = getPreviousAndNextMonths();
+  const [selectedMonth, setSelectedMonth] = React.useState(
+    getMonthFormat(months[1])
+  );
+
   if (loading)
     return (
       <div className="flex items-center justify-center mt-10 p-10">
@@ -100,15 +107,36 @@ export default function AdminPage() {
   return (
     <>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-2">
-          {["Dashboard", "Rooms", "Users"].map((tab) => (
-            <TabsTrigger key={tab} value={tab}>
-              {tab}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex items-center justify-between mb-2">
+          <TabsList>
+            {["Dashboard", "Rooms", "Users"].map((tab) => (
+              <TabsTrigger key={tab} value={tab}>
+                {tab}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div>
+            <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
+              <TabsList>
+                {months.map((month) => (
+                  <TabsTrigger
+                    key={month.getTime()}
+                    value={getMonthFormat(month)}
+                  >
+                    {getMonthFormat(month)}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
         <TabsContent value="Dashboard">
-          Make changes to your account here.
+          <Dashboard
+            rooms={rooms}
+            months={months}
+            users={users}
+            selectedMonth={selectedMonth}
+          />
         </TabsContent>
         <TabsContent value="Rooms">
           <Rooms
