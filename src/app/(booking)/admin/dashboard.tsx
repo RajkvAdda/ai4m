@@ -61,14 +61,17 @@ export default function Dashboard({
   return (
     <Card>
       <CardContent>
-        <div className="grid sm:grid-cols-3 md:grid-cols-7">
+        <div className="grid sm:grid-cols-3 md:grid-cols-7 ">
           {days.map((day, i) => {
             const dayBookings = bookings?.filter(
               (b) => b.startDate === getDateFormat(day)
             );
             if (dayBookings.length > 0) {
               return (
-                <div key={i} className=" border border-emerald-400">
+                <div
+                  key={i}
+                  className=" border border-emerald-400 aspect-square"
+                >
                   <BookingDetails
                     bookings={dayBookings}
                     rooms={rooms}
@@ -81,10 +84,10 @@ export default function Dashboard({
               <div
                 key={i}
                 className={cn(
-                  "bg-muted/30 text-shadow-lg flex items-center text-center justify-center text-md",
+                  "bg-muted/30 aspect-square text-shadow-lg flex items-center text-center justify-center text-md border-emerald-400 border",
                   ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
-                    ? "bg-yellow-50 border-yellow-400 border text-yellow-700"
-                    : "border",
+                    ? "bg-yellow-50 text-yellow-700"
+                    : "",
                   loading ? "animate-pulse" : ""
                 )}
               >
