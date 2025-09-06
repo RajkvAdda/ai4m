@@ -25,6 +25,7 @@ import { PasswordStrength } from "@/components/profile/password-strength";
 import { Save, ArrowLeft, Shield, Mail, User, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
+import { signOut } from "next-auth/react";
 
 // Define the user interface
 export interface IUser {
@@ -334,6 +335,13 @@ export default function EditProfilePage({
           <Card className="border-0 shadow-md">
             <CardContent className="pt-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+                <Button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  variant="destructive"
+                  className="sm:w-auto w-full"
+                >
+                  Logout
+                </Button>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   {isDirty && (
                     <>

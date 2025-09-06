@@ -37,6 +37,25 @@ const handler = NextAuth({
       }
       return true;
     },
+    async signOut({ token, session }) {
+      try {
+        // Clear the session
+        if (session) {
+          session.user = null;
+          session.expires = null;
+        }
+
+        // Invalidate the token
+        if (token) {
+          token = {};
+        }
+
+        return true;
+      } catch (error) {
+        console.error("Error during sign out:", error);
+        return false;
+      }
+    },
     async session({ session, token }: { session: any; token: any }) {
       let loginUser = await User.findOne({ email: session.user.email });
 
