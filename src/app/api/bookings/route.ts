@@ -53,3 +53,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const roomId = searchParams.get("roomId");
+    await connectToDatabase();
+
+    const query: Record<string, unknown> = {};
+    if (roomId) query.roomId = roomId;
+
+    const bookings = await Booking.deleteMany(query).exec();
+    return NextResponse.json(bookings);
+  } catch (error) {
+    let errorMsg = "Unknown error";
+    if (error instanceof Error) {
+      errorMsg = error.message;
+    }
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
+  }
+}

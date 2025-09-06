@@ -59,7 +59,9 @@ function RoomCard({
             {roomIcons[room.type as RoomType] || ""}
           </div>
         </div>
-        <CardDescription>{roomDescriptions[room.type]}</CardDescription>
+        <CardDescription>
+          {room.description || roomDescriptions[room.type]}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="space-y-2">

@@ -9,12 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Rooms from "./rooms";
 import Users from "./users";
 import { IUser } from "../users/[id]/page";
+import { IBooking } from "@/modals/Booking";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = React.useState("Dashboard");
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [users, setUsers] = useState<IUser[]>([]);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<IBooking[]>([]);
 
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -67,12 +68,13 @@ export default function AdminPage() {
     }
   }, [router, status]);
 
-  console.log("rj-rooms-2", rooms);
-
   // Handler for deleting a room
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this room?")) return;
     try {
+      await fetch(`/api/bookings?roomId=${id}`, {
+        method: "DELETE",
+      });
       const res = await fetch(`/api/rooms/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
