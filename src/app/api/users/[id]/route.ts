@@ -39,7 +39,7 @@ export async function PUT(
     await connectToDatabase();
     const updateResult = await User.findByIdAndUpdate(
       userUpadete._id,
-      { ...userUpadete, ...body }, // Prevent changing the id field
+      { ...body }, // Prevent changing the id field
       {
         new: true,
       }

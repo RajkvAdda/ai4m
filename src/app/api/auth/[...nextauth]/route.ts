@@ -19,8 +19,6 @@ const handler = NextAuth({
           let loginUser = await User.findOne({ email: user.email });
 
           if (!loginUser) {
-            console.log("rj-signin", { user, account, profile });
-
             loginUser = await User.create({
               id: user.id,
               name: user.name!,
@@ -40,10 +38,14 @@ const handler = NextAuth({
       return true;
     },
     async session({ session, token }: { session: any; token: any }) {
-      console.log("rj-session-1", { session, token });
+      let loginUser = await User.findOne({ email: session.user.email });
+
       if (token && session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.name = loginUser?.name || session.user.name;
+        session.user.avatar = loginUser?.avator;
+        session.user.image = loginUser?.avator || session.user.image;
       }
       return session;
     },

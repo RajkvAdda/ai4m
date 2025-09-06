@@ -19,6 +19,7 @@ export default function UserCalender({
   rooms: IRoom[];
 }) {
   const [bookings, setBookings] = React.useState<IBooking[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const months = getPreviousAndNextMonths();
   const [selectedMonth, setSelectedMonth] = React.useState(
     getMonthFormat(months[1])
@@ -35,6 +36,7 @@ export default function UserCalender({
   useEffect(() => {
     const fetchBookings = async () => {
       setBookings([]);
+      setLoading(true);
       try {
         const res = await fetch(
           `/api/bookings?userId=${userId}&fromDate=${fromDate}&toDate=${toDate}`
@@ -43,10 +45,13 @@ export default function UserCalender({
         setBookings(data);
       } catch (_err) {
         // Optionally handle error
+      } finally {
+        setLoading(false);
       }
     };
-    fetchBookings();
+    if (fromDate && toDate && userId) fetchBookings();
   }, [fromDate, toDate, userId]);
+
   return (
     <Card>
       <CardHeader>
@@ -90,7 +95,8 @@ export default function UserCalender({
                   "bg-muted/30 aspect-square rounded-xl p-4 text-shadow-lg flex items-center text-center justify-center text-md",
                   ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
                     ? "bg-yellow-50 border-yellow-400 border text-yellow-700"
-                    : "border"
+                    : "border",
+                  loading ? "animate-pulse" : ""
                 )}
               >
                 {getDateFormat(day, "EEE d")}

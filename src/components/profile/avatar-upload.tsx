@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Camera, Upload } from "lucide-react";
+import { Camera } from "lucide-react";
 
 interface AvatarUploadProps {
   currentAvatar?: string;
@@ -57,14 +57,14 @@ export function AvatarUpload({
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative">
-        <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
+        <Avatar className="h-40 w-40 border-4 border-gray-400 ">
           <AvatarImage src={preview} alt={userName} />
           <AvatarFallback className="text-lg font-semibold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
             {getInitials(userName)}
           </AvatarFallback>
         </Avatar>
 
-        <div className="absolute -bottom-2 -right-2">
+        <div className="absolute -bottom-2 -right-1">
           <Label htmlFor="avatar-upload" className="cursor-pointer">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-colors">
               <Camera className="h-4 w-4" />
