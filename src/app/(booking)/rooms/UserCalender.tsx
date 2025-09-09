@@ -84,7 +84,12 @@ export default function UserCalender({
                   key={i}
                   className="bg-emerald-50 text-emerald-500 border border-emerald-400 aspect-square rounded-xl p-2 text-shadow-lg flex items-center text-md text-center justify-center"
                 >
-                  {room.name} Seat({dayBooking.seatNumber})
+                  <div>
+                    <div className="whitespace-nowrap mr-2 font-bold">
+                      {getDateFormat(day, "EEE d")}
+                    </div>
+                    {`${room.name} Seat(${dayBooking.seatNumber})`}
+                  </div>
                 </div>
               );
             }
@@ -96,7 +101,7 @@ export default function UserCalender({
                   ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
                     ? "bg-yellow-50 border-yellow-400 border text-yellow-700"
                     : "border",
-                  loading ? "animate-pulse" : ""
+                  loading ? "animate-caret-blink" : ""
                 )}
               >
                 {getDateFormat(day, "EEE d")}

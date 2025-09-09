@@ -6,8 +6,9 @@ import { Inter } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
-  title: "RoomBook - Smart Workspace Booking",
-  description: "Book your perfect workspace with intelligent room management",
+  title: "Seatbooking - Smart Workspace Booking",
+  description:
+    "Book your perfect workspace with intelligent seatbook management",
 };
 
 const inter = Inter({ subsets: ["latin"] });

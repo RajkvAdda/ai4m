@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,10 +35,11 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Pencil, Trash } from "lucide-react";
+import { AlertCircleIcon, Pencil, Trash } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Flex } from "@/components/ui/flex";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function BookingClient({
   room,
@@ -212,6 +214,7 @@ export default function BookingClient({
                       "h-full w-full aspect-square overflow-hidden bg-blue-200 text-blue-900 border flex items-center justify-center rounded-lg relative cursor-pointer"
                     )}
                     onDoubleClick={async () => {
+                      if (isLoading || isPending) return;
                       await deleteBooking(existingBooking);
                       await fetchBookings();
                     }}
@@ -231,6 +234,8 @@ export default function BookingClient({
                       <ContextMenuContent>
                         <ContextMenuItem
                           onClick={async () => {
+                            if (isLoading || isPending) return;
+
                             await deleteBooking(existingBooking);
                             await fetchBookings();
                           }}
@@ -285,14 +290,17 @@ export default function BookingClient({
                   key={seatNumber as number}
                   variant={isSelected ? "default" : "outline"}
                   size="icon"
+                  disabled={isLoading || isPending}
                   className={cn(
                     "h-full w-full aspect-square text-sm font-semibold transition-all duration-200",
                     isSelected &&
                       "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg",
-                    isLoading && "cursor-not-allowed animate-pulse"
+                    isLoading && "cursor-not-allowed animate-caret-blink"
                   )}
                   onClick={() => setSelectedSeat(seatNumber as number)}
                   onDoubleClick={() => {
+                    if (isLoading || isPending) return;
+
                     handleBooking(seatNumber as number);
                   }}
                   aria-label={`Select seat ${seatNumber}`}
@@ -304,6 +312,19 @@ export default function BookingClient({
           </div>
         </div>
       </CardContent>
+      <CardFooter>
+        <Alert>
+          <AlertCircleIcon />
+          <AlertTitle>Usase Info</AlertTitle>
+          <AlertDescription>
+            <ul className="list-inside list-disc text-sm mt-2">
+              <li>You Can Double Click to Book Your Seat</li>
+              <li>To Delete You Can Duble Click on Your (Booked seat)</li>
+              <li>You can hover on seat and see the booking details</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      </CardFooter>
     </Card>
   );
 }

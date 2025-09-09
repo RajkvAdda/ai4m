@@ -67,6 +67,11 @@ export default function Rooms({
                         {room?.totalCapacity}
                       </TableCell>
                       <TableCell className="text-right">
+                        {/* <IconButton
+                          iconName="Edit2"
+                          onClick={() => handleDelete(room._id || room.id)}
+                          aria-label="Delete Room"
+                        /> */}
                         <IconButton
                           iconName="Trash"
                           onClick={() => handleDelete(room._id || room.id)}

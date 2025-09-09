@@ -88,7 +88,7 @@ export default function Dashboard({
                   ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
                     ? "bg-yellow-50 text-yellow-700"
                     : "",
-                  loading ? "animate-pulse" : ""
+                  loading ? "animate-caret-blink" : ""
                 )}
               >
                 {getDateFormat(day, "EEE d")}

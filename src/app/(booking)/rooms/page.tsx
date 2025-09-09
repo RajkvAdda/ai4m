@@ -12,17 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { IRoom, RoomType } from "@/modals/Room";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getNameFistKey, getTodayOrNextDate } from "@/lib/utils";
-import { H5 } from "@/components/ui/typography";
+import { getTodayOrNextDate } from "@/lib/utils";
 import { IBooking } from "@/modals/Booking";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import UserCalender from "./UserCalender";
+import UserAvator from "@/components/user-avator";
+import { useSession } from "next-auth/react";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
@@ -104,11 +102,9 @@ function RoomCard({
 export default function Rooms() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [selectedDate, setSelectedDate] = useState(getTodayOrNextDate());
-
+  const { data: session } = useSession();
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const router = useRouter();
-  const { data: session, status } = useSession();
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -143,14 +139,6 @@ export default function Rooms() {
     }
   }, [selectedDate]);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [router, status]);
-
-  console.log("rj-session", session);
-
   // Helper to get booking count for a room and date
   const getBookingCount = (roomId: string) => {
     return bookings.filter((b) => b.roomId === roomId).length;
@@ -159,29 +147,7 @@ export default function Rooms() {
   return (
     <div className="container p-8 m-auto">
       <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap justify-center gap-5">
-        <div className="flex gap-3">
-          <Avatar
-            className="w-15 h-15 rounded-lg cursor-pointer hover:border-2 hover:border-gray-200"
-            onClick={() => router.push("/users/" + session?.user?.id)}
-          >
-            <AvatarImage
-              className="rounded-lg"
-              src={session?.user?.image}
-              alt={session?.user?.name}
-            />
-            <AvatarFallback className="rounded-lg">
-              <H5>{getNameFistKey(session?.user?.name)}</H5>
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <AlertTitle className="text-3xl font-bold tracking-tight font-headline">
-              Welcome, {session?.user?.name || "User"}!
-            </AlertTitle>
-            <AlertDescription>
-              Choose a room to see details and book your seat.
-            </AlertDescription>
-          </div>
-        </div>
+        <UserAvator discription="Choose a room to see details and book your seat." />
         <div className="flex-1"></div>
         <div>
           <Label htmlFor="booking-date" className="mb-1 font-medium">
