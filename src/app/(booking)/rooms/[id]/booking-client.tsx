@@ -15,8 +15,6 @@ import {
   getDateFormat,
   getIsBeforeDate,
   getNameFistKey,
-  getNextDate,
-  getPrevDate,
   getTodayOrNextDate,
 } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -174,12 +172,7 @@ export default function BookingClient({
             >
               Date for booking
             </Label>
-            <button
-              className="text-sm text-blue-600 underline hover:text-blue-800 transition-colors"
-              onClick={() => setSelectedDate(getPrevDate(selectedDate))}
-            >
-              Previous
-            </button>
+           
             <Input
               id="booking-date"
               type="date"
@@ -188,12 +181,7 @@ export default function BookingClient({
               onChange={(e) => setSelectedDate(e.target.value)}
               min={getTodayOrNextDate()}
             />
-            <button
-              className="text-sm text-blue-600 underline hover:text-blue-800 transition-colors"
-              onClick={() => setSelectedDate(getNextDate(selectedDate))}
-            >
-              Next
-            </button>
+           
           </Flex>
           <Button
             disabled={!selectedSeat || isPending}

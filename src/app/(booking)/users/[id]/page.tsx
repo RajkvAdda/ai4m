@@ -89,7 +89,7 @@ export default function EditProfilePage({
   const watchedPassword = watch("password") || "";
   const watchedName = watch("name") || "";
   const watchedRole = watch("role");
-  const ROLES = ["SPP", "GSP", "User"];
+  const ROLES = ["SPP", 'GST', "User"];
 
   // Fetch user data when id is available
   useEffect(() => {
