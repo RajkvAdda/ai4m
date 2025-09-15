@@ -1,6 +1,6 @@
-import { clsx, type ClassValue } from "clsx";
-import { addDays, format, startOfDay } from "date-fns";
-import { twMerge } from "tailwind-merge";
+import {clsx, type ClassValue} from "clsx";
+import {addDays, format, startOfDay} from "date-fns";
+import {twMerge} from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -35,6 +35,16 @@ export function getTodayOrNextDate(afterHour: number = 10) {
 
   // Otherwise, return today's date
   return format(now, "yyyy-MM-dd");
+}
+export function getNextDate(selectedDate: string) {
+  const baseDate = selectedDate ? new Date(selectedDate) : new Date();
+  const nextDay = addDays(baseDate, 1);
+  return format(nextDay, "yyyy-MM-dd");
+}
+export function getPrevDate(selectedDate: string) {
+  const baseDate = selectedDate ? new Date(selectedDate) : new Date();
+  const prevDay = addDays(baseDate, -1);
+  return format(prevDay, "yyyy-MM-dd");
 }
 
 export function getPreviousAndNextMonths(date: Date = new Date()) {

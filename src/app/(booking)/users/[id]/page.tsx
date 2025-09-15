@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, Suspense, use } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import {useEffect, useState, Suspense, use} from "react";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
 import {
   Card,
   CardContent,
@@ -10,9 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,12 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AvatarUpload } from "@/components/profile/avatar-upload";
-import { PasswordStrength } from "@/components/profile/password-strength";
-import { Save, ArrowLeft, Shield, Mail, User, Lock } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { z } from "zod";
-import { signOut } from "next-auth/react";
+import {AvatarUpload} from "@/components/profile/avatar-upload";
+import {PasswordStrength} from "@/components/profile/password-strength";
+import {Save, ArrowLeft, Shield, Mail, User, Lock} from "lucide-react";
+import {useRouter} from "next/navigation";
+import {z} from "zod";
+import {signOut} from "next-auth/react";
 
 // Define the user interface
 export interface IUser {
@@ -57,22 +57,22 @@ export const userZodSchema = z
 
 // Define roles for the select dropdown
 const ROLES = [
-  { value: "admin", label: "Administrator", color: "bg-red-100 text-red-800" },
-  { value: "user", label: "User", color: "bg-green-100 text-green-800" },
+  {value: "admin", label: "Administrator", color: "bg-red-100 text-red-800"},
+  {value: "user", label: "User", color: "bg-green-100 text-green-800"},
   // { value: "viewer", label: "Viewer", color: "bg-gray-100 text-gray-800" },
 ];
 
 export default function EditProfilePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{id: string}>;
 }) {
   const router = useRouter();
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   // Resolve async params
-  const { id } = use(params);
+  const {id} = use(params);
 
   // Initialize react-hook-form
   const {
@@ -80,15 +80,16 @@ export default function EditProfilePage({
     handleSubmit,
     watch,
     setValue,
-    formState: { errors, isDirty },
+    formState: {errors, isDirty},
     reset,
-  } = useForm<IUser & { confirmPassword: string }>({
+  } = useForm<IUser & {confirmPassword: string}>({
     resolver: zodResolver(userZodSchema),
   });
 
   const watchedPassword = watch("password") || "";
   const watchedName = watch("name") || "";
   const watchedRole = watch("role");
+  const ROLES = ["SPP", "GSP", "User"];
 
   // Fetch user data when id is available
   useEffect(() => {
@@ -116,19 +117,19 @@ export default function EditProfilePage({
   }, [id, user, reset]);
 
   // Handle form submission
-  const onSubmit = async (data: IUser & { confirmPassword: string }) => {
+  const onSubmit = async (data: IUser & {confirmPassword: string}) => {
     setIsLoading(true);
     try {
       // Simulate API call (replace with your actual API call)
       await fetch(`/api/users/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
           // email: data.email,
           // password: data.password, // Keep existing password if not changed
           name: data.name,
           avator: data.avator,
-          // role: data.role,
+          role: data.role,
         }),
       });
       console.log("Profile updated:", data);
@@ -191,7 +192,7 @@ export default function EditProfilePage({
                 currentAvatar={user.avator}
                 userName={watchedName}
                 onAvatarChange={(avatar) =>
-                  setValue("avator", avatar, { shouldDirty: true })
+                  setValue("avator", avatar, {shouldDirty: true})
                 }
               />
             </CardContent>
@@ -250,10 +251,10 @@ export default function EditProfilePage({
                 </Label>
                 <Select
                   value={watchedRole}
-                  disabled
-                  onValueChange={(value) =>
-                    setValue("role", value, { shouldDirty: true })
-                  }
+                  // disabled
+                  onValueChange={(value) => {
+                    setValue("role", value, {shouldDirty: true});
+                  }}
                 >
                   <SelectTrigger
                     className={errors.role ? "border-red-500" : ""}
@@ -262,15 +263,8 @@ export default function EditProfilePage({
                   </SelectTrigger>
                   <SelectContent>
                     {ROLES.map((role) => (
-                      <SelectItem key={role.value} value={role.value}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`h-2 w-2 rounded-full ${
-                              role.color.split(" ")[0]
-                            }`}
-                          />
-                          {role.label}
-                        </div>
+                      <SelectItem key={role} value={role}>
+                        {role}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -336,7 +330,7 @@ export default function EditProfilePage({
             <CardContent className="pt-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
                 <Button
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={() => signOut({callbackUrl: "/"})}
                   variant="destructive"
                   className="sm:w-auto w-full"
                 >
@@ -382,9 +376,7 @@ export default function EditProfilePage({
 }
 
 // Wrap the component in Suspense for async params handling
-export function EditProfilePageWrapper(props: {
-  params: Promise<{ id: string }>;
-}) {
+export function EditProfilePageWrapper(props: {params: Promise<{id: string}>}) {
   return (
     <Suspense
       fallback={

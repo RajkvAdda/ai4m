@@ -15,6 +15,8 @@ import {
   getDateFormat,
   getIsBeforeDate,
   getNameFistKey,
+  getNextDate,
+  getPrevDate,
   getTodayOrNextDate,
 } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -23,11 +25,7 @@ import { IBooking } from "@/modals/Booking";
 import { IRoom } from "@/modals/Room";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { H4, H5 } from "@/components/ui/typography";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import {
   ContextMenu,
@@ -176,6 +174,12 @@ export default function BookingClient({
             >
               Date for booking
             </Label>
+            <button
+              className="text-sm text-blue-600 underline hover:text-blue-800 transition-colors"
+              onClick={() => setSelectedDate(getPrevDate(selectedDate))}
+            >
+              Previous
+            </button>
             <Input
               id="booking-date"
               type="date"
@@ -184,6 +188,12 @@ export default function BookingClient({
               onChange={(e) => setSelectedDate(e.target.value)}
               min={getTodayOrNextDate()}
             />
+            <button
+              className="text-sm text-blue-600 underline hover:text-blue-800 transition-colors"
+              onClick={() => setSelectedDate(getNextDate(selectedDate))}
+            >
+              Next
+            </button>
           </Flex>
           <Button
             disabled={!selectedSeat || isPending}
@@ -196,119 +206,118 @@ export default function BookingClient({
       <CardContent>
         <div className="p-8 border-2 border-dashed rounded-lg bg-muted/20">
           <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 md:gap-8 gap-4 items-center justify-center">
-            {Array.from(
-              { length: room.totalCapacity || 0 },
-              (_, i) => i + 1
-            ).map((seatNumber) => {
-              const isBooked =
-                bookedSeats.find((list) => list?.seatNumber == seatNumber) ||
-                null;
+            {Array.from({ length: room.totalCapacity || 0 }, (_, i) => i + 1).map(
+              (seatNumber) => {
+                const isBooked =
+                  bookedSeats.find((list) => list?.seatNumber == seatNumber) ||
+                  null;
 
-              console.log("rj-isBooked", isBooked);
-              const isSelected = selectedSeat === seatNumber;
-              if (isBooked?._id == existingBooking && existingBooking) {
-                return (
-                  <div
-                    key={seatNumber as number}
-                    className={cn(
-                      "h-full w-full aspect-square overflow-hidden bg-blue-200 text-blue-900 border flex items-center justify-center rounded-lg relative cursor-pointer"
-                    )}
-                    onDoubleClick={async () => {
-                      if (isLoading || isPending) return;
-                      await deleteBooking(existingBooking);
-                      await fetchBookings();
-                    }}
-                  >
-                    <ContextMenu>
-                      <ContextMenuTrigger>
-                        <Avatar color="bg-blue-200">
-                          <AvatarImage
-                            src={isBooked?.avator}
-                            alt={isBooked?.userName}
-                          />
-                          <AvatarFallback className="rounded-lg">
-                            <H5>{getNameFistKey(isBooked?.userName)}</H5>
-                          </AvatarFallback>
-                        </Avatar>
-                      </ContextMenuTrigger>
-                      <ContextMenuContent>
-                        <ContextMenuItem
-                          onClick={async () => {
-                            if (isLoading || isPending) return;
+                console.log("rj-isBooked", isBooked);
+                const isSelected = selectedSeat === seatNumber;
+                if (isBooked?._id == existingBooking && existingBooking) {
+                  return (
+                    <div
+                      key={seatNumber as number}
+                      className={cn(
+                        "h-full w-full aspect-square overflow-hidden bg-blue-200 text-blue-900 border flex items-center justify-center rounded-lg relative cursor-pointer"
+                      )}
+                      onDoubleClick={async () => {
+                        if (isLoading || isPending) return;
+                        await deleteBooking(existingBooking);
+                        await fetchBookings();
+                      }}
+                    >
+                      <ContextMenu>
+                        <ContextMenuTrigger>
+                          <Avatar color="bg-blue-200">
+                            <AvatarImage
+                              src={isBooked?.avator}
+                              alt={isBooked?.userName}
+                            />
+                            <AvatarFallback className="rounded-lg">
+                              <H5>{getNameFistKey(isBooked?.userName)}</H5>
+                            </AvatarFallback>
+                          </Avatar>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem
+                            onClick={async () => {
+                              if (isLoading || isPending) return;
 
-                            await deleteBooking(existingBooking);
-                            await fetchBookings();
-                          }}
-                        >
-                          <Trash size={14} className="mr-2" />
-                          Delete
-                        </ContextMenuItem>
-                        <ContextMenuItem>
-                          <Pencil size={14} className="mr-2" />
-                          Remarks
-                        </ContextMenuItem>
-                      </ContextMenuContent>
-                    </ContextMenu>
-                  </div>
-                );
-              }
-              if (isBooked?._id) {
+                              await deleteBooking(existingBooking);
+                              await fetchBookings();
+                            }}
+                          >
+                            <Trash size={14} className="mr-2" />
+                            Delete
+                          </ContextMenuItem>
+                          <ContextMenuItem>
+                            <Pencil size={14} className="mr-2" />
+                            Remarks
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
+                    </div>
+                  );
+                }
+                if (isBooked?._id) {
+                  return (
+                    <div
+                      key={seatNumber as number}
+                      className={cn(
+                        "h-full w-full aspect-square overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer"
+                      )}
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar color="bg-blue-200">
+                            <AvatarImage
+                              src={isBooked?.avator}
+                              alt={isBooked?.userName}
+                            />
+                            <AvatarFallback className="rounded-lg">
+                              <H5>{getNameFistKey(isBooked?.userName)}</H5>
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="text-white min-w-5 h-5 flex justify-center items-center px-1 rounded-lg font-mono tabular-nums"
+                          >
+                            {seatNumber as ReactNode}
+                          </Badge>
+                          <p>{isBooked?.userName}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  );
+                }
                 return (
-                  <div
+                  <Button
                     key={seatNumber as number}
+                    variant={isSelected ? "default" : "outline"}
+                    size="icon"
+                    disabled={isLoading || isPending}
                     className={cn(
-                      "h-full w-full aspect-square overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer"
-                    )}
-                  >
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Avatar color="bg-blue-200">
-                          <AvatarImage
-                            src={isBooked?.avator}
-                            alt={isBooked?.userName}
-                          />
-                          <AvatarFallback className="rounded-lg">
-                            <H5>{getNameFistKey(isBooked?.userName)}</H5>
-                          </AvatarFallback>
-                        </Avatar>
-                      </TooltipTrigger>
-                      <TooltipContent className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-white min-w-5 h-5 flex justify-center items-center px-1 rounded-lg font-mono tabular-nums"
-                        >
-                          {seatNumber as ReactNode}
-                        </Badge>
-                        <p>{isBooked?.userName}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                );
-              }
-              return (
-                <Button
-                  key={seatNumber as number}
-                  variant={isSelected ? "default" : "outline"}
-                  size="icon"
-                  disabled={isLoading || isPending}
-                  className={cn(
-                    "h-full w-full aspect-square text-sm font-semibold transition-all duration-200",
-                    isSelected &&
+                      "h-full w-full aspect-square text-sm font-semibold transition-all duration-200",
+                      isSelected &&
                       "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg",
-                    isLoading && "cursor-not-allowed animate-caret-blink"
-                  )}
-                  onClick={() => setSelectedSeat(seatNumber as number)}
-                  onDoubleClick={() => {
-                    if (isLoading || isPending) return;
+                      isLoading && "cursor-not-allowed animate-caret-blink"
+                    )}
+                    onClick={() => setSelectedSeat(seatNumber as number)}
+                    onDoubleClick={() => {
+                      if (isLoading || isPending) return;
 
-                    handleBooking(seatNumber as number);
-                  }}
-                  aria-label={`Select seat ${seatNumber}`}
-                >
-                  <H4>{seatNumber as ReactNode}</H4>
-                </Button>
-              );
-            })}
+                      handleBooking(seatNumber as number);
+                    }}
+                    aria-label={`Select seat ${seatNumber}`}
+                  >
+                    <H4>{seatNumber as ReactNode}</H4>
+                  </Button>
+                );
+              }
+            )}
           </div>
         </div>
       </CardContent>
