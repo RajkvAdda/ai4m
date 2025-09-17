@@ -154,14 +154,12 @@ export default function Rooms() {
     if (!role) return false;
 
     const allowedDays: Record<string, string[]> = {
-      SPP: ["Monday", "Tuesday"],
-      GST: ["Wednesday", "Friday"],
+      SPP: ["Monday", "Tuesday", "Wednesday"],
+      GST: ["Wednesday", "Thursday", "Friday"],
       User: [...dayNames],
     };
 
-    return dayName == "Wednesday"
-      ? true
-      : allowedDays[role]?.includes(dayName) || isAfter5PM;
+    return allowedDays[role]?.includes(dayName);
   };
 
   useEffect(() => {
