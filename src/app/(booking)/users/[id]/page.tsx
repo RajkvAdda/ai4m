@@ -250,7 +250,7 @@ export default function EditProfilePage({
                   Role
                 </Label>
                 <Select
-                  value={watchedRole}
+                  value={watchedRole == 'GST' ? 'GST / TDS' : watchedRole}
                   // disabled
                   onValueChange={(value) => {
                     setValue("role", value, {shouldDirty: true});
@@ -264,7 +264,7 @@ export default function EditProfilePage({
                   <SelectContent>
                     {ROLES.map((role) => (
                       <SelectItem key={role} value={role}>
-                        {role}
+                        {role == 'GST' ? 'GST / TDS' : role}
                       </SelectItem>
                     ))}
                   </SelectContent>

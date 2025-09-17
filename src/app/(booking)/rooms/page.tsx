@@ -158,8 +158,7 @@ export default function Rooms() {
       GST: ["Wednesday", "Thursday", "Friday"],
       User: [...dayNames],
     };
-
-    return allowedDays[role]?.includes(dayName);
+    return allowedDays[role]?.includes(dayName) || isAfter5PM;
   };
 
   useEffect(() => {
