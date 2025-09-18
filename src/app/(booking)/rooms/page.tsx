@@ -117,6 +117,11 @@ export default function Rooms() {
   const [isAfter5PM, setIsAfter5PM] = useState<boolean>(false);
   console.log(role, "role-123");
 
+  const isSameDate = (d1: Date, d2: Date) =>
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
+
   const today = new Date(selectedDate);
   const dayNames = [
     "Sunday",
@@ -131,15 +136,16 @@ export default function Rooms() {
 
   useEffect(() => {
     const updateTime = () => {
-      const now = new Date(selectedDate);
-      const istOffsetMinutes = 5 * 60 + 30;
-      const istTime = new Date(now.getTime() + istOffsetMinutes * 60 * 1000);
-      const currentHour = istTime.getUTCHours();
-      const currentMinutes = istTime.getUTCMinutes();
-      const isAfter5PMNow = currentHour >= 7;
-      setIsAfter5PM(isAfter5PMNow);
+      const now = new Date();
+
+      const currentHour = now.getHours();
+      const currentMinutes = now.getMinutes();
+
+      const isAfter7AM = currentHour >= 7;
+      setIsAfter5PM(isAfter7AM);
+
       console.log(
-        isAfter5PMNow,
+        isAfter7AM,
         `${currentHour}:${currentMinutes} IST`,
         "currentTime"
       );
@@ -158,7 +164,10 @@ export default function Rooms() {
       GST: ["Wednesday", "Thursday", "Friday"],
       User: [...dayNames],
     };
-    return allowedDays[role]?.includes(dayName) || isAfter5PM;
+    return (
+      allowedDays[role]?.includes(dayName) ||
+      (isSameDate(new Date(selectedDate), new Date()) && isAfter5PM)
+    );
   };
 
   useEffect(() => {
