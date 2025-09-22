@@ -156,14 +156,30 @@ export default function Rooms() {
     return () => clearInterval(interval);
   }, []);
 
+  function getWeekNumber(date: Date): number {
+    const oneJan = new Date(date.getFullYear(), 0, 1);
+    const numberOfDays = Math.floor(
+      (date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000)
+    );
+    return Math.ceil((numberOfDays + oneJan.getDay() + 1) / 7);
+  }
+
   const isAccessAllowed = () => {
     if (!role) return false;
 
+    const week = getWeekNumber(new Date(selectedDate));
+    const isOddWeek = week % 2 === 1;
+
     const allowedDays: Record<string, string[]> = {
-      SPP: ["Monday", "Tuesday", "Wednesday"],
-      GST: ["Wednesday", "Thursday", "Friday"],
+      SPP: isOddWeek
+        ? ["Monday", "Tuesday", "Wednesday"]
+        : ["Monday", "Tuesday"],
+      GST: !isOddWeek
+        ? ["Wednesday", "Thursday", "Friday"]
+        : ["Thursday", "Friday"],
       User: [...dayNames],
     };
+
     return (
       allowedDays[role]?.includes(dayName) ||
       (isSameDate(new Date(selectedDate), new Date()) && isAfter5PM)
@@ -274,11 +290,24 @@ export default function Rooms() {
         <>
           {!isAccessAllowed() && session?.user?.id && (
             <Alert className="mb-8 border-yellow-500 text-yellow-500">
-              {role === "SPP"
-                ? "Access restricted: SPP users can only book on Monday to Tuesday, If you need to book on other days, you can book after 7 AM."
-                : role === "GST"
-                ? "Access restricted: GST users can only book on Wednesday to Friday, If you need to book on other days, you can book after 7 AM."
-                : "Access restricted: Please log in or check your role."}
+              {(() => {
+                const week = getWeekNumber(new Date(selectedDate));
+                const isOddWeek = week % 2 === 1;
+
+                if (role === "SPP") {
+                  return `Access restricted: SPP users can only book on Monday, Tuesday${
+                    isOddWeek ? ", and Wednesday (this week)" : ""
+                  }. If you need to book on other days, you can book after 7 AM.`;
+                }
+
+                if (role === "GST") {
+                  return `Access restricted: GST users can only book on Thursday, Friday${
+                    !isOddWeek ? ", and Wednesday (this week)" : ""
+                  }. If you need to book on other days, you can book after 7 AM.`;
+                }
+
+                return "Access restricted: Please log in or check your role.";
+              })()}
             </Alert>
           )}
 
