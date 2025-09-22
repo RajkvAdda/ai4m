@@ -10,7 +10,7 @@ import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/rooms" });
+    signIn("google", { callbackUrl: "/" });
   };
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
