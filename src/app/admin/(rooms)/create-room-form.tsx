@@ -33,17 +33,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { IRoom } from "@/modals/(Room)/Room";
+import { IRoom, RoomType, roomTypeEnum } from "@/modals/(Room)/Room";
 
-const roomZodSchema = z.object({
+export const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  type: z.enum(["table", "row", "free_area"]),
-  units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
-  roomsPerUnit: z.coerce
+  type: z.enum(Object.keys(roomTypeEnum) as RoomType[]),
+  minBookingTime: z.coerce
     .number()
     .int()
-    .min(1, "Must have at least 1 room per unit"),
+    .min(30, "Must be at least 30 minutes"),
+  startTime: z.coerce
+    .number()
+    .int()
+    .min(8 * 60, "Must start at least 8:00 AM"),
+  endTime: z.coerce
+    .number()
+    .int()
+    .max(20 * 60, "Must end at most 8:00 PM"),
 });
 
 export default function CreateRoomForm({
@@ -63,14 +70,17 @@ export default function CreateRoomForm({
           name: room.name,
           type: room.type,
           description: room.description,
-          units: room.units,
-          roomsPerUnit: room.roomsPerUnit,
+          minBookingTime: room.minBookingTime,
+          startTime: room.startTime,
+          endTime: room.endTime,
         }
       : {
           name: "",
-          type: "table",
-          units: 1,
-          roomsPerUnit: 1,
+          type: room?.type || roomTypeEnum.open_room,
+          description: "",
+          minBookingTime: 30,
+          startTime: 8 * 60,
+          endTime: 20 * 60,
         },
   });
 
@@ -203,39 +213,14 @@ export default function CreateRoomForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Room Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a room type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="table">Table</SelectItem>
-                      <SelectItem value="row">Row</SelectItem>
-                      <SelectItem value="free_area">Free Area</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="units"
+                name="minBookingTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Units</FormLabel>
+                    <FormLabel>Min Booking Time</FormLabel>
                     <FormControl>
                       <Input type="number" min="1" {...field} />
                     </FormControl>
@@ -246,14 +231,27 @@ export default function CreateRoomForm({
 
               <FormField
                 control={form.control}
-                name="roomsPerUnit"
+                name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Rooms/Unit</FormLabel>
+                    <FormLabel>Start Time</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" {...field} />
+                      <Input type="number" min="0" max="24" {...field} />
+                      <FormMessage />
                     </FormControl>
-                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" max="24" {...field} />
+                      <FormMessage />
+                    </FormControl>
                   </FormItem>
                 )}
               />

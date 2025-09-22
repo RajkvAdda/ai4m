@@ -7,24 +7,29 @@ export type TRoomBookingStatus =
   | "booked_by_admin"
   | "cancelled_by_admin"
   | "not_came";
+
+export type TRoomBookingPriority = "high" | "medium" | "low";
 export interface IRoomBooking extends Document {
   roomId: string;
-  roomNumber: number;
   userId: string;
   userName: string;
   avator: string;
-  startDate: string;
-  endDate: string;
+  date: string;
+  startTime: string;
+  endTime: TRoomBookingStatus;
+  remarks: string;
   status: TRoomBookingStatus;
+  priority: TRoomBookingPriority;
 }
 export const RoomBookingSchema: Schema = new Schema({
   roomId: { type: String, required: true },
-  roomNumber: { type: Number, required: true },
   userId: { type: String, required: true },
   userName: { type: String, required: true },
   avator: { type: String },
-  startDate: { type: String, required: true },
-  endDate: { type: String, required: true },
+  date: { type: String, required: true },
+  startTime: { type: String, required: true },
+  endTime: { type: String, required: true },
+  remarks: { type: String },
   status: {
     type: String,
     enum: [
@@ -36,6 +41,11 @@ export const RoomBookingSchema: Schema = new Schema({
     ],
     required: true,
   },
+  priority: {
+    type: String,
+    enum: ["high", "medium", "low"],
+    required: true,
+  },
 });
 
 export const RoomBooking: Model<IRoomBooking> =
@@ -45,16 +55,15 @@ export const RoomBooking: Model<IRoomBooking> =
 // Zod schema for validation
 export const RoomBookingZodSchema = z.object({
   roomId: z.string(),
-  roomNumber: z.number(),
   userId: z.string(),
   userName: z.string(),
   avator: z.any(),
-  startDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid start date format",
+  date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format",
   }),
-  endDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Invalid end date format",
-  }),
+  startTime: z.string(),
+  endTime: z.string(),
+  remarks: z.string().optional(),
   status: z
     .enum([
       "booked",
@@ -64,4 +73,5 @@ export const RoomBookingZodSchema = z.object({
       "not_came",
     ])
     .default("booked"),
+  priority: z.enum(["high", "medium", "low"]).default("medium"),
 });

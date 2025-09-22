@@ -2,32 +2,38 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 import { z } from "zod";
 
 export const roomTypeEnum = {
-  table: "table",
-  row: "row",
-  free_area: "free_area",
+  open_room: "open_room",
+  table_room: "table_room",
 };
 
-export type RoomType = "table" | "row" | "free_area";
+export type RoomType = keyof typeof roomTypeEnum;
 
 export interface IRoom extends Document {
   _id: string;
   name: string;
   description: string;
   type: RoomType;
-  units: number;
-  roomsPerUnit: number;
-  totalCapacity?: number;
+  minBookingTime: number;
+  startTime: number;
+  endTime: number;
 }
 
 export const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  type: z.enum(["table", "row", "free_area"]),
-  units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
-  roomsPerUnit: z.coerce
+  type: z.enum(Object.keys(roomTypeEnum) as RoomType[]),
+  minBookingTime: z.coerce
     .number()
     .int()
-    .min(1, "Must have at least 1 room per unit"),
+    .min(30, "Must be at least 30 minutes"),
+  startTime: z.coerce
+    .number()
+    .int()
+    .min(8 * 60, "Must start at least 8:00 AM"),
+  endTime: z.coerce
+    .number()
+    .int()
+    .max(20 * 60, "Must end at most 8:00 PM"),
 });
 
 const RoomSchema: Schema = new Schema(
@@ -36,18 +42,15 @@ const RoomSchema: Schema = new Schema(
     description: { type: String, required: true, minlength: 10 },
     type: {
       type: String,
-      enum: ["table", "row", "free_area"],
+      enum: Object.keys(roomTypeEnum) as RoomType[],
       required: true,
     },
-    units: { type: Number, required: true, min: 1 },
-    roomsPerUnit: { type: Number, required: true, min: 1 },
+    minBookingTime: { type: Number, required: true, min: 30 },
+    startTime: { type: Number, required: true, min: 8 * 60 },
+    endTime: { type: Number, required: true, max: 20 * 60 },
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
-
-RoomSchema.virtual("totalCapacity").get(function (this: IRoom) {
-  return this.units * this.roomsPerUnit;
-});
 
 export const Room: Model<IRoom> =
   mongoose.models.Room || mongoose.model<IRoom>("Room", RoomSchema);
