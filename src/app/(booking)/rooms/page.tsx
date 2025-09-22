@@ -171,10 +171,10 @@ export default function Rooms() {
     const isOddWeek = week % 2 === 1;
 
     const allowedDays: Record<string, string[]> = {
-      SPP: isOddWeek
+      SPP: !isOddWeek
         ? ["Monday", "Tuesday", "Wednesday"]
         : ["Monday", "Tuesday"],
-      GST: !isOddWeek
+      GST: isOddWeek
         ? ["Wednesday", "Thursday", "Friday"]
         : ["Thursday", "Friday"],
       User: [...dayNames],
@@ -296,13 +296,13 @@ export default function Rooms() {
 
                 if (role === "SPP") {
                   return `Access restricted: SPP users can only book on Monday, Tuesday${
-                    isOddWeek ? ", and Wednesday (this week)" : ""
+                    !isOddWeek ? ", and Wednesday (this week)" : ""
                   }. If you need to book on other days, you can book after 7 AM.`;
                 }
 
                 if (role === "GST") {
                   return `Access restricted: GST users can only book on Thursday, Friday${
-                    !isOddWeek ? ", and Wednesday (this week)" : ""
+                    isOddWeek ? ", and Wednesday (this week)" : ""
                   }. If you need to book on other days, you can book after 7 AM.`;
                 }
 
