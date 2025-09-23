@@ -33,7 +33,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { IRoom, roomTypeEnum, roomZodSchema } from "@/types/room";
+import { IRoom, roomTypeEnum, roomZodSchema, timeOptions } from "@/types/room";
 
 export default function CreateRoomForm({
   room,
@@ -58,11 +58,11 @@ export default function CreateRoomForm({
         }
       : {
           name: "",
-          type: room?.type || roomTypeEnum.open_room,
+          type: roomTypeEnum.open_room,
           description: "",
-          minBookingTime: 30,
-          startTime: 8 * 60,
-          endTime: 20 * 60,
+          minBookingTime: "30",
+          startTime: "09:00",
+          endTime: "20:00",
         },
   });
 
@@ -170,42 +170,58 @@ export default function CreateRoomForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Room Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a room type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="table">Table</SelectItem>
-                      <SelectItem value="row">Row</SelectItem>
-                      <SelectItem value="free_area">Free Area</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Room Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a room type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.keys(roomTypeEnum).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type.replace("_", " ").toUpperCase()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="minBookingTime"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Min Booking Time</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="1" {...field} />
-                    </FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Min Booking Time" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {timeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -218,8 +234,7 @@ export default function CreateRoomForm({
                   <FormItem>
                     <FormLabel>Start Time</FormLabel>
                     <FormControl>
-                      <Input type="number" min="0" max="24" {...field} />
-                      <FormMessage />
+                      <Input type="time" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -231,8 +246,7 @@ export default function CreateRoomForm({
                   <FormItem>
                     <FormLabel>End Time</FormLabel>
                     <FormControl>
-                      <Input type="number" min="0" max="24" {...field} />
-                      <FormMessage />
+                      <Input type="time" {...field} />
                     </FormControl>
                   </FormItem>
                 )}

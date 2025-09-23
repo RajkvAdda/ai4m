@@ -11,9 +11,13 @@ const RoomSchema: Schema = new Schema(
       enum: Object.keys(roomTypeEnum) as RoomType[],
       required: true,
     },
-    minBookingTime: { type: Number, required: true, min: 30 },
-    startTime: { type: Number, required: true, min: 8 * 60 },
-    endTime: { type: Number, required: true, max: 20 * 60 },
+    minBookingTime: {
+      type: String,
+      enum: ["30", "60", "90", "120", "150", "180"],
+      required: true,
+    },
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true },
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

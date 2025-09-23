@@ -5,6 +5,14 @@ export const roomTypeEnum = {
   table_room: "table_room",
 };
 
+export const timeOptions = [
+  { value: "30", label: "30 Minutes" },
+  { value: "60", label: "1 Hour" },
+  { value: "90", label: "1 Hour 30 Minutes" },
+  { value: "120", label: "2 Hours" },
+  { value: "150", label: "2 Hours 30 Minutes" },
+  { value: "180", label: "3 Hours" },
+];
 export type RoomType = keyof typeof roomTypeEnum;
 
 export type IRoom = {
@@ -12,27 +20,28 @@ export type IRoom = {
   name: string;
   description: string;
   type: RoomType;
-  minBookingTime: number;
-  startTime: number;
-  endTime: number;
+  minBookingTime: string;
+  startTime: string;
+  endTime: string;
 };
 
 export const roomZodSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   type: z.enum(Object.keys(roomTypeEnum) as RoomType[]),
-  minBookingTime: z.coerce
-    .number()
-    .int()
-    .min(30, "Must be at least 30 minutes"),
-  startTime: z.coerce
-    .number()
-    .int()
-    .min(8 * 60, "Must start at least 8:00 AM"),
-  endTime: z.coerce
-    .number()
-    .int()
-    .max(20 * 60, "Must end at most 8:00 PM"),
+  minBookingTime: z.enum(timeOptions.map((item) => item.value)).default("30"),
+  startTime: z
+    .string()
+    .refine((time) => /^([01]\d|2[0-3]):([0-5]\d)$/.test(time), {
+      message: "Invalid time format. Use HH:MM (24-hour format)",
+    })
+    .default("09:00"),
+  endTime: z
+    .string()
+    .refine((time) => /^([01]\d|2[0-3]):([0-5]\d)$/.test(time), {
+      message: "Invalid time format. Use HH:MM (24-hour format)",
+    })
+    .default("20:00"),
 });
 
 export const RoomBookingZodSchema = z.object({

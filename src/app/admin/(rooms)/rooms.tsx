@@ -45,7 +45,11 @@ export default function Rooms({
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Capacity</TableHead>
+                    <TableHead className="text-right">
+                      Min Booking Time
+                    </TableHead>
+                    <TableHead className="text-right">Start Time</TableHead>
+                    <TableHead className="text-right">End Time</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -64,7 +68,13 @@ export default function Rooms({
                         <Badge variant="secondary">{room.type}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {room?.totalCapacity}
+                        {room?.minBookingTime}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {room?.startTime}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {room?.endTime}
                       </TableCell>
                       <TableCell className="text-right">
                         {/* <IconButton
