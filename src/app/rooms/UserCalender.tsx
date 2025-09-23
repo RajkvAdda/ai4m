@@ -74,7 +74,7 @@ export default function UserCalender({
         <div className="grid auto-rows-min gap-4 grid-cols-3 md:grid-cols-10">
           {days.map((day, i) => {
             const dayBooking = bookings?.find(
-              (b) => b.startDate === getDateFormat(day)
+              (b) => b.date === getDateFormat(day)
             );
             const room = rooms?.find((r) => r.id === dayBooking?.roomId);
             if (dayBooking && room) {
@@ -87,7 +87,7 @@ export default function UserCalender({
                     <div className="whitespace-nowrap mr-2 font-bold">
                       {getDateFormat(day, "EEE d")}
                     </div>
-                    {`${room.name} Seat(${dayBooking.seatNumber})`}
+                    {`${room.name} slot(${dayBooking.startTime} - ${dayBooking.endTime})`}
                   </div>
                 </div>
               );
