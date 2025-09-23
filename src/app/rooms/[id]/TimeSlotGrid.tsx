@@ -1,12 +1,17 @@
 import React, { useEffect, useRef } from "react";
 import { useMemo } from "react";
-import { generateColorFromId } from "@/lib/utils";
+import { cn, generateColorFromId } from "@/lib/utils";
 import { formatTime, minutesToTime, timeToMinutes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { TicketMinus } from "lucide-react";
+import { ClosedCaption, TicketMinus, XIcon } from "lucide-react";
 import { IRoom, IRoomBooking } from "@/types/room";
 import { IUser } from "@/types/user";
 import { H4 } from "@/components/ui/typography";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const getPriorityColor = (priority: string) => {
   switch (priority) {
@@ -30,6 +35,7 @@ export const TimeSlotGrid = ({
   allUsers,
   currentUser,
   onDeleteBooking,
+  loading,
 }: {
   room: IRoom;
   dailyBookings: IRoomBooking[];
@@ -38,6 +44,7 @@ export const TimeSlotGrid = ({
   selectedDate: string;
   allUsers: IUser[];
   currentUser: IUser;
+  loading: boolean;
   onDeleteBooking: (bookingId: string) => void;
 }) => {
   const gridRef = useRef(null);
@@ -133,20 +140,12 @@ export const TimeSlotGrid = ({
 
     onSlotSelect(slot.time);
   };
-
+  console.log("displaySlots", displaySlots);
   return (
     <div className="grid gap-4">
       <H4>Available Slots</H4>
       <div className="grid grid-cols-6 gap-4" ref={gridRef}>
         {displaySlots.map((slot) => {
-          let statusClass = `slot-${slot.status}`;
-          if (selectedSlots.includes(slot.time)) {
-            statusClass = "slot-selected";
-          }
-          if (slot.status === "expired") {
-            statusClass = "slot-booked";
-          }
-
           let tooltip = "";
           let slotStyle = {};
           const bookingUser = slot.booking
@@ -175,30 +174,27 @@ export const TimeSlotGrid = ({
 
           const content =
             slot.status === "booked" && bookingUser ? (
-              <div className="merged-slot">
-                <div className="d-flex justify-content-between align-items-start w-100">
-                  <div>
-                    <strong>{bookingUser.name}</strong>
-                    <br />
-                    <small>
-                      {formatTime(slot.booking.startTime)} -{" "}
-                      {formatTime(slot.booking.endTime)}
-                    </small>
-                  </div>
-                  {currentUser && currentUser.id === bookingUser.id && (
-                    <Button
-                      variant="link"
-                      className="text-danger p-0 delete-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteBooking(slot.booking.bookingId);
-                      }}
-                      title="Cancel this booking"
-                    >
-                      <TicketMinus />
-                    </Button>
-                  )}
+              <div>
+                <div>
+                  <strong>{bookingUser.name}</strong>
+                  <br />
+                  <small>
+                    {formatTime(slot.booking.startTime)} -{" "}
+                    {formatTime(slot.booking.endTime)}
+                  </small>
                 </div>
+                {currentUser && currentUser.id === bookingUser.id && (
+                  <div
+                    className="absolute top-0 right-0 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-colors duration-200 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteBooking(slot.booking.bookingId);
+                    }}
+                    title="Cancel this booking"
+                  >
+                    <XIcon size={16} color="red" />
+                  </div>
+                )}
               </div>
             ) : (
               formatTime(slot.time)
@@ -207,19 +203,33 @@ export const TimeSlotGrid = ({
           return isBookedOrExpired ? (
             <div
               key={slot.time}
-              className={`h-fit min-h-[70px] text-center border-2 flex items-center justify-center rounded-lg `}
+              className={cn(
+                `group h-full min-h-[70px] text-center border-2 flex items-center justify-center rounded-lg relative`,
+                loading && "cursor-not-allowed animate-caret-blink"
+              )}
               data-bs-toggle="tooltip"
               data-bs-placement="top"
               data-bs-custom-class="custom-tooltip"
               data-bs-title={slot.booking?.remarks || "Slot Has Expired"}
               style={{ gridColumn: `span ${slot.span || 1}`, ...slotStyle }}
             >
-              {content}
+              <Tooltip>
+                <TooltipTrigger>{content}</TooltipTrigger>
+                <TooltipContent>
+                  <p>{tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           ) : (
             <div
               key={slot.time}
-              className={`h-fit min-h-[70px] text-center border-2 bg-slate-100 hover:bg-slate-200 cursor-pointer flex items-center justify-center rounded-lg `}
+              className={cn(
+                `h-full min-h-[70px] text-center border-2 border-green-200 bg-green-50  cursor-pointer flex items-center justify-center rounded-lg`,
+                selectedSlots.includes(slot.time)
+                  ? "bg-green-200 "
+                  : "hover:bg-green-100",
+                loading && "cursor-not-allowed animate-caret-blink"
+              )}
               onClick={() => handleSlotClick(slot)}
               // data-bs-toggle="tooltip"
               // data-bs-placement="top"
@@ -227,7 +237,12 @@ export const TimeSlotGrid = ({
               // data-bs-title={tooltip}
               style={{ gridColumn: `span ${slot.span || 1}`, ...slotStyle }}
             >
-              {content}
+              <Tooltip>
+                <TooltipTrigger>{content}</TooltipTrigger>
+                <TooltipContent>
+                  <p>{tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           );
         })}

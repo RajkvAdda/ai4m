@@ -134,5 +134,5 @@ export const generateColorFromId = (id: string) => {
     hash = id.charCodeAt(i) + ((hash << 5) - hash);
   }
   const h = hash % 360;
-  return `hsl(${h}, 70%, 80%)`;
+  return `hsl(${h}, 70%, 85%)`;
 };
