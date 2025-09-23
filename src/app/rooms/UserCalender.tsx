@@ -38,7 +38,7 @@ export default function UserCalender({
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/bookings?userId=${userId}&fromDate=${fromDate}&toDate=${toDate}`
+          `/api/roombookings?userId=${userId}&fromDate=${fromDate}&toDate=${toDate}`
         );
         const data = await res.json();
         setBookings(data);

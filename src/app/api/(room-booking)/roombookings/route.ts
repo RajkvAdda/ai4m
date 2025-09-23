@@ -14,6 +14,10 @@ export async function GET(request: Request) {
     if (roomId) query.roomId = roomId;
     if (date) query.date = date;
     if (searchParams.get("userId")) query.userId = searchParams.get("userId");
+    if (searchParams.get("fromDate") && searchParams.get("toDate")) {
+      query.date = { $gte: searchParams.get("fromDate") };
+      query.date = { $lte: searchParams.get("toDate") };
+    }
 
     const roomBookings = await RoomBooking.find(query).exec();
     return NextResponse.json(roomBookings);
