@@ -9,7 +9,7 @@ export const seatTypeEnum = {
 export type SeatType = "table" | "row" | "free_area";
 
 export type ISeat = {
-  _id: string;
+  _id: string | any;
   name: string;
   description: string;
   type: SeatType;

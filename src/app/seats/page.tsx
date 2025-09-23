@@ -92,9 +92,10 @@ function SeatCard({
         >
           <Link
             href={
-              selectedDate && isAccessAllowed
-                ? `/seats/${seat._id}?date=${selectedDate}`
-                : "#"
+              // selectedDate && isAccessAllowed
+              //   ?
+              `/seats/${seat._id}?date=${selectedDate}`
+              // : "#"
             }
           >
             View & Book <ArrowRight className="ml-2 h-4 w-4" />
@@ -234,7 +235,7 @@ export default function Seats() {
     if (selectedDate) {
       const fetchBookings = async () => {
         try {
-          const res = await fetch(`/api/bookings?date=${selectedDate}`);
+          const res = await fetch(`/api/seatbookings?date=${selectedDate}`);
           if (!res.ok) {
             throw new Error("Failed to fetch bookings");
           }
@@ -292,7 +293,7 @@ export default function Seats() {
         </div>
       ) : (
         <>
-          {!isAccessAllowed() && session?.user?.id && (
+          {/* {!isAccessAllowed() && session?.user?.id && (
             <Alert className="mb-8 border-yellow-500 text-yellow-500">
               {(() => {
                 const week = getWeekNumber(new Date(selectedDate));
@@ -313,7 +314,7 @@ export default function Seats() {
                 return "Access restricted: Please log in or check your role.";
               })()}
             </Alert>
-          )}
+          )} */}
 
           {loading ? (
             <div className="flex items-center justify-center mt-10 p-10">

@@ -14,9 +14,10 @@ import Seats from "./(seats)/seats";
 import { IRoom } from "@/types/room";
 import { ISeat } from "@/types/seat";
 import { IUser } from "@/types/user";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminPage() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = React.useState("Dashboard");
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [seats, setSeats] = useState<ISeat[]>([]);
@@ -109,12 +110,20 @@ export default function AdminPage() {
       const res = await fetch(`/api/rooms/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
-        toast.success(data.message);
+        toast({
+          title: "Room Deleted",
+          description: data.message,
+          variant: "destructive",
+        });
         setRooms((prev) =>
           prev.filter((room) => room._id !== id && room.id !== id)
         );
       } else {
-        toast.error(data.error || "Failed to delete room");
+        toast({
+          title: "Failed to delete room",
+          description: data.message,
+          variant: "destructive",
+        });
       }
     } catch (_err) {
       toast.error("Error deleting room");

@@ -41,10 +41,10 @@ import { Flex } from "@/components/ui/flex";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function BookingClient({
-  room,
+  seatDetails,
   date,
 }: {
-  room: ISeat;
+  seatDetails: ISeat;
   date: string;
 }) {
   const { data: session } = useSession();
@@ -57,19 +57,19 @@ export default function BookingClient({
   // Booked seats state (should be fetched from API)
   const [bookedSeats, setBookedSeats] = useState<ISeatBooking[]>([]);
 
-  // Fetch booked seats for this room
+  // Fetch booked seats for this seat
   const fetchBookings = async () => {
     try {
       setLoading(true);
       setexistingBooking(null);
-      const res = await fetch(`/api/bookings?date=${selectedDate}`);
+      const res = await fetch(`/api/seatbookings?date=${selectedDate}`);
       const bookings: ISeatBooking[] = await res.json();
       const booked: ISeatBooking[] = [];
       bookings.forEach((b) => {
         if (b?.userId == session?.user?.id) {
           setexistingBooking((b?._id as string) || "");
         }
-        if (b?.roomId == room?.id) booked.push(b);
+        if (b?.seatId == seatDetails?.id) booked.push(b);
       });
       setBookedSeats(booked);
     } catch {
@@ -80,16 +80,16 @@ export default function BookingClient({
   };
 
   useEffect(() => {
-    if (room.id && selectedDate) fetchBookings();
+    if (seatDetails.id && selectedDate) fetchBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room.id, selectedDate, session?.user?.id]);
+  }, [seatDetails.id, selectedDate, session?.user?.id]);
 
   async function deleteBooking(id: string | null) {
     if (!id) {
       alert("invalid Id");
       return;
     }
-    return await fetch(`/api/bookings/${id}`, {
+    return await fetch(`/api/seatbookings/${id}`, {
       method: "DELETE",
     });
   }
@@ -110,13 +110,13 @@ export default function BookingClient({
       if (existingBooking) {
         await deleteBooking(existingBooking);
       }
-
+      console.log("seat.id", seat);
       // 3. Add new booking
-      const res = await fetch(`/api/bookings`, {
+      const res = await fetch(`/api/seatbookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          roomId: room.id,
+          seatId: seatDetails.id,
           seatNumber: seat,
           userId: session?.user?.id,
           userName: session?.user?.name,
@@ -197,7 +197,7 @@ export default function BookingClient({
         <div className="p-8 border-2 border-dashed rounded-lg bg-muted/20">
           <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 md:gap-8 gap-4 items-center justify-center">
             {Array.from(
-              { length: room.totalCapacity || 0 },
+              { length: seatDetails.totalCapacity || 0 },
               (_, i) => i + 1
             ).map((seatNumber) => {
               const isBooked =

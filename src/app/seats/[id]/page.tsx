@@ -35,7 +35,7 @@ export default async function SeatDetailsPage({
   if (!seat) {
     notFound();
   }
-  console.log("ej-date", sp?.date);
+  console.log("ej-date", seat, sp?.date);
   return <SeatDetails seat={seat} date={sp?.date as string} />;
 }
 
@@ -67,7 +67,7 @@ function SeatDetails({ seat, date }: { seat: ISeat; date: string }) {
         <BackButton />
       </Alert>
 
-      <BookingClient seat={seat} date={date} />
+      <BookingClient seatDetails={seat} date={date} />
     </div>
   );
 }
