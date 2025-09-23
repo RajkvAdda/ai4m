@@ -9,48 +9,35 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { BackButton, Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
+import { Users, ArrowRight, TableRowsSplit } from "lucide-react";
 import { useEffect, useState } from "react";
 import { IRoom, RoomType, IRoomBooking } from "@/types/room";
-import { getTodayOrNextDate } from "@/lib/utils";
+import { formatTime, getTodayOrNextDate } from "@/lib/utils";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import UserCalender from "./UserCalender";
 import UserAvator from "@/components/user-avator";
 import { useSession } from "next-auth/react";
-import { IUser } from "../users/[id]/page";
 import { Flex } from "@/components/ui/flex";
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
-  table: <TableRowsSplit className="h-6 w-6" />,
-  row: <Rows className="h-6 w-6" />,
-  free_area: <Users className="h-6 w-6" />,
+  open_room: <Users className="h-6 w-6" />,
+  table_room: <TableRowsSplit className="h-6 w-6" />,
 };
 
 const roomDescriptions: Record<RoomType, string> = {
-  table: "Group tables for collaboration",
-  row: "Individual row-style seating",
-  free_area: "Open area for flexible work",
+  open_room: "Open room for flexible work",
+  table_room: "Group tables for collaboration",
 };
 
 function RoomCard({
   room,
   selectedDate,
-  bookingCount,
-  isAccessAllowed,
 }: {
   room: IRoom;
   selectedDate: string;
-  bookingCount: number;
-  isAccessAllowed: boolean;
 }) {
-  const totalCapacity = room.totalCapacity || 0;
-  const availableSeats = totalCapacity - bookingCount;
-  const progressValue =
-    totalCapacity > 0 ? (availableSeats / totalCapacity) * 100 : 0;
-
   return (
     <Card className="flex flex-col transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300">
       <CardHeader>
@@ -66,37 +53,18 @@ function RoomCard({
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="space-y-2">
-          <div className="flex justify-between items-baseline">
-            <p className="text-sm font-medium text-muted-foreground">
-              Availability
-            </p>
-            <p className="text-lg font-semibold">
-              {availableSeats}
-              <span className="text-sm font-normal text-muted-foreground">
-                /{totalCapacity} Seats
-              </span>
-            </p>
-          </div>
-          <Progress
-            value={progressValue}
-            aria-label={`${availableSeats} of ${totalCapacity} seats available`}
-          />
+          <p className="small mb-1">
+            <strong>Operating Hours:</strong> {formatTime(room.startTime)} -{" "}
+            {formatTime(room.endTime)}
+          </p>
+          <p className="small">
+            <strong>Min. Interval:</strong> {room.minBookingTime} mins
+          </p>
         </div>
       </CardContent>
       <CardFooter>
-        <Button
-          asChild
-          className="w-full"
-          variant="default"
-          disabled={!isAccessAllowed}
-        >
-          <Link
-            href={
-              selectedDate && isAccessAllowed
-                ? `/rooms/${room._id}?date=${selectedDate}`
-                : "#"
-            }
-          >
+        <Button asChild className="w-full" variant="default">
+          <Link href={`/rooms/${room._id}?date=${selectedDate}`}>
             View & Book <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
@@ -106,6 +74,8 @@ function RoomCard({
 }
 
 export default function Rooms() {
+  const { data: session } = useSession();
+
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [selectedDate, setSelectedDate] = useState(getTodayOrNextDate());
   const [bookings, setBookings] = useState<IRoomBooking[]>([]);
@@ -136,7 +106,7 @@ export default function Rooms() {
     if (selectedDate) {
       const fetchBookings = async () => {
         try {
-          const res = await fetch(`/api/bookings?date=${selectedDate}`);
+          const res = await fetch(`/api/roombookings?date=${selectedDate}`);
           if (!res.ok) {
             throw new Error("Failed to fetch bookings");
           }
@@ -181,6 +151,25 @@ export default function Rooms() {
 
       {error && (
         <Alert className="mb-8 border-red-500 text-red-500">{error}</Alert>
+      )}
+      {loading ? (
+        <div className="flex items-center justify-center mt-10 p-10">
+          <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mr-2"></span>
+          <span className="text-lg font-semibold">Loading...</span>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {rooms?.map((room: IRoom) => (
+              <RoomCard
+                key={room._id}
+                room={room}
+                selectedDate={selectedDate}
+              />
+            ))}
+          </div>
+          <UserCalender userId={session?.user?.id} rooms={rooms} />
+        </div>
       )}
     </div>
   );

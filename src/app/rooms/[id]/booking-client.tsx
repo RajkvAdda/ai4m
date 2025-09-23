@@ -1,77 +1,139 @@
 "use client";
-
-import { useState, useEffect, ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { IRoom, IRoomBooking } from "@/types/room";
+import {
+  formatTime,
+  getDateFormat,
+  getTodayDate,
+  minutesToTime,
+  timeToMinutes,
+} from "@/lib/utils";
+import { DateSelector } from "./DateGenerator";
+// import { formatDate } from "date-fns";
+// import { TimeSlotGrid } from "./TimeSlotGrid";
+import { useSession } from "next-auth/react";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
   CardDescription,
   CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  cn,
-  getDateFormat,
-  getIsBeforeDate,
-  getNameFistKey,
-  getTodayOrNextDate,
-} from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
-import { useSession } from "next-auth/react";
-import { IRoom, IRoomBooking } from "@/types/room";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
-import { H4, H5 } from "@/components/ui/typography";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { AlertCircleIcon, Pencil, Trash } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Flex } from "@/components/ui/flex";
+import { Label } from "recharts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircleIcon } from "lucide-react";
+import { TimeSlotGrid } from "./TimeSlotGrid";
+import { se } from "date-fns/locale";
 
-export default function BookingClient({
-  room,
-  date,
-}: {
-  room: IRoom;
-  date: string;
-}) {
+export default function Room({ room }: { room: IRoom }) {
   const { data: session } = useSession();
-  const [selectedDate, setSelectedDate] = useState(date);
-  const [isLoading, setLoading] = useState(true);
-  const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
-  const [isPending, setIsPending] = useState(false);
-  const { toast } = useToast();
-  const [existingBooking, setexistingBooking] = useState<string | null>(null);
-  // Booked seats state (should be fetched from API)
-  const [bookedSeats, setBookedSeats] = useState<IRoomBooking[]>([]);
 
-  // Fetch booked seats for this room
+  const [remarks, setRemarks] = useState("");
+  const [priority, setPriority] = useState("medium");
+  const [isLoading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [allBookings, setAllBookings] = useState([]);
+  const [selectedSlots, setSelectedSlots] = useState([]);
+  const refreshBookings = () => {
+    const storedBookings = JSON.parse(localStorage.getItem("bookings")) || [];
+    setAllBookings(storedBookings);
+  };
+  const handleSlotSelect = (slotTime: string) => {
+    setSelectedSlots((prevSelectedSlots) => {
+      if (prevSelectedSlots.includes(slotTime)) {
+        return prevSelectedSlots.filter((s) => s !== slotTime);
+      } else {
+        return [...prevSelectedSlots, slotTime].sort();
+      }
+    });
+  };
+  const handleDeleteBooking = (bookingIdToDelete: string) => {
+    if (window.confirm("Are you sure you want to cancel this booking?")) {
+      const currentBookings =
+        JSON.parse(localStorage.getItem("bookings")) || [];
+      const updatedBookings = currentBookings.filter(
+        (booking) => booking.bookingId !== bookingIdToDelete
+      );
+      localStorage.setItem("bookings", JSON.stringify(updatedBookings));
+      refreshBookings();
+    }
+  };
+  const mergeContinuousSlots = (slots: string[], interval: number) => {
+    if (slots.length === 0) return [];
+
+    const merged = [];
+    let currentGroup = [slots[0]];
+
+    for (let i = 1; i < slots.length; i++) {
+      const lastSlotInGroup = currentGroup[currentGroup.length - 1];
+      const currentSlot = slots[i];
+
+      const isContinuous =
+        timeToMinutes(currentSlot) ===
+        timeToMinutes(lastSlotInGroup) + interval;
+
+      if (isContinuous) {
+        currentGroup.push(currentSlot);
+      } else {
+        merged.push({
+          startTime: currentGroup[0],
+          endTime: minutesToTime(timeToMinutes(lastSlotInGroup) + interval),
+        });
+        currentGroup = [currentSlot];
+      }
+    }
+
+    merged.push({
+      startTime: currentGroup[0],
+      endTime: minutesToTime(
+        timeToMinutes(currentGroup[currentGroup.length - 1]) + interval
+      ),
+    });
+
+    return merged;
+  };
+  const handleBookingConfirm = (e) => {
+    e.preventDefault();
+    if (!selectedSlots) return;
+    const mergedSlots = mergeContinuousSlots(
+      selectedSlots,
+      parseInt(room.minBookingTime, 10)
+    );
+
+    const newBookings = mergedSlots.map((slotGroup) => ({
+      roomId: roomDetail.id,
+      userId: user.id,
+      date: selectedDate,
+      startTime: slotGroup.startTime,
+      endTime: slotGroup.endTime,
+      remarks: remarks,
+      priority: priority,
+    }));
+
+    const currentBookings = JSON.parse(localStorage.getItem("bookings")) || [];
+    localStorage.setItem(
+      "bookings",
+      JSON.stringify([...currentBookings, ...newBookings])
+    );
+    toast.success("Booking successful!");
+    refreshBookings();
+    setSelectedSlots([]);
+    setRemarks("");
+    setPriority("medium");
+  };
+
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      setexistingBooking(null);
-      const res = await fetch(`/api/bookings?date=${selectedDate}`);
+      const res = await fetch(`/api/roombookings?date=${selectedDate}`);
       const bookings: IRoomBooking[] = await res.json();
       const booked: IRoomBooking[] = [];
       bookings.forEach((b) => {
-        if (b?.userId == session?.user?.id) {
-          setexistingBooking((b?._id as string) || "");
-        }
-        if (b?.roomId == room?.id) booked.push(b);
+        if (b?.roomId == room.id) booked.push(b);
       });
-      setBookedSeats(booked);
+      setAllBookings(booked);
     } catch {
       // Optionally handle error
     } finally {
@@ -81,250 +143,136 @@ export default function BookingClient({
 
   useEffect(() => {
     if (room.id && selectedDate) fetchBookings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room.id, selectedDate, session?.user?.id]);
+  }, [room.id, selectedDate]);
 
-  async function deleteBooking(id: string | null) {
-    if (!id) {
-      alert("invalid Id");
-      return;
-    }
-    return await fetch(`/api/bookings/${id}`, {
-      method: "DELETE",
-    });
-  }
-
-  const handleBooking = async (seat = selectedSeat) => {
-    if (!seat) return;
-    setIsPending(true);
-    try {
-      if (!getIsBeforeDate(getTodayOrNextDate(), selectedDate)) {
-        toast({
-          title: "Invalid Date",
-          description: "You can only book for today or future dates.",
-          variant: "destructive",
-        });
-        setIsPending(false);
-        return;
-      }
-      if (existingBooking) {
-        await deleteBooking(existingBooking);
-      }
-
-      // 3. Add new booking
-      const res = await fetch(`/api/bookings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomId: room.id,
-          seatNumber: seat,
-          userId: session?.user?.id,
-          userName: session?.user?.name,
-          avator: session?.user?.image,
-          startDate: selectedDate,
-          endDate: selectedDate,
-          status: "booked",
-        }),
-      });
-      if (res.ok) {
-        toast({
-          title: "Success!",
-          description: `Seat ${selectedSeat} booked successfully!`,
-          variant: "default",
-        });
-        setSelectedSeat(null);
-        await fetchBookings(); // Refetch bookings after booking
-      } else {
-        toast({
-          title: "Error",
-          description: "Booking failed.",
-          variant: "destructive",
-        });
-      }
-    } catch {
-      toast({
-        title: "Error",
-        description: "Network error.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPending(false);
-    }
+  const handleDateChange = (newDate) => {
+    setSelectedDate(newDate);
+    setSelectedSlots([]);
   };
-  console.log("existingBookings", existingBooking, bookedSeats);
-  // ...existing code...
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader className="flex items-center flex-wrap ">
-        <div>
-          <CardTitle className="font-headline">
-            Select a Seat for{" "}
-            <b>{`(${getDateFormat(selectedDate, "EEE dd MMM, yyyy")})`}</b>
-          </CardTitle>
-          <CardDescription>
-            Click on an available seat to make a reservation.
-          </CardDescription>
-        </div>
-        <div className="flex-1"></div>
-        <Flex className="flex-wrap">
-          <Flex className="gap-1">
-            <Label
-              htmlFor="booking-date"
-              className="mb-1 font-medium whitespace-nowrap"
-            >
-              Date for booking
-            </Label>
-
-            <Input
-              id="booking-date"
-              type="date"
-              className="border rounded px-3 py-2"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              min={getTodayOrNextDate()}
+    <>
+      <Card className="shadow-lg">
+        <CardHeader className="flex items-center flex-wrap ">
+          <DateSelector
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
+          />
+        </CardHeader>
+        <CardContent className="bg-secondary py-6">
+          <div className="grid grid-cols-[3fr_1fr] gap-4">
+            <TimeSlotGrid
+              room={room}
+              dailyBookings={allBookings}
+              onSlotSelect={handleSlotSelect}
+              selectedSlots={selectedSlots}
+              allUsers={[]}
+              selectedDate={selectedDate}
+              currentUser={session?.user}
+              onDeleteBooking={handleDeleteBooking}
             />
-          </Flex>
-          <Button
-            disabled={!selectedSeat || isPending}
-            onClick={() => handleBooking(selectedSeat)}
-          >
-            {isPending ? "Booking..." : `Book Seat ${selectedSeat || ""}`}
-          </Button>
-        </Flex>
-      </CardHeader>
-      <CardContent>
-        <div className="p-8 border-2 border-dashed rounded-lg bg-muted/20">
-          <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 md:gap-8 gap-4 items-center justify-center">
-            {Array.from(
-              { length: room.totalCapacity || 0 },
-              (_, i) => i + 1
-            ).map((seatNumber) => {
-              const isBooked =
-                bookedSeats.find((list) => list?.seatNumber == seatNumber) ||
-                null;
-
-              console.log("rj-isBooked", isBooked);
-              const isSelected = selectedSeat === seatNumber;
-              if (isBooked?._id == existingBooking && existingBooking) {
-                return (
-                  <div
-                    key={seatNumber as number}
-                    className={cn(
-                      "h-full w-full aspect-square overflow-hidden bg-blue-200 text-blue-900 border flex items-center justify-center rounded-lg relative cursor-pointer"
-                    )}
-                    onDoubleClick={async () => {
-                      if (isLoading || isPending) return;
-                      await deleteBooking(existingBooking);
-                      await fetchBookings();
-                    }}
-                  >
-                    <ContextMenu>
-                      <ContextMenuTrigger>
-                        <Avatar color="bg-blue-200">
-                          <AvatarImage
-                            src={isBooked?.avator}
-                            alt={isBooked?.userName}
-                          />
-                          <AvatarFallback className="rounded-lg">
-                            <H5>{getNameFistKey(isBooked?.userName)}</H5>
-                          </AvatarFallback>
-                        </Avatar>
-                      </ContextMenuTrigger>
-                      <ContextMenuContent>
-                        <ContextMenuItem
-                          onClick={async () => {
-                            if (isLoading || isPending) return;
-
-                            await deleteBooking(existingBooking);
-                            await fetchBookings();
-                          }}
-                        >
-                          <Trash size={14} className="mr-2" />
-                          Delete
-                        </ContextMenuItem>
-                        <ContextMenuItem>
-                          <Pencil size={14} className="mr-2" />
-                          Remarks
-                        </ContextMenuItem>
-                      </ContextMenuContent>
-                    </ContextMenu>
+            <div className="bg-background p-4 rounded-lg">
+              <h5>Confirm Your Booking</h5>
+              <p className="text-muted small">
+                You are booking for {selectedDate}
+              </p>
+              {mergeContinuousSlots(
+                selectedSlots,
+                parseInt(room.minBookingTime, 10)
+              ).map((group, index) => (
+                <div className="alert alert-primary" key={index}>
+                  <strong>Slot:</strong> {formatTime(group.startTime)} -{" "}
+                  {formatTime(group.endTime)}
+                </div>
+              ))}{" "}
+              {/* <Form onSubmit={handleBookingConfirm} className="mt-3">
+                <InputField
+                  as="textarea"
+                  label="Remarks (Reason for booking)"
+                  name="remarks"
+                  rows="2"
+                  value={remarks}
+                  onChange={(e, value) => setRemarks(value)}
+                  required
+                />{" "}
+                <div className="mt-3">
+                  <Label>Priority:</Label>
+                  <div className="d-flex gap-3">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="priority"
+                        id="priorityLow"
+                        value="low"
+                        checked={priority === "low"}
+                        onChange={(e) => setPriority(e.target.value)}
+                      />
+                      <label className="form-check-label" htmlFor="priorityLow">
+                        Low
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="priority"
+                        id="priorityMedium"
+                        value="medium"
+                        checked={priority === "medium"}
+                        onChange={(e) => setPriority(e.target.value)}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="priorityMedium"
+                      >
+                        Medium
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="priority"
+                        id="priorityHigh"
+                        value="high"
+                        checked={priority === "high"}
+                        onChange={(e) => setPriority(e.target.value)}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="priorityHigh"
+                      >
+                        High
+                      </label>
+                    </div>
                   </div>
-                );
-              }
-              if (isBooked?._id) {
-                return (
-                  <div
-                    key={seatNumber as number}
-                    className={cn(
-                      "h-full w-full aspect-square overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer"
-                    )}
+                  <Button
+                    type="submit"
+                    className="custom-btn w-100"
+                    disabled={selectedSlots.length <= 0}
                   >
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Avatar color="bg-blue-200">
-                          <AvatarImage
-                            src={isBooked?.avator}
-                            alt={isBooked?.userName}
-                          />
-                          <AvatarFallback className="rounded-lg">
-                            <H5>{getNameFistKey(isBooked?.userName)}</H5>
-                          </AvatarFallback>
-                        </Avatar>
-                      </TooltipTrigger>
-                      <TooltipContent className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-white min-w-5 h-5 flex justify-center items-center px-1 rounded-lg font-mono tabular-nums"
-                        >
-                          {seatNumber as ReactNode}
-                        </Badge>
-                        <p>{isBooked?.userName}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                );
-              }
-              return (
-                <Button
-                  key={seatNumber as number}
-                  variant={isSelected ? "default" : "outline"}
-                  size="icon"
-                  disabled={isLoading || isPending}
-                  className={cn(
-                    "h-full w-full aspect-square text-sm font-semibold transition-all duration-200",
-                    isSelected &&
-                      "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg",
-                    isLoading && "cursor-not-allowed animate-caret-blink"
-                  )}
-                  onClick={() => setSelectedSeat(seatNumber as number)}
-                  onDoubleClick={() => {
-                    if (isLoading || isPending) return;
-
-                    handleBooking(seatNumber as number);
-                  }}
-                  aria-label={`Select seat ${seatNumber}`}
-                >
-                  <H4>{seatNumber as ReactNode}</H4>
-                </Button>
-              );
-            })}
+                    Confirm Booking for this Slot
+                  </Button>
+                </div>
+              </Form> */}
+            </div>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Alert>
-          <AlertCircleIcon />
-          <AlertTitle>Usase Info</AlertTitle>
-          <AlertDescription>
-            <ul className="list-inside list-disc text-sm mt-2">
-              <li>You Can Double Click to Book Your Seat</li>
-              <li>To Delete You Can Duble Click on Your (Booked seat)</li>
-              <li>You can hover on seat and see the booking details</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
-      </CardFooter>
-    </Card>
+        </CardContent>
+        <CardFooter>
+          <Alert>
+            <AlertCircleIcon />
+            <AlertTitle>Usase Info</AlertTitle>
+            <AlertDescription>
+              <ul className="list-inside list-disc text-sm mt-2">
+                <li>You Can Double Click to Book Your Seat</li>
+                <li>To Delete You Can Duble Click on Your (Booked seat)</li>
+                <li>You can hover on seat and see the booking details</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+        </CardFooter>
+      </Card>
+    </>
   );
 }

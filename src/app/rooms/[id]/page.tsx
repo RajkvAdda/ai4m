@@ -2,16 +2,15 @@ import { notFound } from "next/navigation";
 import BookingClient from "./booking-client";
 import { IRoom, RoomType } from "@/types/room";
 import { BackButton } from "@/components/ui/button";
-import { Rows, TableRowsSplit, Users } from "lucide-react";
+import { TableRowsSplit, Users } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { CardDescription, CardTitle } from "@/components/ui/card";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
 const roomIcons: Record<RoomType, React.ReactNode> = {
-  table: <TableRowsSplit className="h-6 w-6" />,
-  row: <Rows className="h-6 w-6" />,
-  free_area: <Users className="h-6 w-6" />,
+  table_room: <TableRowsSplit className="h-6 w-6" />,
+  open_room: <Users className="h-6 w-6" />,
 };
 
 export default async function RoomDetailsPage({
@@ -54,11 +53,11 @@ function RoomDetails({ room, date }: { room: IRoom; date: string }) {
             </CardTitle>
             <CardDescription className="text-base">
               Capacity: {room?.totalCapacity} seats ({room.units}{" "}
-              {room.type === "table"
+              {room.type === "table_room"
                 ? "tables"
-                : room.type === "row"
-                ? "rows"
-                : "areas"}
+                : room.type === "open_room"
+                ? "areas"
+                : "rows"}
               )
             </CardDescription>
           </div>
@@ -67,7 +66,7 @@ function RoomDetails({ room, date }: { room: IRoom; date: string }) {
         <BackButton />
       </Alert>
 
-      <BookingClient room={room} date={date} />
+      <BookingClient room={room} />
     </div>
   );
 }
