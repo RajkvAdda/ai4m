@@ -46,13 +46,32 @@ import { useToast } from "@/hooks/use-toast";
 export default function Room({ room }: { room: IRoom }) {
   const { data: session } = useSession();
   const { toast } = useToast();
-  const [remarks, setRemarks] = useState("");
   const [priority, setPriority] = useState("medium");
   const [isLoading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [allBookings, setAllBookings] = useState([]);
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [users, setUsers] = useState([]);
+
+  const formRef = useRef<HTMLFormElement>(null);
+  const form = useForm<z.infer<typeof RoomBookingZodSchema>>({
+    resolver: zodResolver(RoomBookingZodSchema),
+    defaultValues: {
+      name: "",
+      roomId: room.id,
+      userId: session?.user?.id || "",
+      userName: session?.user?.name || "",
+      avator: session?.user?.image || "",
+      date: selectedDate,
+      startTime: selectedSlots[0] || "",
+      endTime: selectedSlots[selectedSlots.length - 1] || "",
+      remarks: "",
+      priority: "medium",
+    },
+  });
+
+  const remarks = form.watch("remarks");
+
   const fetchBookings = async () => {
     try {
       setLoading(true);
@@ -142,64 +161,53 @@ export default function Room({ room }: { room: IRoom }) {
     );
     let res, data;
     mergedSlots.forEach(async (slotGroup) => {
-      res = await fetch("/api/roombookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomId: room.id,
-          userId: session?.user?.id || "",
-          userName: session?.user?.name || "",
-          avator: session?.user?.image || "",
-          date: selectedDate,
-          startTime: slotGroup.startTime,
-          endTime: slotGroup.endTime,
-          remarks: remarks,
-          priority: priority,
-        }),
-      });
-      data = await res.json();
-      if (res.ok) {
-        toast({
-          title: `Booking Confirmed for ${slotGroup.startTime} - ${slotGroup.endTime}`,
-          description: data.message,
+      try {
+        res = await fetch("/api/roombookings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomId: room.id,
+            userId: session?.user?.id || "",
+            userName: session?.user?.name || "",
+            avator: session?.user?.image || "",
+            date: selectedDate,
+            startTime: slotGroup.startTime,
+            endTime: slotGroup.endTime,
+            remarks: remarks,
+            priority: priority,
+          }),
         });
-        form.reset();
-        setSelectedSlots([]);
-        setRemarks("");
-        setPriority("medium");
-        fetchBookings();
-      } else {
+        data = await res.json();
+        if (res.ok) {
+          toast({
+            title: `Booking Confirmed for ${slotGroup.startTime} - ${slotGroup.endTime}`,
+            description: data.message,
+          });
+          form.reset();
+          setSelectedSlots([]);
+          setPriority("medium");
+          fetchBookings();
+        } else {
+          toast({
+            title: `Booking Failed for ${slotGroup.startTime} - ${slotGroup.endTime}`,
+            description: data.error
+              ? JSON.stringify(data.error)
+              : "Failed to create room.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
         toast({
           title: `Booking Failed for ${slotGroup.startTime} - ${slotGroup.endTime}`,
-          description: data.error
-            ? JSON.stringify(data.error)
-            : "Failed to create room.",
+          description: "Failed to create room.",
           variant: "destructive",
         });
       }
     });
 
     setSelectedSlots([]);
-    setRemarks("");
     setPriority("medium");
   }
-
-  const formRef = useRef<HTMLFormElement>(null);
-  const form = useForm<z.infer<typeof RoomBookingZodSchema>>({
-    resolver: zodResolver(RoomBookingZodSchema),
-    defaultValues: {
-      name: "",
-      roomId: room.id,
-      userId: session?.user?.id || "",
-      userName: session?.user?.name || "",
-      avator: session?.user?.image || "",
-      date: selectedDate,
-      startTime: selectedSlots[0] || "",
-      endTime: selectedSlots[selectedSlots.length - 1] || "",
-      remarks: "",
-      priority: "medium",
-    },
-  });
 
   useEffect(() => {
     if (room.id && selectedDate) {
@@ -295,7 +303,9 @@ export default function Room({ room }: { room: IRoom }) {
                     className="w-full "
                     disabled={form.formState.isSubmitting}
                   >
-                    Confirm Booking
+                    {form.formState.isSubmitting
+                      ? "Booking..."
+                      : "Confirm Booking"}
                   </Button>
                 </form>
               </Form>

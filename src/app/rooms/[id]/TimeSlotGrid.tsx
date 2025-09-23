@@ -1,17 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import { useMemo } from "react";
-import { cn, generateColorFromId } from "@/lib/utils";
+import { cn, generateColorFromId, getNameFistKey } from "@/lib/utils";
 import { formatTime, minutesToTime, timeToMinutes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ClosedCaption, TicketMinus, XIcon } from "lucide-react";
 import { IRoom, IRoomBooking } from "@/types/room";
 import { IUser } from "@/types/user";
-import { H4 } from "@/components/ui/typography";
+import { H4, H5 } from "@/components/ui/typography";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Flex } from "@/components/ui/flex";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarImage } from "@radix-ui/react-avatar";
 
 const getPriorityColor = (priority: string) => {
   switch (priority) {
@@ -167,6 +170,8 @@ export const TimeSlotGrid = ({
               timeToMinutes(slot.time) + parseInt(room.minBookingTime, 10)
             );
             tooltip = `${formatTime(slot.time)} - ${formatTime(endTimeString)}`;
+          } else if (slot.status === "booked" && bookingUser) {
+            tooltip = slot.booking.remarks || "slot has been booked";
           }
 
           const isBookedOrExpired =
@@ -174,14 +179,30 @@ export const TimeSlotGrid = ({
 
           const content =
             slot.status === "booked" && bookingUser ? (
-              <div>
+              <div className="w-full">
                 <div>
-                  <strong>{bookingUser.name}</strong>
-                  <br />
-                  <small>
-                    {formatTime(slot.booking.startTime)} -{" "}
-                    {formatTime(slot.booking.endTime)}
-                  </small>
+                  <Flex>
+                    <Avatar
+                      color="bg-blue-200"
+                      className="h-12 w-12 rounded-lg"
+                    >
+                      <AvatarImage
+                        src={bookingUser.avator}
+                        alt={bookingUser.name}
+                      />
+                      <AvatarFallback className="rounded-lg">
+                        <H5>{getNameFistKey(bookingUser.name)}</H5>
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-left">
+                      <strong>{bookingUser.name}</strong>
+                      <br />
+                      <small>
+                        {formatTime(slot.booking.startTime)} -{" "}
+                        {formatTime(slot.booking.endTime)}
+                      </small>
+                    </div>
+                  </Flex>
                 </div>
                 {currentUser && currentUser.id === bookingUser.id && (
                   <div
@@ -197,15 +218,16 @@ export const TimeSlotGrid = ({
                 )}
               </div>
             ) : (
-              formatTime(slot.time)
+              <div className="text-center">{formatTime(slot.time)}</div>
             );
 
           return isBookedOrExpired ? (
             <div
               key={slot.time}
               className={cn(
-                `group h-full min-h-[70px] text-center border-2 flex items-center justify-center rounded-lg relative`,
-                loading && "cursor-not-allowed animate-caret-blink"
+                `group h-full min-h-[70px] text-center border-2 flex items-center pl-3 rounded-lg relative`,
+                loading && "cursor-not-allowed animate-caret-blink",
+                slot.status === "expired" ? "justify-center" : "justify-start"
               )}
               data-bs-toggle="tooltip"
               data-bs-placement="top"
@@ -214,7 +236,7 @@ export const TimeSlotGrid = ({
               style={{ gridColumn: `span ${slot.span || 1}`, ...slotStyle }}
             >
               <Tooltip>
-                <TooltipTrigger>{content}</TooltipTrigger>
+                <TooltipTrigger asChild>{content}</TooltipTrigger>
                 <TooltipContent>
                   <p>{tooltip}</p>
                 </TooltipContent>
@@ -238,7 +260,7 @@ export const TimeSlotGrid = ({
               style={{ gridColumn: `span ${slot.span || 1}`, ...slotStyle }}
             >
               <Tooltip>
-                <TooltipTrigger>{content}</TooltipTrigger>
+                <TooltipTrigger asChild>{content}</TooltipTrigger>
                 <TooltipContent>
                   <p>{tooltip}</p>
                 </TooltipContent>
