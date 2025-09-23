@@ -4,26 +4,22 @@ import React, { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { IRoom } from "@/modals/(Room)/Room";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Rooms from "./(rooms)/rooms";
 import Users from "./users";
-import { IUser } from "../users/[id]/page";
 import SeatDashboard from "./(seats)/seat-dashboard";
 import RoomDashboard from "./(rooms)/room-dashboard";
 import { getMonthFormat, getPreviousAndNextMonths } from "@/lib/utils";
 import Seats from "./(seats)/seats";
-import { ISeatBooking } from "@/modals/(Seat)/SeatBooking";
-import { ISeat } from "@/modals/(Seat)/Seat";
-import { IRoomBooking } from "@/modals/(Room)/RoomBooking";
+import { IRoom } from "@/types/room";
+import { ISeat } from "@/types/seat";
+import { IUser } from "@/types/user";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = React.useState("Dashboard");
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [seats, setSeats] = useState<ISeat[]>([]);
   const [users, setUsers] = useState<IUser[]>([]);
-  const [seatBookings, setSeatBookings] = useState<ISeatBooking[]>([]);
-  const [roomBookings, setRoomBookings] = useState<IRoomBooking[]>([]);
 
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -64,36 +60,36 @@ export default function AdminPage() {
       setLoading(false);
     }
   }
-  async function fetchRoomBookings() {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/roombookings");
-      const data = await res.json();
-      setRoomBookings(data);
-    } catch (_err) {
-      // Optionally handle error
-    } finally {
-      setLoading(false);
-    }
-  }
-  async function fetchSeatBookings() {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/seatbookings");
-      const data = await res.json();
-      setSeatBookings(data);
-    } catch (_err) {
-      // Optionally handle error
-    } finally {
-      setLoading(false);
-    }
-  }
+  // async function fetchRoomBookings() {
+  //   try {
+  //     setLoading(true);
+  //     const res = await fetch("/api/roombookings");
+  //     const data = await res.json();
+  //     setRoomBookings(data);
+  //   } catch (_err) {
+  //     // Optionally handle error
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+  // async function fetchSeatBookings() {
+  //   try {
+  //     setLoading(true);
+  //     const res = await fetch("/api/seatbookings");
+  //     const data = await res.json();
+  //     setSeatBookings(data);
+  //   } catch (_err) {
+  //     // Optionally handle error
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
   useEffect(() => {
     fetchUsers();
     fetchRooms();
     fetchSeats();
-    fetchRoomBookings();
-    fetchSeatBookings();
+    // fetchRoomBookings();
+    // fetchSeatBookings();
   }, []);
 
   useEffect(() => {

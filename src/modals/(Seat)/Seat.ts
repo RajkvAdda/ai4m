@@ -1,34 +1,5 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
-import { z } from "zod";
-
-export const seatTypeEnum = {
-  table: "table",
-  row: "row",
-  free_area: "free_area",
-};
-
-export type SeatType = "table" | "row" | "free_area";
-
-export interface ISeat extends Document {
-  _id: string;
-  name: string;
-  description: string;
-  type: SeatType;
-  units: number;
-  seatsPerUnit: number;
-  totalCapacity?: number;
-}
-
-export const seatZodSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  type: z.enum(["table", "row", "free_area"]),
-  units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
-  seatsPerUnit: z.coerce
-    .number()
-    .int()
-    .min(1, "Must have at least 1 seat per unit"),
-});
+import { ISeat } from "@/types/seat";
+import mongoose, { Schema, Model } from "mongoose";
 
 const SeatSchema: Schema = new Schema(
   {

@@ -19,8 +19,7 @@ import {
 } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
-import { IBooking } from "@/modals/Booking";
-import { IRoom } from "@/modals/(Seat)/Room";
+import { ISeat, ISeatBooking } from "@/types/seat";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { H4, H5 } from "@/components/ui/typography";
 import {
@@ -45,7 +44,7 @@ export default function BookingClient({
   room,
   date,
 }: {
-  room: IRoom;
+  room: ISeat;
   date: string;
 }) {
   const { data: session } = useSession();
@@ -56,7 +55,7 @@ export default function BookingClient({
   const { toast } = useToast();
   const [existingBooking, setexistingBooking] = useState<string | null>(null);
   // Booked seats state (should be fetched from API)
-  const [bookedSeats, setBookedSeats] = useState<IBooking[]>([]);
+  const [bookedSeats, setBookedSeats] = useState<ISeatBooking[]>([]);
 
   // Fetch booked seats for this room
   const fetchBookings = async () => {
@@ -64,8 +63,8 @@ export default function BookingClient({
       setLoading(true);
       setexistingBooking(null);
       const res = await fetch(`/api/bookings?date=${selectedDate}`);
-      const bookings: IBooking[] = await res.json();
-      const booked: IBooking[] = [];
+      const bookings: ISeatBooking[] = await res.json();
+      const booked: ISeatBooking[] = [];
       bookings.forEach((b) => {
         if (b?.userId == session?.user?.id) {
           setexistingBooking((b?._id as string) || "");

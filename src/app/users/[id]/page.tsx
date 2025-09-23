@@ -1,8 +1,8 @@
 "use client";
 
-import {useEffect, useState, Suspense, use} from "react";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
+import { useEffect, useState, Suspense, use } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Card,
   CardContent,
@@ -10,9 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,59 +20,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {AvatarUpload} from "@/components/profile/avatar-upload";
-import {PasswordStrength} from "@/components/profile/password-strength";
-import {Save, ArrowLeft, Shield, Mail, User, Lock} from "lucide-react";
-import {useRouter} from "next/navigation";
-import {z} from "zod";
-import {signOut} from "next-auth/react";
-
-// Define the user interface
-export interface IUser {
-  id: string;
-  email: string;
-  password: string;
-  name: string;
-  avator?: string; // Fixed typo: "avator" to "avatar"
-  role: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-// Define the Zod schema for form validation
-export const userZodSchema = z
-  .object({
-    id: z.string().min(1, "ID is required"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm password is required"),
-    name: z.string().min(1, "Name is required"),
-    avator: z.string().optional(),
-    role: z.string().min(1, "Role is required"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-// Define roles for the select dropdown
-const ROLES = [
-  {value: "admin", label: "Administrator", color: "bg-red-100 text-red-800"},
-  {value: "user", label: "User", color: "bg-green-100 text-green-800"},
-  // { value: "viewer", label: "Viewer", color: "bg-gray-100 text-gray-800" },
-];
+import { AvatarUpload } from "@/components/profile/avatar-upload";
+import { PasswordStrength } from "@/components/profile/password-strength";
+import { Save, ArrowLeft, Shield, Mail, User, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
+import { IUser, userZodSchema } from "@/types/user";
 
 export default function EditProfilePage({
   params,
 }: {
-  params: Promise<{id: string}>;
+  params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   // Resolve async params
-  const {id} = use(params);
+  const { id } = use(params);
 
   // Initialize react-hook-form
   const {
@@ -80,16 +45,16 @@ export default function EditProfilePage({
     handleSubmit,
     watch,
     setValue,
-    formState: {errors, isDirty},
+    formState: { errors, isDirty },
     reset,
-  } = useForm<IUser & {confirmPassword: string}>({
+  } = useForm<IUser & { confirmPassword: string }>({
     resolver: zodResolver(userZodSchema),
   });
 
   const watchedPassword = watch("password") || "";
   const watchedName = watch("name") || "";
   const watchedRole = watch("role");
-  const ROLES = ["SPP", 'GST', "User"];
+  const ROLES = ["SPP", "GST", "User"];
 
   // Fetch user data when id is available
   useEffect(() => {
@@ -117,13 +82,13 @@ export default function EditProfilePage({
   }, [id, user, reset]);
 
   // Handle form submission
-  const onSubmit = async (data: IUser & {confirmPassword: string}) => {
+  const onSubmit = async (data: IUser & { confirmPassword: string }) => {
     setIsLoading(true);
     try {
       // Simulate API call (replace with your actual API call)
       await fetch(`/api/users/${id}`, {
         method: "PUT",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           // email: data.email,
           // password: data.password, // Keep existing password if not changed
@@ -192,7 +157,7 @@ export default function EditProfilePage({
                 currentAvatar={user.avator}
                 userName={watchedName}
                 onAvatarChange={(avatar) =>
-                  setValue("avator", avatar, {shouldDirty: true})
+                  setValue("avator", avatar, { shouldDirty: true })
                 }
               />
             </CardContent>
@@ -250,10 +215,10 @@ export default function EditProfilePage({
                   Role
                 </Label>
                 <Select
-                  value={watchedRole == 'GST' ? 'GST / TDS' : watchedRole}
+                  value={watchedRole == "GST" ? "GST / TDS" : watchedRole}
                   // disabled
                   onValueChange={(value) => {
-                    setValue("role", value, {shouldDirty: true});
+                    setValue("role", value, { shouldDirty: true });
                   }}
                 >
                   <SelectTrigger
@@ -264,7 +229,7 @@ export default function EditProfilePage({
                   <SelectContent>
                     {ROLES.map((role) => (
                       <SelectItem key={role} value={role}>
-                        {role == 'GST' ? 'GST / TDS' : role}
+                        {role == "GST" ? "GST / TDS" : role}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -330,7 +295,7 @@ export default function EditProfilePage({
             <CardContent className="pt-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
                 <Button
-                  onClick={() => signOut({callbackUrl: "/"})}
+                  onClick={() => signOut({ callbackUrl: "/" })}
                   variant="destructive"
                   className="sm:w-auto w-full"
                 >
@@ -376,7 +341,9 @@ export default function EditProfilePage({
 }
 
 // Wrap the component in Suspense for async params handling
-export function EditProfilePageWrapper(props: {params: Promise<{id: string}>}) {
+export function EditProfilePageWrapper(props: {
+  params: Promise<{ id: string }>;
+}) {
   return (
     <Suspense
       fallback={

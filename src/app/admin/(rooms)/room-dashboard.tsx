@@ -15,9 +15,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { IUser } from "@/app/users/[id]/page";
-import { IRoom } from "@/modals/(Room)/Room";
-import { IRoomBooking } from "@/modals/(Room)/RoomBooking";
+import { IUser } from "@/types/user";
+import { IRoom, IRoomBooking } from "@/types/room";
 
 export default function RoomDashboard({
   rooms,

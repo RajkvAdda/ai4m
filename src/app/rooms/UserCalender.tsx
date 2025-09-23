@@ -7,8 +7,7 @@ import {
   getMonthFormat,
   getPreviousAndNextMonths,
 } from "@/lib/utils";
-import { IBooking } from "@/modals/Booking";
-import { IRoom } from "@/modals/(Seat)/Room";
+import { IRoom, IRoomBooking } from "@/types/room";
 import React, { useEffect } from "react";
 
 export default function UserCalender({
@@ -18,7 +17,7 @@ export default function UserCalender({
   userId: string;
   rooms: IRoom[];
 }) {
-  const [bookings, setBookings] = React.useState<IBooking[]>([]);
+  const [bookings, setBookings] = React.useState<IRoomBooking[]>([]);
   const [loading, setLoading] = React.useState(true);
   const months = getPreviousAndNextMonths();
   const [selectedMonth, setSelectedMonth] = React.useState(

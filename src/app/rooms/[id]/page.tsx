@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import BookingClient from "./booking-client";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { IRoom, RoomType } from "@/modals/(Seat)/Room";
+import { IRoom, RoomType } from "@/types/room";
 import { BackButton } from "@/components/ui/button";
 import { Rows, TableRowsSplit, Users } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
+import { CardDescription, CardTitle } from "@/components/ui/card";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

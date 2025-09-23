@@ -33,25 +33,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { IRoom, RoomType, roomTypeEnum } from "@/modals/(Room)/Room";
-
-export const roomZodSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  type: z.enum(Object.keys(roomTypeEnum) as RoomType[]),
-  minBookingTime: z.coerce
-    .number()
-    .int()
-    .min(30, "Must be at least 30 minutes"),
-  startTime: z.coerce
-    .number()
-    .int()
-    .min(8 * 60, "Must start at least 8:00 AM"),
-  endTime: z.coerce
-    .number()
-    .int()
-    .max(20 * 60, "Must end at most 8:00 PM"),
-});
+import { IRoom, roomTypeEnum, roomZodSchema } from "@/types/room";
 
 export default function CreateRoomForm({
   room,

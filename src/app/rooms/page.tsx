@@ -12,9 +12,8 @@ import { BackButton, Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
 import { useEffect, useState } from "react";
-import { IRoom, RoomType } from "@/modals/(Seat)/Room";
+import { IRoom, RoomType, IRoomBooking } from "@/types/room";
 import { getTodayOrNextDate } from "@/lib/utils";
-import { IBooking } from "@/modals/Booking";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,7 +108,7 @@ function RoomCard({
 export default function Rooms() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [selectedDate, setSelectedDate] = useState(getTodayOrNextDate());
-  const [bookings, setBookings] = useState<IBooking[]>([]);
+  const [bookings, setBookings] = useState<IRoomBooking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 

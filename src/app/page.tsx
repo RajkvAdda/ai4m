@@ -47,7 +47,7 @@ export default function Main() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="font-headline text-2xl">
-                  Rooms Booking
+                  Room Booking
                 </CardTitle>
                 <div className="p-2 opacity-30 rounded-lg">
                   <PanelsRightBottomIcon />

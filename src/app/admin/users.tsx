@@ -1,11 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -14,8 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { IUser } from "@/types/user";
 import React from "react";
-import { IUser } from "../users/[id]/page";
 
 export default function Users({ users }: { users: IUser[] }) {
   return (

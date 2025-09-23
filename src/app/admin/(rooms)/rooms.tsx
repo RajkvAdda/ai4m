@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import React from "react";
 import CreateRoomForm from "./create-room-form";
-import { IRoom } from "@/modals/(Room)/Room";
+import { IRoom } from "@/types/room";
 
 export default function Rooms({
   rooms,

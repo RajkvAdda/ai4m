@@ -12,42 +12,41 @@ import { BackButton, Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
 import { useEffect, useState } from "react";
-import { IRoom, RoomType } from "@/modals/(Seat)/Room";
+import { ISeat, SeatType, ISeatBooking } from "@/types/seat";
 import { getTodayOrNextDate } from "@/lib/utils";
-import { IBooking } from "@/modals/Booking";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import UserCalender from "./UserCalender";
 import UserAvator from "@/components/user-avator";
 import { useSession } from "next-auth/react";
-import { IUser } from "../users/[id]/page";
+import { IUser } from "@/types/user";
 import { Flex } from "@/components/ui/flex";
 
-const roomIcons: Record<RoomType, React.ReactNode> = {
+const seatIcons: Record<SeatType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
   row: <Rows className="h-6 w-6" />,
   free_area: <Users className="h-6 w-6" />,
 };
 
-const roomDescriptions: Record<RoomType, string> = {
+const seatDescriptions: Record<SeatType, string> = {
   table: "Group tables for collaboration",
   row: "Individual row-style seating",
   free_area: "Open area for flexible work",
 };
 
-function RoomCard({
-  room,
+function SeatCard({
+  seat,
   selectedDate,
   bookingCount,
   isAccessAllowed,
 }: {
-  room: IRoom;
+  seat: ISeat;
   selectedDate: string;
   bookingCount: number;
   isAccessAllowed: boolean;
 }) {
-  const totalCapacity = room.totalCapacity || 0;
+  const totalCapacity = seat.totalCapacity || 0;
   const availableSeats = totalCapacity - bookingCount;
   const progressValue =
     totalCapacity > 0 ? (availableSeats / totalCapacity) * 100 : 0;
@@ -56,13 +55,13 @@ function RoomCard({
     <Card className="flex flex-col transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="font-headline text-2xl">{room.name}</CardTitle>
+          <CardTitle className="font-headline text-2xl">{seat.name}</CardTitle>
           <div className="p-2 opacity-30 rounded-lg">
-            {roomIcons[room.type as RoomType] || ""}
+            {seatIcons[seat.type as SeatType] || ""}
           </div>
         </div>
         <CardDescription>
-          {room.description || roomDescriptions[room.type]}
+          {seat.description || seatDescriptions[seat.type]}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -94,7 +93,7 @@ function RoomCard({
           <Link
             href={
               selectedDate && isAccessAllowed
-                ? `/rooms/${room._id}?date=${selectedDate}`
+                ? `/seats/${seat._id}?date=${selectedDate}`
                 : "#"
             }
           >
@@ -106,11 +105,11 @@ function RoomCard({
   );
 }
 
-export default function Rooms() {
-  const [rooms, setRooms] = useState<IRoom[]>([]);
+export default function Seats() {
+  const [seats, setSeats] = useState<ISeat[]>([]);
   const [selectedDate, setSelectedDate] = useState(getTodayOrNextDate());
   const { data: session } = useSession();
-  const [bookings, setBookings] = useState<IBooking[]>([]);
+  const [bookings, setBookings] = useState<ISeatBooking[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [role, setRole] = useState<string>("");
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
@@ -212,23 +211,23 @@ export default function Rooms() {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    const fetchRooms = async () => {
+    const fetchSeats = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/api/rooms");
+        const res = await fetch("/api/seats");
         if (!res.ok) {
-          throw new Error("Failed to fetch rooms");
+          throw new Error("Failed to fetch seats");
         }
         const data = await res.json();
-        if (data?.length) setRooms(data);
+        if (data?.length) setSeats(data);
       } catch (error) {
-        console.error("Error fetching rooms:", error);
-        setError("Failed to load rooms. Please try again.");
+        console.error("Error fetching seats:", error);
+        setError("Failed to load seats. Please try again.");
       } finally {
         setLoading(false);
       }
     };
-    fetchRooms();
+    fetchSeats();
   }, []);
 
   useEffect(() => {
@@ -252,8 +251,8 @@ export default function Rooms() {
     }
   }, [selectedDate]);
 
-  const getBookingCount = (roomId: string) => {
-    return bookings.filter((b) => b.roomId === roomId).length;
+  const getBookingCount = (seatId: string) => {
+    return bookings.filter((b) => b.seatId === seatId).length;
   };
 
   return (
@@ -324,17 +323,17 @@ export default function Rooms() {
           ) : (
             <div className="space-y-5">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {rooms?.map((room: IRoom) => (
-                  <RoomCard
-                    key={room._id}
-                    room={room}
+                {seats?.map((seat: ISeat) => (
+                  <SeatCard
+                    key={seat._id}
+                    seat={seat}
                     selectedDate={selectedDate}
-                    bookingCount={getBookingCount(room._id)}
+                    bookingCount={getBookingCount(seat._id)}
                     isAccessAllowed={isAccessAllowed()}
                   />
                 ))}
               </div>
-              <UserCalender userId={session?.user?.id} rooms={rooms} />
+              <UserCalender userId={session?.user?.id} seats={seats} />
             </div>
           )}
         </>

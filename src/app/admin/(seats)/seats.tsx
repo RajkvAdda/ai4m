@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ISeat } from "@/modals/(Seat)/Seat";
+import { ISeat } from "@/types/seat";
 import React from "react";
 import CreateSeatForm from "./create-seat-form";
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import { Seat, seatZodSchema } from "@/modals/(Seat)/Seat";
+import { Seat } from "@/modals/(Seat)/Seat";
+import { seatZodSchema } from "@/types/seat";
 
 export async function GET() {
   try {

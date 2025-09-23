@@ -1,27 +1,6 @@
 import mongoose, { Model, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
-import { z } from "zod";
-
-export interface IUser {
-  id: string;
-  email: string;
-  password: string;
-  name: string;
-  avator: string;
-  role: string;
-  _id?: mongoose.Types.ObjectId;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export const userZodSchema = z.object({
-  id: z.string().min(1),
-  email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().min(1),
-  avator: z.string().optional(),
-  role: z.string().min(1),
-});
+import { IUser } from "@/types/user";
 
 const userSchema = new Schema<IUser>(
   {

@@ -33,18 +33,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { ISeat } from "@/modals/(Seat)/Seat";
-
-const seatZodSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  type: z.enum(["table", "row", "free_area"]),
-  units: z.coerce.number().int().min(1, "Must have at least 1 unit"),
-  seatsPerUnit: z.coerce
-    .number()
-    .int()
-    .min(1, "Must have at least 1 seat per unit"),
-});
+import { ISeat, seatZodSchema } from "@/types/seat";
 
 export default function CreateSeatForm({
   seat,

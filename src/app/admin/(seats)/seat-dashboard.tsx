@@ -15,9 +15,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { IUser } from "@/app/users/[id]/page";
-import { ISeat } from "@/modals/(Seat)/Seat";
-import { ISeatBooking } from "@/modals/(Seat)/SeatBooking";
+import { IUser } from "@/types/user";
+import { ISeat, ISeatBooking } from "@/types/seat";
 
 export default function SeatDashboard({
   seats,

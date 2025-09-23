@@ -7,18 +7,18 @@ import {
   getMonthFormat,
   getPreviousAndNextMonths,
 } from "@/lib/utils";
-import { IBooking } from "@/modals/Booking";
-import { IRoom } from "@/modals/(Seat)/Room";
+import { ISeat, ISeatBooking } from "@/types/seat";
+
 import React, { useEffect } from "react";
 
 export default function UserCalender({
   userId,
-  rooms,
+  seats,
 }: {
   userId: string;
-  rooms: IRoom[];
+  seats: ISeat[];
 }) {
-  const [bookings, setBookings] = React.useState<IBooking[]>([]);
+  const [bookings, setBookings] = React.useState<ISeatBooking[]>([]);
   const [loading, setLoading] = React.useState(true);
   const months = getPreviousAndNextMonths();
   const [selectedMonth, setSelectedMonth] = React.useState(
@@ -77,8 +77,8 @@ export default function UserCalender({
             const dayBooking = bookings?.find(
               (b) => b.startDate === getDateFormat(day)
             );
-            const room = rooms?.find((r) => r.id === dayBooking?.roomId);
-            if (dayBooking && room) {
+            const seat = seats?.find((r) => r.id === dayBooking?.seatId);
+            if (dayBooking && seat) {
               return (
                 <div
                   key={i}
@@ -88,7 +88,7 @@ export default function UserCalender({
                     <div className="whitespace-nowrap mr-2 font-bold">
                       {getDateFormat(day, "EEE d")}
                     </div>
-                    {`${room.name} Seat(${dayBooking.seatNumber})`}
+                    {`${seat.name} Seat(${dayBooking.seatNumber})`}
                   </div>
                 </div>
               );

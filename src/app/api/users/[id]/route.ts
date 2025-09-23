@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
-import User, { userZodSchema } from "@/modals/User";
+import User from "@/modals/User";
 
 export async function GET(
   request: Request,
