@@ -163,7 +163,9 @@ export const TimeSlotGrid = ({
               fontWeight: "500",
               borderLeft: `5px solid ${priorityColor}`,
             };
-          } else if (slot.status === "expired") {
+          }
+
+          if (slot.status === "expired") {
             tooltip = "This time slot has passed";
           } else if (slot.status === "available") {
             const endTimeString = minutesToTime(
@@ -171,7 +173,7 @@ export const TimeSlotGrid = ({
             );
             tooltip = `${formatTime(slot.time)} - ${formatTime(endTimeString)}`;
           } else if (slot.status === "booked" && bookingUser) {
-            tooltip = slot.booking.remarks || "slot has been booked";
+            tooltip = slot?.booking?.remarks || "slot has been booked";
           }
 
           const isBookedOrExpired =
@@ -209,7 +211,7 @@ export const TimeSlotGrid = ({
                     className="absolute top-0 right-0 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-colors duration-200 cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteBooking(slot.booking.bookingId);
+                      onDeleteBooking(slot?.booking?._id);
                     }}
                     title="Cancel this booking"
                   >

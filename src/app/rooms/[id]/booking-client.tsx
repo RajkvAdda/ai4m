@@ -109,14 +109,21 @@ export default function Room({ room }: { room: IRoom }) {
       }
     });
   };
-  const handleDeleteBooking = (bookingIdToDelete: string) => {
+  const handleDeleteBooking = async (bookingIdToDelete: string) => {
+    console.log(bookingIdToDelete, "bookingIdToDelete");
     if (window.confirm("Are you sure you want to cancel this booking?")) {
-      const currentBookings =
-        JSON.parse(localStorage.getItem("bookings")) || [];
-      const updatedBookings = currentBookings.filter(
-        (booking) => booking.bookingId !== bookingIdToDelete
-      );
-      localStorage.setItem("bookings", JSON.stringify(updatedBookings));
+      const res = await fetch(`/api/roombookings/${bookingIdToDelete}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast({
+          title: "Room Deleted",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+      fetchBookings();
     }
   };
   const mergeContinuousSlots = (slots: string[], interval: number) => {
