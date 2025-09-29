@@ -285,6 +285,7 @@ export default function Room({ room }: { room: IRoom }) {
                             size={40}
                             placeholder="e.g., The Library"
                             {...field}
+                            required
                           />
                         </FormControl>
                         <FormMessage />

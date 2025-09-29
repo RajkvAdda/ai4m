@@ -1,9 +1,7 @@
-import React, { useEffect, useRef } from "react";
-import { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { cn, generateColorFromId, getNameFistKey } from "@/lib/utils";
 import { formatTime, minutesToTime, timeToMinutes } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ClosedCaption, TicketMinus, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { IRoom, IRoomBooking } from "@/types/room";
 import { IUser } from "@/types/user";
 import { H4, H5 } from "@/components/ui/typography";
@@ -21,7 +19,7 @@ const getPriorityColor = (priority: string) => {
     case "low":
       return "#28a745"; // Green
     case "medium":
-      return "#ffc107"; // Orange/Yellow
+      return "#ffc107"; // Yellow
     case "high":
       return "#dc3545"; // Red
     default:
@@ -51,6 +49,7 @@ export const TimeSlotGrid = ({
   onDeleteBooking: (bookingId: string) => void;
 }) => {
   const gridRef = useRef(null);
+
   const displaySlots = useMemo(() => {
     if (!room.startTime || !room.endTime) return [];
     const allPossibleSlots = [];
@@ -63,6 +62,7 @@ export const TimeSlotGrid = ({
       const slotTime = minutesToTime(slotStart);
       let bookingDetails = null;
       let status = "available";
+
       for (const booking of dailyBookings) {
         if (
           slotStart >= timeToMinutes(booking.startTime) &&
@@ -85,7 +85,7 @@ export const TimeSlotGrid = ({
 
       allPossibleSlots.push({
         time: slotTime,
-        status: status,
+        status,
         booking: bookingDetails,
       });
     }
@@ -108,72 +108,58 @@ export const TimeSlotGrid = ({
       while (
         j < allPossibleSlots.length &&
         allPossibleSlots[j].status === "booked" &&
-        allPossibleSlots[j].booking.userId === currentSlot.booking.userId &&
-        allPossibleSlots[j].booking.priority === currentSlot.booking.priority
+        // allPossibleSlots[j].booking.userId === currentSlot.booking.userId &&
+        // allPossibleSlots[j].booking.priority === currentSlot.booking.priority &&
+        allPossibleSlots[j].booking?._id === currentSlot.booking._id
       ) {
         span++;
         j++;
       }
-      groupedSlots.push({ ...currentSlot, span: span });
+      groupedSlots.push({ ...currentSlot, span });
       i += span;
     }
+
     return groupedSlots;
   }, [room, dailyBookings, selectedDate]);
-  // useEffect(() => {
-  //   if (!gridRef.current) return;
 
-  //   const tooltipTriggerList = Array.from(
-  //     gridRef.current.querySelectorAll('[data-bs-toggle="tooltip"]')
-  //   );
-
-  //   const tooltipList = tooltipTriggerList.map(
-  //     (tooltipTriggerEl) =>
-  //       new Tooltip(tooltipTriggerEl, {
-  //         trigger: "hover",
-  //         container: "body",
-  //       })
-  //   );
-
-  //   return () => {
-  //     tooltipList.forEach((tooltip) => tooltip.dispose());
-  //   };
-  // }, [displaySlots]);
   const handleSlotClick = (slot) => {
     if (slot.status === "booked" || slot.status === "expired") return;
-
     onSlotSelect(slot.time);
   };
-  console.log("displaySlots", displaySlots);
+
   return (
-    <div className="grid gap-4">
-      <H4>Available Slots</H4>
-      <div className="grid grid-cols-6 gap-4" ref={gridRef}>
+    <div className="p-4">
+      <div className="mb-5">
+        <H4>Available Slots</H4>
+      </div>
+      <div className="grid grid-cols-6 gap-3 auto-rows-[80px]" ref={gridRef}>
         {displaySlots.map((slot) => {
-          let tooltip = "";
-          let slotStyle = {};
           const bookingUser = slot.booking
             ? allUsers.find((u) => u.id === slot.booking.userId)
             : null;
 
+          let slotStyle = {};
+          let tooltip = "";
+
           if (bookingUser) {
-            const priorityColor = getPriorityColor(slot.booking.priority);
             slotStyle = {
               backgroundColor: generateColorFromId(bookingUser.id),
               color: "#4a3f35",
               fontWeight: "500",
-              borderLeft: `5px solid ${priorityColor}`,
+              borderLeft: `5px solid ${getPriorityColor(
+                slot.booking.priority
+              )}`,
             };
           }
 
-          if (slot.status === "expired") {
-            tooltip = "This time slot has passed";
-          } else if (slot.status === "available") {
-            const endTimeString = minutesToTime(
+          if (slot.status === "expired") tooltip = "This time slot has passed";
+          else if (slot.status === "available") {
+            const endTime = minutesToTime(
               timeToMinutes(slot.time) + parseInt(room.minBookingTime, 10)
             );
-            tooltip = `${formatTime(slot.time)} - ${formatTime(endTimeString)}`;
+            tooltip = `${formatTime(slot.time)} - ${formatTime(endTime)}`;
           } else if (slot.status === "booked" && bookingUser) {
-            tooltip = slot?.booking?.remarks || "slot has been booked";
+            tooltip = slot.booking.remarks || "Slot booked";
           }
 
           const isBookedOrExpired =
@@ -181,85 +167,62 @@ export const TimeSlotGrid = ({
 
           const content =
             slot.status === "booked" && bookingUser ? (
-              <div className="w-full">
-                <div>
-                  <Flex>
-                    <Avatar
-                      color="bg-blue-200"
-                      className="h-12 w-12 rounded-lg"
-                    >
-                      <AvatarImage
-                        src={bookingUser.avator}
-                        alt={bookingUser.name}
-                      />
-                      <AvatarFallback className="rounded-lg">
-                        <H5>{getNameFistKey(bookingUser.name)}</H5>
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-left">
-                      <strong>{bookingUser.name}</strong>
-                      <br />
-                      <small>
-                        {formatTime(slot.booking.startTime)} -{" "}
-                        {formatTime(slot.booking.endTime)}
-                      </small>
-                    </div>
-                  </Flex>
+              <Flex className="relative w-full items-center gap-2 flex-1 min-w-0">
+                <Avatar
+                  color="bg-blue-200"
+                  className="h-12 w-12 rounded-lg m-1"
+                >
+                  <AvatarImage
+                    src={bookingUser.avator}
+                    alt={bookingUser.name}
+                  />
+                  <AvatarFallback className="rounded-lg">
+                    <H5>{getNameFistKey(bookingUser.name)}</H5>
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <strong className="truncate block">{bookingUser.name}</strong>
+                  <small className="truncate block">
+                    {formatTime(slot.booking.startTime)} -{" "}
+                    {formatTime(slot.booking.endTime)}
+                  </small>
                 </div>
-                {currentUser && currentUser.id === bookingUser.id && (
+
+                {currentUser?.id === bookingUser.id && (
                   <div
-                    className="absolute top-0 right-0 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-colors duration-200 cursor-pointer"
+                    className="absolute top-0 right-1 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer z-10"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeleteBooking(slot?.booking?._id);
+                      onDeleteBooking(slot.booking._id);
                     }}
                     title="Cancel this booking"
                   >
                     <XIcon size={16} color="red" />
                   </div>
                 )}
-              </div>
+              </Flex>
             ) : (
-              <div className="text-center">{formatTime(slot.time)}</div>
+              <div className="text-center truncate">
+                {formatTime(slot.time)}
+              </div>
             );
 
-          return isBookedOrExpired ? (
+          return (
             <div
               key={slot.time}
               className={cn(
-                `group h-full min-h-[70px] text-center border-2 flex items-center pl-3 rounded-lg relative`,
-                loading && "cursor-not-allowed animate-caret-blink",
-                slot.status === "expired" ? "justify-center" : "justify-start"
-              )}
-              data-bs-toggle="tooltip"
-              data-bs-placement="top"
-              data-bs-custom-class="custom-tooltip"
-              data-bs-title={slot.booking?.remarks || "Slot Has Expired"}
-              style={{ gridColumn: `span ${slot.span || 1}`, ...slotStyle }}
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>{content}</TooltipTrigger>
-                <TooltipContent>
-                  <p>{tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          ) : (
-            <div
-              key={slot.time}
-              className={cn(
-                `h-full min-h-[70px] text-center border-2 border-green-200 bg-green-50  cursor-pointer flex items-center justify-center rounded-lg`,
-                selectedSlots.includes(slot.time)
-                  ? "bg-green-200 "
-                  : "hover:bg-green-100",
+                "flex-none basis-24 md:basis-28 flex items-center justify-center overflow-hidden h-[70px] text-center border-2 rounded-lg text-sm group",
+                slot.status === "expired" &&
+                  "cursor-not-allowed opacity-50 bg-gray-100",
+                slot.status === "available" && "cursor-pointer bg-green-100",
+                selectedSlots.includes(slot.time) && "bg-green-300",
+                !selectedSlots.includes(slot.time) &&
+                  slot.status === "available" &&
+                  "hover:bg-green-200",
                 loading && "cursor-not-allowed animate-caret-blink"
               )}
-              onClick={() => handleSlotClick(slot)}
-              // data-bs-toggle="tooltip"
-              // data-bs-placement="top"
-              // data-bs-custom-class="custom-tooltip"
-              // data-bs-title={tooltip}
               style={{ gridColumn: `span ${slot.span || 1}`, ...slotStyle }}
+              onClick={() => handleSlotClick(slot)}
             >
               <Tooltip>
                 <TooltipTrigger asChild>{content}</TooltipTrigger>
