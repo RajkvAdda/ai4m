@@ -264,7 +264,7 @@ export default function Seats() {
         />
         <div className="flex-1"></div>
         <Flex>
-          <Label
+          {/* <Label
             htmlFor="booking-date"
             className="mb-1 font-medium whitespace-nowrap"
           >
@@ -277,7 +277,7 @@ export default function Seats() {
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             min={getTodayOrNextDate()}
-          />
+          /> */}
           <BackButton />
         </Flex>
       </Alert>

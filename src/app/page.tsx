@@ -1,29 +1,41 @@
 "use client";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
 import UserAvator from "@/components/user-avator";
 import { ArrowRight, PanelsRightBottomIcon, Table } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
+import seatBookingBg from "@/assets/images/seatbooking.png";
+import meetingRoomBg from "@/assets/images/MeetingRoomBg.png";
+const bookingOptions = [
+  {
+    title: "Meeting Room Booking",
+    description: "Discover and book rooms in our beautiful campus.",
+    href: "/rooms",
+    Icon: PanelsRightBottomIcon,
+    backgroundImage: `url(${meetingRoomBg.src})`,
+  },
+  {
+    title: "Seat Booking",
+    description: "Book your individual seat in our shared spaces.",
+    href: "/seats",
+    Icon: Table,
+    backgroundImage: `url(${seatBookingBg.src})`,
+  },
+];
 
 export default function Main() {
   const router = useRouter();
   const { status } = useSession();
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
     }
   }, [router, status]);
+
   return (
     <div className="container p-8 m-auto">
       <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap items-center justify-center gap-5">
@@ -41,84 +53,38 @@ export default function Main() {
           </Button>
         </div>
       </Alert>
-      <div className="space-y-5">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="flex flex-col transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="font-headline text-2xl">
-                  Meeting Room Booking
-                </CardTitle>
-                <div className="p-2 opacity-30 rounded-lg">
-                  <PanelsRightBottomIcon />
-                </div>
-              </div>
-              <CardDescription>
-                Discover and book rooms in our beautiful campus.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="space-y-2">
-                <div className="flex justify-between items-baseline">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Availability
-                  </p>
-                  <p className="text-lg font-semibold">
-                    {/* {availableSeats}
-                <span className="text-sm font-normal text-muted-foreground">
-                  /{totalCapacity} Seats
-                </span> */}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button asChild className="w-full" variant="default">
-                <Link href={`/rooms`}>
-                  View & Book Room
-                  <ArrowRight className="ml-2 h-4 w-4" />
+
+      <div
+        className="flex flex-col md:flex-row rounded-xl overflow-hidden  gap-5 "
+        style={{ minHeight: "60vh" }}
+      >
+        {bookingOptions.map((option) => (
+          <div
+            key={option.title}
+            className="group relative w-full md:w-1/2 p-8 flex flex-col items-center justify-center text-center text-white overflow-hidden"
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center transform transition-all rounded duration-500 ease-in-out group-hover:scale-110"
+              style={{ backgroundImage: option.backgroundImage }}
+            />
+            <div className="absolute inset-0 bg-black/60 transition-all duration-300 group-hover:bg-black/50" />
+
+            <div className="relative z-10">
+              <option.Icon className="h-12 w-12 mx-auto mb-4 text-white/80" />
+              <h2 className="text-3xl font-bold mb-2">{option.title}</h2>
+              <p className="text-white/90 mb-6">{option.description} </p>
+              <Button
+                asChild
+                size="lg"
+                className="bg-white text-black hover:bg-gray-200"
+              >
+                <Link href={option.href}>
+                  Select Option <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-            </CardFooter>
-          </Card>
-          <Card className="flex flex-col transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="font-headline text-2xl">
-                  Seat Booking
-                </CardTitle>
-                <div className="p-2 opacity-30 rounded-lg">
-                  <Table />
-                </div>
-              </div>
-              <CardDescription>
-                Book your seat in our beautiful campus.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="space-y-2">
-                <div className="flex justify-between items-baseline">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Availability
-                  </p>
-                  <p className="text-lg font-semibold">
-                    {/* {availableSeats}
-                <span className="text-sm font-normal text-muted-foreground">
-                  /{totalCapacity} Seats
-                </span> */}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button asChild className="w-full" variant="default">
-                <Link href={`/seats`}>
-                  View & Book Seat <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

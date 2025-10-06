@@ -131,7 +131,7 @@ export default function Rooms() {
         />
         <div className="flex-1"></div>
         <Flex>
-          <Label
+          {/* <Label
             htmlFor="booking-date"
             className="mb-1 font-medium whitespace-nowrap"
           >
@@ -144,7 +144,7 @@ export default function Rooms() {
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             min={getTodayOrNextDate()}
-          />
+          /> */}
           <BackButton />
         </Flex>
       </Alert>

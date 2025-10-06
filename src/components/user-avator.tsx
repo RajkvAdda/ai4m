@@ -1,20 +1,20 @@
 "use client";
 import React from "react";
-import {Avatar, AvatarFallback, AvatarImage} from "./ui/avatar";
-import {H5} from "./ui/typography";
-import {getNameFistKey} from "@/lib/utils";
-import {useRouter} from "next/navigation";
-import {useSession} from "next-auth/react";
-import {AlertDescription, AlertTitle} from "./ui/alert";
-import { EditIcon} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { H5 } from "./ui/typography";
+import { getNameFistKey } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { AlertDescription, AlertTitle } from "./ui/alert";
+import { EditIcon } from "lucide-react";
 
-export default function UserAvator({discription}: {discription: string}) {
+export default function UserAvator({ discription }: { discription: string }) {
   const router = useRouter();
-  const {data: session} = useSession();
+  const { data: session } = useSession();
 
   return (
     <div className="flex gap-3 ">
-      <div className="relative">
+      <div className="relative flex-shrink-0">
         <Avatar
           className="w-15 h-15 rounded-lg cursor-pointer hover:border-2 hover:border-gray-200"
           onClick={() => router.push("/users/" + session?.user?.id)}
