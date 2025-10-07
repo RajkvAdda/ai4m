@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Flex } from "@/components/ui/flex";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { IUser } from "@/types/user";
 
 export default function BookingClient({
   seatDetails,
@@ -54,10 +55,87 @@ export default function BookingClient({
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
   const [existingBooking, setexistingBooking] = useState<string | null>(null);
-  // Booked seats state (should be fetched from API)
   const [bookedSeats, setBookedSeats] = useState<ISeatBooking[]>([]);
 
-  // Fetch booked seats for this seat
+  // --- Start of New Code ---
+  const [role, setRole] = useState<string>("");
+  const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
+  const [isAfter5PM, setIsAfter5PM] = useState<boolean>(false);
+  const [accessAllowed, setAccessAllowed] = useState<boolean>(false);
+
+  const dayNames = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  const getWeekNumber = (date: Date): number => {
+    const oneJan = new Date(date.getFullYear(), 0, 1);
+    const numberOfDays = Math.floor(
+      (date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000)
+    );
+    return Math.ceil((numberOfDays + oneJan.getDay() + 1) / 7);
+  };
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!session?.user?.id) {
+        setIsRoleLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/users/${session.user.id}`);
+        if (res.ok) {
+          const userData: IUser = await res.json();
+          setRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user role", error);
+      } finally {
+        setIsRoleLoading(false);
+      }
+    };
+
+    fetchUserRole();
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    const checkAccess = () => {
+      if (!role || isRoleLoading) return;
+
+      const today = new Date(selectedDate);
+      const dayName = dayNames[today.getDay()];
+      const week = getWeekNumber(today);
+      const isOddWeek = week % 2 === 1;
+
+      const allowedDays: Record<string, string[]> = {
+        SPP: !isOddWeek
+          ? ["Monday", "Tuesday", "Wednesday"]
+          : ["Monday", "Tuesday"],
+        GST: isOddWeek
+          ? ["Wednesday", "Thursday", "Friday"]
+          : ["Thursday", "Friday"],
+        User: [...dayNames],
+      };
+
+      const hasAccess =
+        allowedDays[role]?.includes(dayName) ||
+        (new Date(selectedDate).toDateString() === new Date().toDateString() &&
+          isAfter5PM);
+      setAccessAllowed(hasAccess);
+    };
+
+    checkAccess();
+  }, [selectedDate, role, isRoleLoading, isAfter5PM]);
+
+  const week = getWeekNumber(new Date(selectedDate));
+  const isOddWeek = week % 2 === 1;
+  // --- End of New Code ---
+
   const fetchBookings = async () => {
     try {
       setLoading(true);
@@ -81,7 +159,6 @@ export default function BookingClient({
 
   useEffect(() => {
     if (seatDetails.id && selectedDate) fetchBookings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seatDetails.id, selectedDate, session?.user?.id]);
 
   async function deleteBooking(id: string | null) {
@@ -95,6 +172,17 @@ export default function BookingClient({
   }
 
   const handleBooking = async (seat = selectedSeat) => {
+    // --- New check added here ---
+    if (!accessAllowed) {
+      toast({
+        title: "Permission Denied",
+        description: "You do not have permission to book for this date.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // --- End of new check ---
+
     if (!seat) return;
     setIsPending(true);
     try {
@@ -111,7 +199,6 @@ export default function BookingClient({
         await deleteBooking(existingBooking);
       }
       console.log("seat.id", seat);
-      // 3. Add new booking
       const res = await fetch(`/api/seatbookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -133,7 +220,7 @@ export default function BookingClient({
           variant: "default",
         });
         setSelectedSeat(null);
-        await fetchBookings(); // Refetch bookings after booking
+        await fetchBookings();
       } else {
         toast({
           title: "Error",
@@ -151,8 +238,6 @@ export default function BookingClient({
       setIsPending(false);
     }
   };
-  console.log("existingBookings", existingBooking, bookedSeats);
-  // ...existing code...
 
   return (
     <Card className="shadow-lg">
@@ -186,7 +271,8 @@ export default function BookingClient({
             />
           </Flex>
           <Button
-            disabled={!selectedSeat || isPending}
+            // --- Button is now disabled based on accessAllowed ---
+            disabled={!selectedSeat || isPending || !accessAllowed}
             onClick={() => handleBooking(selectedSeat)}
           >
             {isPending ? "Booking..." : `Book Seat ${selectedSeat || ""}`}
@@ -194,6 +280,19 @@ export default function BookingClient({
         </Flex>
       </CardHeader>
       <CardContent>
+        {/* --- Alert message for restricted access --- */}
+        {!accessAllowed && !isRoleLoading && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircleIcon className="h-4 w-4" />
+            <AlertDescription>
+              {`
+              Access restricted: GST users can only book on Thursday, Friday${
+                isOddWeek ? ", and Wednesday (this week)" : ""
+              }. If you need to
+              book on other days, you can book after 7 AM.`}
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="p-8 border-2 border-dashed rounded-lg bg-muted/20">
           <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 md:gap-8 gap-4 items-center justify-center">
             {Array.from(
@@ -204,7 +303,6 @@ export default function BookingClient({
                 bookedSeats.find((list) => list?.seatNumber == seatNumber) ||
                 null;
 
-              console.log("rj-isBooked", isBooked);
               const isSelected = selectedSeat === seatNumber;
               if (isBooked?._id == existingBooking && existingBooking) {
                 return (
@@ -290,7 +388,8 @@ export default function BookingClient({
                   key={seatNumber as number}
                   variant={isSelected ? "default" : "outline"}
                   size="icon"
-                  disabled={isLoading || isPending}
+                  // --- Seat buttons are now also disabled ---
+                  disabled={isLoading || isPending || !accessAllowed}
                   className={cn(
                     "h-full w-full aspect-square text-sm font-semibold transition-all duration-200",
                     isSelected &&

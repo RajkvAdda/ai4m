@@ -78,7 +78,10 @@ export default function Main() {
                 size="lg"
                 className="bg-white text-black hover:bg-gray-200"
               >
-                <Link href={option.href}>
+                <Link
+                  href={option.href}
+                  className="transition-transform duration-300 hover:scale-110"
+                >
                   Select Option <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
