@@ -262,7 +262,7 @@ export default function Seats() {
           discription={"Choose a table to see details and book your seat."}
         />
         <div className="flex-1"></div>
-        <Flex>
+        <Flex className="flex-col sm:flex-row">
           <Label
             htmlFor="booking-date"
             className="mb-1 font-medium whitespace-nowrap"
@@ -322,7 +322,7 @@ export default function Seats() {
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {seats?.map((seat: ISeat) => (
                   <SeatCard
                     key={seat._id}

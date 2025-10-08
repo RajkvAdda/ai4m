@@ -71,7 +71,7 @@ export default function UserCalender({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid auto-rows-min gap-4 grid-cols-3 md:grid-cols-10">
+        <div className="grid auto-rows-min gap-4 grid-cols-3 sm:grid-cols-6 lg:grid-cols-10 text-xs md:text-base">
           {days.map((day, i) => {
             const dayBooking = bookings?.find(
               (b) => b.date === getDateFormat(day)
@@ -84,7 +84,7 @@ export default function UserCalender({
                   className="bg-emerald-50 text-emerald-500 border border-emerald-400 aspect-square rounded-xl p-2 text-shadow-lg flex items-center text-md text-center justify-center"
                 >
                   <div>
-                    <div className="whitespace-nowrap mr-2 font-bold">
+                    <div className="whitespace-nowrap mr-2 font-bold ">
                       {getDateFormat(day, "EEE d")}
                     </div>
                     {`${room.name} slot(${dayBooking.startTime} - ${dayBooking.endTime})`}

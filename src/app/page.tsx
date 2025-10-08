@@ -61,7 +61,7 @@ export default function Main() {
         {bookingOptions.map((option) => (
           <div
             key={option.title}
-            className="group relative w-full md:w-1/2 p-8 flex flex-col items-center justify-center text-center text-white overflow-hidden"
+            className="group relative w-full md:w-1+/2 p-8 flex flex-col items-center justify-center text-center text-white overflow-hidden"
           >
             <div
               className="absolute inset-0 bg-cover bg-center transform transition-all rounded duration-500 ease-in-out group-hover:scale-110"
