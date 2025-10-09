@@ -285,11 +285,21 @@ export default function BookingClient({
           <Alert variant="destructive" className="mb-4">
             <AlertCircleIcon className="h-4 w-4" />
             <AlertDescription>
-              {`
-              Access restricted: GST users can only book on Thursday, Friday${
-                isOddWeek ? ", and Wednesday (this week)" : ""
-              }. If you need to
-              book on other days, you can book after 7 AM.`}
+              {(() => {
+                const week = getWeekNumber(new Date(selectedDate));
+                const isOddWeek = week % 2 === 1;
+                if (role === "SPP") {
+                  return `Access restricted: SPP users can only book on Monday, Tuesday${
+                    !isOddWeek ? ", and Wednesday (this week)" : ""
+                  }. If you need to book on other days, you can book after 7 AM.`;
+                }
+                if (role === "GST") {
+                  return `Access restricted: GST users can only book on Thursday, Friday${
+                    isOddWeek ? ", and Wednesday (this week)" : ""
+                  }. If you need to book on other days, you can book after 7 AM.`;
+                }
+                return "Access restricted: Please log in or check your role.";
+              })()}
             </AlertDescription>
           </Alert>
         )}
