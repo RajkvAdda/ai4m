@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, Calendar, Check } from "lucide-react";
 import { toast } from "sonner";
+import { User } from "next-auth";
 
 const weekdays = [
   { value: "Mon", label: "Monday" },
@@ -45,21 +46,21 @@ const bookingSchema = z.object({
 
 type BookingFormData = z.infer<typeof bookingSchema>;
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
 interface BookingFormProps {
   onSuccess: () => void;
+  users: User[];
+  fromDate: Date;
+  toDate: Date;
 }
 
-export function BookingForm({ onSuccess }: BookingFormProps) {
-  const [users, setUsers] = useState<User[]>([]);
+export function BookingForm({
+  onSuccess,
+  users,
+  fromDate,
+  toDate,
+}: BookingFormProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(true);
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
@@ -67,32 +68,10 @@ export function BookingForm({ onSuccess }: BookingFormProps) {
       userIds: [],
       weekdays: [],
       specificDay: undefined,
-      startDate: new Date().toISOString().split("T")[0],
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 2))
-        .toISOString()
-        .split("T")[0],
+      startDate: fromDate,
+      endDate: toDate,
     },
   });
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoadingUsers(true);
-      const response = await fetch("/api/users");
-      if (!response.ok) throw new Error("Failed to fetch users");
-      const data = await response.json();
-      console.log(data, "rj-users");
-      setUsers(data || []);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast.error("Failed to load users");
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
 
   const toggleUser = (userId: string) => {
     setSelectedUsers((prev) => {
@@ -139,7 +118,7 @@ export function BookingForm({ onSuccess }: BookingFormProps) {
 
   return (
     <Card className="shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Bulk Seat Booking Configuration
@@ -163,45 +142,37 @@ export function BookingForm({ onSuccess }: BookingFormProps) {
                   </FormDescription>
                   <FormControl>
                     <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
-                      {loadingUsers ? (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="h-6 w-6 animate-spin" />
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {users.map((user) => (
+                      <div className="space-y-2">
+                        {users.map((user) => (
+                          <div
+                            key={user.id}
+                            onClick={() => toggleUser(user.id)}
+                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                              selectedUsers.includes(user.id)
+                                ? "bg-primary/10 border-2 border-primary"
+                                : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
+                            }`}
+                          >
                             <div
-                              key={user.id}
-                              onClick={() => toggleUser(user.id)}
-                              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                              className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
                                 selectedUsers.includes(user.id)
-                                  ? "bg-primary/10 border-2 border-primary"
-                                  : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
+                                  ? "bg-primary border-primary"
+                                  : "border-gray-300"
                               }`}
                             >
-                              <div
-                                className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
-                                  selectedUsers.includes(user.id)
-                                    ? "bg-primary border-primary"
-                                    : "border-gray-300"
-                                }`}
-                              >
-                                {selectedUsers.includes(user.id) && (
-                                  <Check className="h-3 w-3 text-white" />
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-medium">
-                                  {user.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {user.email}
-                                </p>
-                              </div>
+                              {selectedUsers.includes(user.id) && (
+                                <Check className="h-3 w-3 text-white" />
+                              )}
                             </div>
-                          ))}
-                        </div>
-                      )}
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{user.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </FormControl>
                   {selectedUsers.length > 0 && (
@@ -231,7 +202,7 @@ export function BookingForm({ onSuccess }: BookingFormProps) {
                   <FormDescription>
                     Choose which days of the week to book seats
                   </FormDescription>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 width-auto mb-2">
                     {weekdays.map((day) => (
                       <FormField
                         key={day.value}

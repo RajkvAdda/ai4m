@@ -3,10 +3,23 @@ import { connectToDatabase } from "@/lib/db";
 import User from "@/modals/User";
 import { userZodSchema } from "@/types/user";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDatabase();
-    const allUsers = await User.find({}).exec();
+
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const roleParam = searchParams.get("role");
+
+    // Build query filter
+    let query = {};
+    if (roleParam) {
+      // Split comma-separated roles and create filter
+      const roles = roleParam.split(",").map((r) => r.trim());
+      query = { role: { $in: roles } };
+    }
+
+    const allUsers = await User.find(query).exec();
     return NextResponse.json(allUsers);
   } catch (error) {
     let errorMsg = "Unknown error";

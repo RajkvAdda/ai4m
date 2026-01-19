@@ -21,18 +21,34 @@ import {
   Armchair,
 } from "lucide-react";
 import { toast } from "sonner";
+import { User } from "next-auth";
+import {
+  getDateFormat,
+  getMonthDays,
+  getMonthFormat,
+  getPreviousAndNextMonths,
+} from "@/lib/utils";
 
 export default function SeatBookingPage() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [users, setUsers] = useState<User[]>([]);
+  const months = getPreviousAndNextMonths();
+  const [selectedMonth, setSelectedMonth] = React.useState(
+    getMonthFormat(months[1]),
+  );
   const [stats, setStats] = useState({
     totalSeats: 0,
     bookedToday: 0,
     totalUsers: 0,
   });
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(
-    new Date(new Date().setMonth(new Date().getMonth() + 2)),
+
+  const monthNumber = months.findIndex(
+    (month) => getMonthFormat(month) === selectedMonth,
   );
+
+  const days = getMonthDays(months[monthNumber].getMonth());
+  const fromDate = getDateFormat(days[0]);
+  const toDate = getDateFormat(days[days.length - 1]);
 
   useEffect(() => {
     fetchStats();
@@ -44,15 +60,17 @@ export default function SeatBookingPage() {
       const seatsResponse = await fetch("/api/seats");
       const seatsData = await seatsResponse.json();
       const totalSeats =
-        seatsData.seats?.reduce(
+        seatsData?.reduce(
           (sum: number, seat: any) => sum + seat.units * seat.seatsPerUnit,
           0,
         ) || 0;
 
       // Fetch users
-      const usersResponse = await fetch("/api/users");
+      const usersResponse = await fetch("/api/users?role=SPP,GST");
+
       const usersData = await usersResponse.json();
-      const totalUsers = usersData.users?.length || 0;
+      setUsers(usersData || []);
+      const totalUsers = usersData?.length || 0;
 
       // Fetch today's bookings
       const today = new Date().toISOString().split("T")[0];
@@ -60,7 +78,7 @@ export default function SeatBookingPage() {
         `/api/seatbookings?startDate=${today}&endDate=${today}`,
       );
       const bookingsData = await bookingsResponse.json();
-      const bookedToday = bookingsData.bookings?.length || 0;
+      const bookedToday = bookingsData?.length || 0;
 
       setStats({ totalSeats, bookedToday, totalUsers });
     } catch (error) {
@@ -172,20 +190,22 @@ export default function SeatBookingPage() {
             <div className="text-3xl font-bold text-purple-900">
               {stats.totalUsers}
             </div>
-            <p className="text-xs text-purple-600 mt-1">Registered members</p>
+            <p className="text-xs text-purple-600 mt-1">
+              Registered members role (SPP, GST)
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content */}
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList className="grid w-full md:w-auto grid-cols-2">
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4" />
+        <TabsList>
+          <TabsTrigger value="calendar">
+            <CalendarDays className="h-4 w-4 mr-2" />
             Calendar View
           </TabsTrigger>
-          <TabsTrigger value="configure" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
+          <TabsTrigger value="configure">
+            <Settings className="h-4 w-4 mr-2" />
             Bulk Booking
           </TabsTrigger>
         </TabsList>
@@ -202,52 +222,42 @@ export default function SeatBookingPage() {
                   <CardDescription className="mt-2">
                     Click on any cell to book or cancel a seat for a user
                   </CardDescription>
+                  <div className="flex gap-4 items-center mt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-gradient-to-br from-green-400 to-green-500"></div>
+                      <span className="text-xs text-gray-600">Booked</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-gray-200"></div>
+                      <span className="text-xs text-gray-600">Available</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded bg-gray-300"></div>
+                      <span className="text-xs text-gray-600">Weekend</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-4 items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded bg-gradient-to-br from-green-400 to-green-500"></div>
-                    <span className="text-xs text-gray-600">Booked</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded bg-gray-200"></div>
-                    <span className="text-xs text-gray-600">Available</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded bg-gray-300"></div>
-                    <span className="text-xs text-gray-600">Weekend</span>
-                  </div>
-                </div>
+                <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <TabsList>
+                    {months.map((month) => (
+                      <TabsTrigger
+                        key={month.getTime()}
+                        value={getMonthFormat(month)}
+                      >
+                        {getMonthFormat(month)}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 flex flex-col md:flex-row gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-1 block">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={startDate.toISOString().split("T")[0]}
-                    onChange={(e) => setStartDate(new Date(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1 block">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={endDate.toISOString().split("T")[0]}
-                    onChange={(e) => setEndDate(new Date(e.target.value))}
-                  />
-                </div>
-              </div>
               <BookingCalendar
-                startDate={startDate}
-                endDate={endDate}
+                startDate={fromDate}
+                endDate={toDate}
+                days={days}
                 refreshKey={refreshKey}
+                users={users}
                 onCellClick={handleCellClick}
               />
             </CardContent>
@@ -255,7 +265,12 @@ export default function SeatBookingPage() {
         </TabsContent>
 
         <TabsContent value="configure">
-          <BookingForm onSuccess={handleBookingSuccess} />
+          <BookingForm
+            onSuccess={handleBookingSuccess}
+            users={users}
+            fromDate={fromDate}
+            toDate={toDate}
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -4,7 +4,7 @@ import User from "@/modals/User";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -24,7 +24,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -42,7 +42,7 @@ export async function PUT(
       { ...body }, // Prevent changing the id field
       {
         new: true,
-      }
+      },
     );
     if (!updateResult) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -58,12 +58,20 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     await connectToDatabase();
-    const deleteResult = await User.findByIdAndDelete(id);
+
+    // First find the user by custom id field
+    const userToDelete = await User.findOne({ id: id });
+    if (!userToDelete) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Then delete using the MongoDB _id
+    const deleteResult = await User.findByIdAndDelete(userToDelete._id);
     if (!deleteResult) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

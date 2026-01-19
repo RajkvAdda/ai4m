@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
+import React, { useState, useEffect, useRef } from "react";
+import { format, isToday } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,8 @@ interface BookingCalendarProps {
   endDate: Date;
   refreshKey: number;
   onCellClick: (userId: string, date: string) => void;
+  users: User[];
+  days: any[];
 }
 
 export function BookingCalendar({
@@ -34,13 +36,15 @@ export function BookingCalendar({
   endDate,
   refreshKey,
   onCellClick,
+  users,
+  days,
 }: BookingCalendarProps) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [dates, setDates] = useState<string[]>([]);
   const [bookingMap, setBookingMap] = useState<
     Record<string, Record<string, Booking | null>>
   >({});
   const [loading, setLoading] = useState(true);
+  const todayRef = useRef<HTMLTableCellElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchBookings = async () => {
     try {
@@ -55,8 +59,6 @@ export function BookingCalendar({
       if (!response.ok) throw new Error("Failed to fetch bookings");
 
       const data = await response.json();
-      setUsers(data.users);
-      setDates(data.dates);
       setBookingMap(data.bookingMap);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -69,6 +71,20 @@ export function BookingCalendar({
     fetchBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, refreshKey]);
+
+  useEffect(() => {
+    // Scroll to today's date after data is loaded
+    if (!loading && todayRef.current && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const todayElement = todayRef.current;
+      const containerWidth = container.clientWidth;
+      const todayLeft = todayElement.offsetLeft;
+      const todayWidth = todayElement.offsetWidth;
+
+      // Center today's date in the view
+      container.scrollLeft = todayLeft - containerWidth / 2 + todayWidth / 2;
+    }
+  }, [loading, days]);
 
   const getDayName = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -86,20 +102,12 @@ export function BookingCalendar({
     return day === 0 || day === 6;
   };
 
-  if (loading) {
-    return (
-      <Card className="p-8 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </Card>
-    );
-  }
-
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" ref={scrollContainerRef}>
         <div className="inline-block min-w-full align-middle">
           <table className="min-w-full border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-30 shadow-sm">
               <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
                 <th className="sticky left-0 z-20 bg-white border-r-2 border-primary/20 px-4 py-3 text-left">
                   <div className="flex items-center gap-2">
@@ -111,34 +119,47 @@ export function BookingCalendar({
                     </Badge>
                   </div>
                 </th>
-                {dates.map((date) => (
-                  <th
-                    key={date}
-                    className={cn(
-                      "px-4 py-3 text-center border-l border-gray-200 min-w-[120px]",
-                      isWeekend(date) && "bg-gray-50",
-                    )}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <span
-                        className={cn(
-                          "text-xs font-medium",
-                          isWeekend(date) ? "text-gray-400" : "text-primary",
+                {days.map((date) => {
+                  const isTodayDate = isToday(new Date(date));
+                  return (
+                    <th
+                      key={date}
+                      ref={isTodayDate ? todayRef : null}
+                      className={cn(
+                        "px-4 py-3 text-center border-l border-gray-200 min-w-[120px]",
+                        isWeekend(date) && "bg-gray-50",
+                        isTodayDate &&
+                          "bg-primary/20 border-2 border-primary relative",
+                      )}
+                    >
+                      <div className="flex flex-col gap-1">
+                        <span
+                          className={cn(
+                            "text-xs font-medium",
+                            isWeekend(date) ? "text-gray-400" : "text-primary",
+                            isTodayDate && "font-bold text-primary",
+                          )}
+                        >
+                          {getDayName(date)}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-xs",
+                            isWeekend(date) ? "text-gray-400" : "text-gray-600",
+                            isTodayDate && "font-bold text-primary",
+                          )}
+                        >
+                          {getDateDisplay(date)}
+                        </span>
+                        {isTodayDate && (
+                          <Badge className="text-[10px] bg-primary text-white">
+                            Today
+                          </Badge>
                         )}
-                      >
-                        {getDayName(date)}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-xs",
-                          isWeekend(date) ? "text-gray-400" : "text-gray-600",
-                        )}
-                      >
-                        {getDateDisplay(date)}
-                      </span>
-                    </div>
-                  </th>
-                ))}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -147,7 +168,8 @@ export function BookingCalendar({
                   key={user.id}
                   className={cn(
                     "hover:bg-gray-50 transition-colors",
-                    userIndex % 2 === 0 ? "bg-white" : "bg-gray-50/50",
+                    loading ? "animate-pulse" : "",
+                    userIndex % 2 === 0 ? "bg-white" : "bg-gray-100",
                   )}
                 >
                   <td className="sticky left-0 z-10 bg-inherit border-r-2 border-primary/20 px-4 py-3">
@@ -173,10 +195,11 @@ export function BookingCalendar({
                       </div>
                     </div>
                   </td>
-                  {dates.map((date) => {
+                  {days.map((date) => {
                     const booking = bookingMap[user.id]?.[date];
                     const isBooked = !!booking;
                     const weekend = isWeekend(date);
+                    const isTodayDate = isToday(new Date(date));
 
                     return (
                       <td
@@ -184,6 +207,8 @@ export function BookingCalendar({
                         className={cn(
                           "border-l border-gray-200 p-2 cursor-pointer transition-all",
                           weekend && "bg-gray-100",
+                          isTodayDate &&
+                            "bg-primary/10 border-2 border-primary",
                         )}
                         onClick={() => !weekend && onCellClick(user.id, date)}
                       >
