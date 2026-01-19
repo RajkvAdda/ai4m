@@ -31,7 +31,7 @@ export default function LoginPage() {
                     <Button
                       onClick={handleGoogleSignIn}
                       className="w-full h-12 "
-                      variant="outline"
+                      variant="secondary"
                     >
                       <svg className="w-10 h-10 mr-3" viewBox="0 0 24 24">
                         <path
@@ -88,15 +88,8 @@ export default function LoginPage() {
                 </div>
               </form>{" "}
               <div className="bg-blue-200 relative hidden md:flex flex-col items-center justify-center">
-                <Image
-                  src={Saral}
-                  alt="Saral logo"
-                  width={256}
-                  height={256}
-                  className="h-auto w-auto object-contain max-h-64"
-                  priority
-                />
-              </div>{" "}
+                <Image src={Saral} alt="Saral logo" width={200} priority />
+              </div>
             </CardContent>
           </Card>
           <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

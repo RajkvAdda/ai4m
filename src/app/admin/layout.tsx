@@ -1,13 +1,25 @@
+"use client";
 import { Alert } from "@/components/ui/alert";
 import { BackButton } from "@/components/ui/button";
 import UserAvator from "@/components/user-avator";
-import React from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import React, { useEffect } from "react";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+    }
+  }, [router, status]);
   return (
     <div className="min-h-screen flex flex-col p-8">
       <main className="flex-1">

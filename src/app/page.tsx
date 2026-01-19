@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import seatBookingBg from "@/assets/images/seatbooking.png";
 import meetingRoomBg from "@/assets/images/MeetingRoomBg.png";
+
 const bookingOptions = [
   {
     title: "Meeting Room Booking",
