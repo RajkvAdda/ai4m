@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, isSameDay } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -39,9 +39,7 @@ export function BookingCalendar({
   users,
   days,
 }: BookingCalendarProps) {
-  const [bookingMap, setBookingMap] = useState<
-    Record<string, Record<string, Booking | null>>
-  >({});
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const todayRef = useRef<HTMLTableCellElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -53,13 +51,13 @@ export function BookingCalendar({
       const end = format(endDate, "yyyy-MM-dd");
 
       const response = await fetch(
-        `/api/admin/bookings-calendar?startDate=${start}&endDate=${end}`,
+        `/api/seatbookings?fromDate=${start}&toDate=${end}`,
       );
 
       if (!response.ok) throw new Error("Failed to fetch bookings");
 
       const data = await response.json();
-      setBookingMap(data.bookingMap);
+      setBookings(data);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
@@ -205,7 +203,11 @@ export function BookingCalendar({
                     </div>
                   </td>
                   {days.map((date) => {
-                    const booking = bookingMap[user.id]?.[date];
+                    const booking = bookings.find(
+                      (b) =>
+                        b.userId === user.id &&
+                        isSameDay(new Date(b.startDate), new Date(date)),
+                    );
                     const isBooked = !!booking;
                     const weekend = isWeekend(date);
                     const isTodayDate = isToday(new Date(date));

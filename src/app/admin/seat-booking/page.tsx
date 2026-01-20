@@ -59,29 +59,28 @@ export default function SeatBookingPage() {
 
   const fetchStats = async () => {
     try {
-      // Fetch seats
-      const seatsResponse = await fetch("/api/seats");
-      const seatsData = await seatsResponse.json();
+      const [seatsResponse, usersResponse, bookingsResponse] = await Promise.all([
+        fetch("/api/seats"),
+        fetch("/api/users?role=SPP,GST"),
+        fetch(`/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}`),
+      ]);
+
+      const [seatsData, usersData, bookingsData] = await Promise.all([
+        seatsResponse.json(),
+        usersResponse.json(),
+        bookingsResponse.json(),
+      ]);
+
       const totalSeats =
         seatsData?.reduce(
           (sum: number, seat: any) => sum + seat.units * seat.seatsPerUnit,
           0,
         ) || 0;
 
-      // Fetch users
-      const usersResponse = await fetch("/api/users?role=SPP,GST");
-
-      const usersData = await usersResponse.json();
       setUsers(usersData || []);
       const totalUsers = usersData?.length || 0;
-
-      // Fetch today's bookings
-      const today = new Date().toISOString().split("T")[0];
-      const bookingsResponse = await fetch(
-        `/api/seatbookings?startDate=${today}`,
-      );
-      const bookingsData = await bookingsResponse.json();
       const bookedToday = bookingsData?.length || 0;
+
       console.log({ totalSeats, bookedToday, totalUsers, bookingsData });
       setStats({ totalSeats, bookedToday, totalUsers });
     } catch (error) {
