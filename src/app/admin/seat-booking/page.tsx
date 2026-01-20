@@ -20,7 +20,6 @@ import {
   Users,
   Armchair,
 } from "lucide-react";
-import { toast } from "sonner";
 import { User } from "next-auth";
 import {
   cn,
@@ -30,8 +29,11 @@ import {
   getPreviousAndNextMonths,
 } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SeatBookingPage() {
+  const { toast } = useToast();
+
   const [refreshKey, setRefreshKey] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [group, setGroup] = useState<string>("All");
@@ -59,11 +61,14 @@ export default function SeatBookingPage() {
 
   const fetchStats = async () => {
     try {
-      const [seatsResponse, usersResponse, bookingsResponse] = await Promise.all([
-        fetch("/api/seats"),
-        fetch("/api/users?role=SPP,GST"),
-        fetch(`/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}`),
-      ]);
+      const [seatsResponse, usersResponse, bookingsResponse] =
+        await Promise.all([
+          fetch("/api/seats"),
+          fetch("/api/users?role=SPP,GST"),
+          fetch(
+            `/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}`,
+          ),
+        ]);
 
       const [seatsData, usersData, bookingsData] = await Promise.all([
         seatsResponse.json(),
@@ -312,9 +317,15 @@ export default function SeatBookingPage() {
                 endDate={toDate}
                 days={days}
                 refreshKey={refreshKey}
-                users={users.filter(
-                  (user) => group === "All" || user.role === group,
-                )}
+                users={users
+                  .filter((user) => group === "All" || user.role === group)
+                  .sort((a, b) => {
+                    const roleOrder = { SPP: 1, GST: 2 };
+                    return (
+                      (roleOrder[a.role as keyof typeof roleOrder] || 999) -
+                      (roleOrder[b.role as keyof typeof roleOrder] || 999)
+                    );
+                  })}
                 onCellClick={handleCellClick}
               />
             </CardContent>
@@ -324,7 +335,13 @@ export default function SeatBookingPage() {
         <TabsContent value="configure">
           <BookingForm
             onSuccess={handleBookingSuccess}
-            users={users}
+            users={users.sort((a, b) => {
+              const roleOrder = { SPP: 1, GST: 2 };
+              return (
+                (roleOrder[a.role as keyof typeof roleOrder] || 999) -
+                (roleOrder[b.role as keyof typeof roleOrder] || 999)
+              );
+            })}
             fromDate={fromDate}
             toDate={toDate}
           />

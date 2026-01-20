@@ -76,10 +76,20 @@ export async function POST(request: Request) {
       }
 
       // Calculate week number from start date (1-indexed)
-      const daysDiff = Math.floor(
-        (currentDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+      // Get ISO week number for the current year
+      const yearStart = new Date(currentDate.getFullYear(), 0, 1);
+      const daysSinceYearStart = Math.floor(
+        (currentDate.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24),
       );
-      const weekNumber = Math.floor(daysDiff / 7) + 1;
+      const weekNumber = Math.ceil(
+        (daysSinceYearStart + yearStart.getDay() + 1) / 7,
+      );
+      console.log(
+        "Current Date:",
+        currentDate.toDateString(),
+        "Week Number:",
+        weekNumber,
+      );
       const isOddWeek = weekNumber % 2 === 1;
       const isEvenWeek = weekNumber % 2 === 0;
 

@@ -19,16 +19,16 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, Calendar, Check } from "lucide-react";
-import { toast } from "sonner";
 import { User } from "next-auth";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUpcomingWednesdayWeekNumber } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const weekdays = [
   { value: "Mon", label: "Monday" },
   { value: "Tue", label: "Tuesday" },
-  { value: "Wed_odd", label: "Wednesday (SPP)" },
-  { value: "Wed_even", label: "Wednesday (GST)" },
+  { value: "Wed_even", label: "Wednesday (SPP)" },
+  { value: "Wed_odd", label: "Wednesday (GST)" },
   { value: "Thu", label: "Thursday" },
   { value: "Fri", label: "Friday" },
 ];
@@ -55,6 +55,8 @@ export function BookingForm({
   fromDate,
   toDate,
 }: BookingFormProps) {
+  const { toast } = useToast();
+
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [group, setGroup] = useState<string>("All");
