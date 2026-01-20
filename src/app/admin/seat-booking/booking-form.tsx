@@ -27,8 +27,8 @@ import { getUpcomingWednesdayWeekNumber } from "@/lib/utils";
 const weekdays = [
   { value: "Mon", label: "Monday" },
   { value: "Tue", label: "Tuesday" },
-  { value: "Wed_even", label: "Wednesday (SPP)" },
-  { value: "Wed_odd", label: "Wednesday (GST)" },
+  { value: "Wed_odd", label: "Wednesday (SPP)" },
+  { value: "Wed_even", label: "Wednesday (GST)" },
   { value: "Thu", label: "Thursday" },
   { value: "Fri", label: "Friday" },
 ];

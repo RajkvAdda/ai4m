@@ -100,8 +100,20 @@ export function BookingCalendar({
     return day === 0 || day === 6;
   };
 
+  // Calculate user-wise booking totals
+  const getUserBookingTotal = (userId: string) => {
+    return bookings.filter((b) => b.userId === userId).length;
+  };
+
+  // Calculate day-wise booking totals
+  const getDayBookingTotal = (date: string) => {
+    return bookings.filter((b) =>
+      isSameDay(new Date(b.startDate), new Date(date)),
+    ).length;
+  };
+
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden p-0">
       <div className="overflow-x-auto" ref={scrollContainerRef}>
         <div className="inline-block min-w-full align-middle">
           <table className="min-w-full border-collapse">
@@ -125,16 +137,17 @@ export function BookingCalendar({
                       ref={isTodayDate ? todayRef : null}
                       className={cn(
                         "px-4 py-3 text-center border-l border-gray-200 min-w-[120px]",
-                        isWeekend(date) && "bg-gray-50",
-                        isTodayDate &&
-                          "bg-primary/20 border-2 border-primary relative",
+                        isWeekend(date) && "bg-yellow-50",
+                        isTodayDate && "bg-green-50 relative",
                       )}
                     >
                       <div className="flex flex-col gap-1">
                         <span
                           className={cn(
-                            "text-xs font-medium",
-                            isWeekend(date) ? "text-gray-400" : "text-primary",
+                            "text-md font-bold",
+                            isWeekend(date)
+                              ? "text-yellow-400"
+                              : "text-primary",
                             isTodayDate && "font-bold text-primary",
                           )}
                         >
@@ -142,8 +155,10 @@ export function BookingCalendar({
                         </span>
                         <span
                           className={cn(
-                            "text-xs",
-                            isWeekend(date) ? "text-gray-400" : "text-gray-600",
+                            "text-sm font-medium",
+                            isWeekend(date)
+                              ? "text-yellow-400"
+                              : "text-gray-600",
                             isTodayDate && "font-bold text-primary",
                           )}
                         >
@@ -158,12 +173,20 @@ export function BookingCalendar({
                     </th>
                   );
                 })}
+                <th className="sticky right-0 z-20 bg-white border-l-2 border-primary/20 px-4 py-3 text-center">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm font-semibold text-primary">
+                      Total
+                    </span>
+                    <span className="text-xs text-gray-600">Bookings</span>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
               {users?.length > 0 ? null : (
                 <tr key="loading" className="animate-pulse">
-                  <td colSpan={10} className="px-4 py-3">
+                  <td colSpan={days.length + 1} className="px-4 py-3">
                     <div className="flex items-center justify-center">
                       <Loader className="h-5 w-5 text-primary animate-spin" />
                     </div>
@@ -217,9 +240,8 @@ export function BookingCalendar({
                         key={`${user.id}-${date}`}
                         className={cn(
                           "border-l border-gray-200 p-2 cursor-pointer transition-all",
-                          weekend && "bg-gray-100",
-                          isTodayDate &&
-                            "bg-primary/10 border-2 border-primary",
+                          weekend && "bg-yellow-50",
+                          isTodayDate && "bg-green-50",
                         )}
                         onClick={() => !weekend && onCellClick(user.id, date)}
                       >
@@ -258,8 +280,54 @@ export function BookingCalendar({
                       </td>
                     );
                   })}
+                  <td className="sticky right-0 z-10 bg-inherit border-l-2 border-primary/20 px-4 py-3">
+                    <div className="flex items-center justify-center">
+                      <Badge
+                        variant="default"
+                        className="text-sm font-bold bg-primary"
+                      >
+                        {getUserBookingTotal(user.id)}
+                      </Badge>
+                    </div>
+                  </td>
                 </tr>
               ))}
+              <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-t-2 border-primary/20 sticky bottom-0 z-20">
+                <td className="sticky left-0 z-30 bg-gray-100 px-4 py-3 font-semibold text-primary text-sm">
+                  Daily Total
+                </td>
+                {days.map((date) => {
+                  const weekend = isWeekend(date);
+                  const isTodayDate = isToday(new Date(date));
+                  const dayTotal = getDayBookingTotal(date);
+
+                  return (
+                    <td
+                      key={`total-${date}`}
+                      className={cn(
+                        "border-l border-gray-200 px-4 py-3 text-center ",
+                        weekend && "bg-yellow-50",
+                        isTodayDate && "bg-green-50",
+                      )}
+                    >
+                      <Badge
+                        variant={dayTotal > 0 ? "default" : "secondary"}
+                        className="text-sm font-bold"
+                      >
+                        {dayTotal}
+                      </Badge>
+                    </td>
+                  );
+                })}
+                <td className="sticky right-0 z-30 bg-gray-100 border-l-2 border-primary/20 px-4 py-3 text-center">
+                  <Badge
+                    variant="default"
+                    className="text-sm font-bold bg-primary"
+                  >
+                    {bookings.length}
+                  </Badge>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
