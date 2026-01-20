@@ -64,7 +64,7 @@ export function getPreviousAndNextMonths(date: Date = new Date()) {
 
 export function getMonthDays(
   month: number = new Date().getMonth(),
-  year: number = new Date().getFullYear()
+  year: number = new Date().getFullYear(),
 ) {
   const date = new Date(year, month, 1);
   const days = [];
@@ -81,7 +81,7 @@ export function getMonthFormat(date: Date = new Date()) {
 }
 export function getDateFormat(
   date: Date = new Date(),
-  formatStr: string = "yyyy-MM-dd"
+  formatStr: string = "yyyy-MM-dd",
 ) {
   return format(date, formatStr);
 }
@@ -136,3 +136,31 @@ export const generateColorFromId = (id: string) => {
   const h = hash % 360;
   return `hsl(${h}, 70%, 85%)`;
 };
+
+export function getUpcomingWednesday(): Date {
+  const today = new Date();
+  const currentDay = today.getDay(); // 0 = Sunday, 3 = Wednesday
+  const daysUntilWednesday = (3 - currentDay + 7) % 7 || 7;
+
+  const upcomingWednesday = new Date(today);
+  upcomingWednesday.setDate(today.getDate() + daysUntilWednesday);
+
+  return upcomingWednesday;
+}
+// e.g., "Wed Jan 22 2026"
+export function getWeekNumber(date: Date): number {
+  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+  const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+}
+
+export function getUpcomingWednesdayWeekNumber(): {
+  date: Date;
+  weekNumber: number;
+} {
+  const wednesday = getUpcomingWednesday();
+  return {
+    date: wednesday,
+    weekNumber: getWeekNumber(wednesday),
+  };
+}

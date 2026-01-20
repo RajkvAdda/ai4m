@@ -18,6 +18,9 @@ export async function GET(request: Request) {
       query.startDate = { $gte: searchParams.get("fromDate") };
       query.endDate = { $lte: searchParams.get("toDate") };
     }
+    if (searchParams.get("startDate")) {
+      query.startDate = { $eq: searchParams.get("startDate") };
+    }
 
     const bookings = await SeatBooking.find(query).exec();
     return NextResponse.json(bookings);

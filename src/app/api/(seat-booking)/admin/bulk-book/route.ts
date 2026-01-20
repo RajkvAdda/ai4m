@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     await connectToDatabase();
 
     const body = await request.json();
-    const { userIds, weekdays, specificDayPattern, startDate, endDate } = body;
+    const { userIds, weekdays, startDate, endDate } = body;
 
     // Validate required fields
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -75,17 +75,38 @@ export async function POST(request: Request) {
         continue;
       }
 
-      // Case 1: Regular weekday booking
+      // Calculate week number from start date (1-indexed)
+      const daysDiff = Math.floor(
+        (currentDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const weekNumber = Math.floor(daysDiff / 7) + 1;
+      const isOddWeek = weekNumber % 2 === 1;
+      const isEvenWeek = weekNumber % 2 === 0;
+
+      // Case 1: Odd Wednesday booking
       if (
+        weekdays &&
+        weekdays.includes("Wed_odd") &&
+        currentDayName === "Wed" &&
+        isOddWeek
+      ) {
+        shouldBook = true;
+      }
+      // Case 2: Even Wednesday booking
+      else if (
+        weekdays &&
+        weekdays.includes("Wed_even") &&
+        currentDayName === "Wed" &&
+        isEvenWeek
+      ) {
+        shouldBook = true;
+      }
+      // Case 3: Regular weekday booking (not Wed_odd or Wed_even)
+      else if (
         weekdays &&
         weekdays.length > 0 &&
         weekdays.includes(currentDayName)
       ) {
-        shouldBook = true;
-      }
-
-      // Case 2: Specific day pattern (e.g., every Wednesday with rotating user sets)
-      if (specificDayPattern && specificDayPattern.day === currentDayName) {
         shouldBook = true;
       }
 

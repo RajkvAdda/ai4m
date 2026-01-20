@@ -5,7 +5,7 @@ import { format, isToday } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface User {
@@ -84,7 +84,7 @@ export function BookingCalendar({
       // Center today's date in the view
       container.scrollLeft = todayLeft - containerWidth / 2 + todayWidth / 2;
     }
-  }, [loading, days]);
+  }, [loading, users]);
 
   const getDayName = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -152,7 +152,7 @@ export function BookingCalendar({
                           {getDateDisplay(date)}
                         </span>
                         {isTodayDate && (
-                          <Badge className="text-[10px] bg-primary text-white">
+                          <Badge variant="default" className="justify-center">
                             Today
                           </Badge>
                         )}
@@ -163,6 +163,15 @@ export function BookingCalendar({
               </tr>
             </thead>
             <tbody>
+              {!users?.length > 0 && (
+                <tr key="loading" className="animate-pulse">
+                  <td colSpan={10} className="px-4 py-3">
+                    <div className="flex items-center justify-center">
+                      <Loader className="h-5 w-5 text-primary animate-spin" />
+                    </div>
+                  </td>
+                </tr>
+              )}
               {users.map((user, userIndex) => (
                 <tr
                   key={user.id}

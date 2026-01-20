@@ -23,15 +23,18 @@ import {
 import { toast } from "sonner";
 import { User } from "next-auth";
 import {
+  cn,
   getDateFormat,
   getMonthDays,
   getMonthFormat,
   getPreviousAndNextMonths,
 } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 export default function SeatBookingPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
+  const [group, setGroup] = useState<string>("All");
   const months = getPreviousAndNextMonths();
   const [selectedMonth, setSelectedMonth] = React.useState(
     getMonthFormat(months[1]),
@@ -75,11 +78,11 @@ export default function SeatBookingPage() {
       // Fetch today's bookings
       const today = new Date().toISOString().split("T")[0];
       const bookingsResponse = await fetch(
-        `/api/seatbookings?startDate=${today}&endDate=${today}`,
+        `/api/seatbookings?startDate=${today}`,
       );
       const bookingsData = await bookingsResponse.json();
       const bookedToday = bookingsData?.length || 0;
-
+      console.log({ totalSeats, bookedToday, totalUsers, bookingsData });
       setStats({ totalSeats, bookedToday, totalUsers });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -147,7 +150,12 @@ export default function SeatBookingPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+        <Card
+          className={cn(
+            "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200",
+            stats?.totalSeats === 0 && "animate-pulse",
+          )}
+        >
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-blue-700 flex items-center gap-2">
               <Armchair className="h-4 w-4" />
@@ -162,7 +170,12 @@ export default function SeatBookingPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+        <Card
+          className={cn(
+            "bg-gradient-to-br from-green-50 to-green-100 border-green-200",
+            stats?.totalSeats === 0 && "animate-pulse",
+          )}
+        >
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
               <CalendarDays className="h-4 w-4" />
@@ -179,7 +192,12 @@ export default function SeatBookingPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+        <Card
+          className={cn(
+            "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200",
+            stats?.totalUsers === 0 && "animate-pulse",
+          )}
+        >
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-purple-700 flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -237,6 +255,28 @@ export default function SeatBookingPage() {
                     </div>
                   </div>
                 </div>
+                <Tabs defaultValue="All" value={group} onValueChange={setGroup}>
+                  <TabsList>
+                    <TabsTrigger value="All">
+                      <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                        {users.length}
+                      </Badge>
+                      All
+                    </TabsTrigger>
+                    <TabsTrigger value="SPP">
+                      <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                        {users.filter((user) => user.role === "SPP").length}
+                      </Badge>
+                      SPP
+                    </TabsTrigger>
+                    <TabsTrigger value="GST">
+                      <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                        {users.filter((user) => user.role === "GST").length}
+                      </Badge>
+                      GST
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
                   <TabsList>
                     {months.map((month) => (
@@ -257,7 +297,9 @@ export default function SeatBookingPage() {
                 endDate={toDate}
                 days={days}
                 refreshKey={refreshKey}
-                users={users}
+                users={users.filter(
+                  (user) => group === "All" || user.role === group,
+                )}
                 onCellClick={handleCellClick}
               />
             </CardContent>

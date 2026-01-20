@@ -27,11 +27,14 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, Calendar, Check } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "next-auth";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getUpcomingWednesdayWeekNumber } from "@/lib/utils";
 
 const weekdays = [
   { value: "Mon", label: "Monday" },
   { value: "Tue", label: "Tuesday" },
-  { value: "Wed", label: "Wednesday" },
+  { value: "Wed_odd", label: "Wednesday (Odd Week)" },
+  { value: "Wed_even", label: "Wednesday (Even Week)" },
   { value: "Thu", label: "Thursday" },
   { value: "Fri", label: "Friday" },
 ];
@@ -39,7 +42,6 @@ const weekdays = [
 const bookingSchema = z.object({
   userIds: z.array(z.string()).min(1, "Select at least one user"),
   weekdays: z.array(z.string()).optional(),
-  specificDay: z.string().optional(),
   startDate: z.string(),
   endDate: z.string(),
 });
@@ -61,13 +63,13 @@ export function BookingForm({
 }: BookingFormProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [group, setGroup] = useState<string>("All");
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       userIds: [],
       weekdays: [],
-      specificDay: undefined,
       startDate: fromDate,
       endDate: toDate,
     },
@@ -86,6 +88,8 @@ export function BookingForm({
   const onSubmit = async (data: BookingFormData) => {
     try {
       setLoading(true);
+
+      console.log("Submitting booking data:", data);
 
       const response = await fetch("/api/admin/bulk-book", {
         method: "POST",
@@ -116,6 +120,9 @@ export function BookingForm({
     }
   };
 
+  // Usage:
+  const upcomingWednesdayInfo = getUpcomingWednesdayWeekNumber();
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -133,60 +140,124 @@ export function BookingForm({
               name="userIds"
               render={() => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Select Team Members
-                  </FormLabel>
-                  <FormDescription>
-                    Choose multiple users for seat booking
-                  </FormDescription>
+                  <div className="flex items-center gap-2 justify-between">
+                    <div>
+                      <FormLabel className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Select Team Members
+                      </FormLabel>
+                      <FormDescription>
+                        Choose multiple users for seat booking
+                      </FormDescription>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {selectedUsers.length > 0 ? (
+                        <>
+                          <Badge variant="secondary">
+                            {selectedUsers.length} selected
+                          </Badge>
+                          <Badge
+                            variant="default"
+                            className="cursor-pointer"
+                            onClick={() => setSelectedUsers([])}
+                          >
+                            Clear
+                          </Badge>
+                        </>
+                      ) : (
+                        <Badge
+                          variant="default"
+                          className="cursor-pointer"
+                          onClick={() =>
+                            setSelectedUsers(
+                              users
+                                .filter(
+                                  (user) =>
+                                    group === "All" || user.role === group,
+                                )
+                                .map((user) => user.id),
+                            )
+                          }
+                        >
+                          Select All
+                        </Badge>
+                      )}
+                      <Tabs
+                        defaultValue="All"
+                        value={group}
+                        onValueChange={setGroup}
+                      >
+                        <TabsList>
+                          <TabsTrigger value="All">
+                            <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                              {users.length}
+                            </Badge>
+                            All
+                          </TabsTrigger>
+                          <TabsTrigger value="SPP">
+                            <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                              {
+                                users.filter((user) => user.role === "SPP")
+                                  .length
+                              }
+                            </Badge>
+                            SPP
+                          </TabsTrigger>
+                          <TabsTrigger value="GST">
+                            <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                              {
+                                users.filter((user) => user.role === "GST")
+                                  .length
+                              }
+                            </Badge>
+                            GST
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </div>
+                  </div>
                   <FormControl>
                     <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
                       <div className="space-y-2">
-                        {users.map((user) => (
-                          <div
-                            key={user.id}
-                            onClick={() => toggleUser(user.id)}
-                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
-                              selectedUsers.includes(user.id)
-                                ? "bg-primary/10 border-2 border-primary"
-                                : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
-                            }`}
-                          >
+                        {users
+                          .filter(
+                            (user) => group === "All" || user.role === group,
+                          )
+                          .map((user) => (
                             <div
-                              className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
+                              key={user.id}
+                              onClick={() => toggleUser(user.id)}
+                              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
                                 selectedUsers.includes(user.id)
-                                  ? "bg-primary border-primary"
-                                  : "border-gray-300"
+                                  ? "bg-primary/10 border-2 border-primary"
+                                  : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
                               }`}
                             >
-                              {selectedUsers.includes(user.id) && (
-                                <Check className="h-3 w-3 text-white" />
-                              )}
+                              <div
+                                className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
+                                  selectedUsers.includes(user.id)
+                                    ? "bg-primary border-primary"
+                                    : "border-gray-300"
+                                }`}
+                              >
+                                {selectedUsers.includes(user.id) && (
+                                  <Check className="h-3 w-3 text-white" />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">
+                                  {user.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {user.email}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium">{user.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {user.email}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
                   </FormControl>
-                  {selectedUsers.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedUsers.map((userId) => {
-                        const user = users.find((u) => u.id === userId);
-                        return (
-                          <Badge key={userId} variant="secondary">
-                            {user?.name}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  )}
+
                   <FormMessage />
                 </FormItem>
               )}
@@ -200,9 +271,14 @@ export function BookingForm({
                 <FormItem>
                   <FormLabel>Select Weekdays</FormLabel>
                   <FormDescription>
-                    Choose which days of the week to book seats
+                    Choose which days of the week to book seats (upcoming
+                    Wednesday is{" "}
+                    {upcomingWednesdayInfo.weekNumber % 2 === 0
+                      ? "Even"
+                      : "Odd"}{" "}
+                    Week )
                   </FormDescription>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 width-auto mb-2">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-3  mb-2">
                     {weekdays.map((day) => (
                       <FormField
                         key={day.value}
@@ -240,39 +316,6 @@ export function BookingForm({
                       />
                     ))}
                   </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Specific Day Pattern */}
-            <FormField
-              control={form.control}
-              name="specificDay"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specific Day Pattern (Optional)</FormLabel>
-                  <FormDescription>
-                    Select a specific day for recurring bookings (e.g., every
-                    Wednesday)
-                  </FormDescription>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a day" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {weekdays.map((day) => (
-                        <SelectItem key={day.value} value={day.value}>
-                          Every {day.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
