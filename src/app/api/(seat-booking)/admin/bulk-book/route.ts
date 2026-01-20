@@ -84,12 +84,7 @@ export async function POST(request: Request) {
       const weekNumber = Math.ceil(
         (daysSinceYearStart + yearStart.getDay() + 1) / 7,
       );
-      console.log(
-        "Current Date:",
-        currentDate.toDateString(),
-        "Week Number:",
-        weekNumber,
-      );
+
       const isOddWeek = weekNumber % 2 === 1;
       const isEvenWeek = weekNumber % 2 === 0;
 

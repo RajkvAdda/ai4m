@@ -77,8 +77,17 @@ export function BookingForm({
         ? prev.filter((id) => id !== userId)
         : [...prev, userId];
       form.setValue("userIds", newSelection);
+
       return newSelection;
     });
+  };
+
+  const selectAllUsers = () => {
+    const allUserIds = users
+      .filter((user) => group === "All" || user.role === group)
+      .map((user) => user.id);
+    setSelectedUsers(allUserIds);
+    form.setValue("userIds", allUserIds);
   };
 
   const onSubmit = async (data: BookingFormData) => {
@@ -172,16 +181,7 @@ export function BookingForm({
                         <Badge
                           variant="default"
                           className="cursor-pointer"
-                          onClick={() =>
-                            setSelectedUsers(
-                              users
-                                .filter(
-                                  (user) =>
-                                    group === "All" || user.role === group,
-                                )
-                                .map((user) => user.id),
-                            )
-                          }
+                          onClick={() => selectAllUsers()}
                         >
                           Select All
                         </Badge>
