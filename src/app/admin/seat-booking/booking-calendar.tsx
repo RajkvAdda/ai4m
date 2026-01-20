@@ -163,7 +163,7 @@ export function BookingCalendar({
               </tr>
             </thead>
             <tbody>
-              {!users?.length > 0 && (
+              {users?.length > 0 ? null : (
                 <tr key="loading" className="animate-pulse">
                   <td colSpan={10} className="px-4 py-3">
                     <div className="flex items-center justify-center">

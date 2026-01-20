@@ -105,9 +105,15 @@ export default function SeatBookingPage() {
       const result = await response.json();
 
       if (result.action === "booked") {
-        toast.success("Seat booked successfully!");
+        toast({
+          title: "Seat booked successfully!",
+          variant: "success",
+        });
       } else {
-        toast.info("Booking cancelled");
+        toast({
+          title: "Booking cancelled",
+          variant: "info",
+        });
       }
 
       setRefreshKey((prev) => prev + 1);
@@ -115,18 +121,28 @@ export default function SeatBookingPage() {
       console.error("Toggle booking error:", error);
       const message =
         error instanceof Error ? error.message : "Failed to update booking";
-      toast.error(message);
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
     }
   };
 
   const handleBookingSuccess = () => {
     setRefreshKey((prev) => prev + 1);
-    toast.success("Booking updated successfully!");
+    toast({
+      title: "Booking updated successfully!",
+      variant: "success",
+    });
   };
 
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
-    toast.success("Calendar refreshed!");
+    toast({
+      title: "Calendar refreshed!",
+      variant: "success",
+    });
   };
 
   return (

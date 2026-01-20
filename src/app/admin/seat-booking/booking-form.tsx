@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,13 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, Calendar, Check } from "lucide-react";
@@ -103,7 +97,11 @@ export function BookingForm({
       }
 
       const result = await response.json();
-      toast.success(`Successfully created ${result.bookingsCreated} bookings!`);
+      toast({
+        title: `Successfully created ${result.bookingsCreated} bookings!`,
+        description: "You do not have permission to book for this date.",
+        variant: "success",
+      });
 
       // Reset form
       setSelectedUsers([]);
@@ -114,7 +112,11 @@ export function BookingForm({
       console.error("Booking error:", error);
       const message =
         error instanceof Error ? error.message : "Failed to create bookings";
-      toast.error(message);
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
