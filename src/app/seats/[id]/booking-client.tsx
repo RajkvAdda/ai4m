@@ -159,7 +159,7 @@ export default function BookingClient({
 
   useEffect(() => {
     if (seatDetails.id && selectedDate) fetchBookings();
-  }, [seatDetails.id, selectedDate, session?.user?.id]);
+  }, [seatDetails.id, selectedDate]);
 
   async function deleteBooking(id: string | null) {
     if (!id) {

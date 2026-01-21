@@ -19,7 +19,7 @@ export function getNameFistKey(fullName: string) {
     ?.map((li) => li?.charAt(0).toUpperCase());
 }
 
-export function getTodayOrNextDate(afterHour: number = 10) {
+export function getTodayOrNextDate(afterHour: number = 19) {
   // Get current time and adjust to IST (UTC+5:30)
   const now = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
