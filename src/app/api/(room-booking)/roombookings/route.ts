@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
     const [roomBookings, total] = await Promise.all([
       RoomBooking.find(query)
-        .select("-__v")
+        .select("-__v -avator")
         .sort({ date: -1, startTime: -1 })
         .skip(skip)
         .limit(limit)

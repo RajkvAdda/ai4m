@@ -10,6 +10,7 @@ export async function GET(request: Request) {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const roleParam = searchParams.get("role");
+    const excludeAvatar = searchParams.get("excludeAvatar") === "true" || true;
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "100");
     const skip = (page - 1) * limit;
@@ -22,9 +23,14 @@ export async function GET(request: Request) {
       query = { role: { $in: roles } };
     }
 
+    // Build select fields - always exclude password and __v, optionally exclude avator
+    const selectFields = excludeAvatar
+      ? "-password -__v -avator"
+      : "-password -__v";
+
     const [allUsers, total] = await Promise.all([
       User.find(query)
-        .select("-password -__v")
+        .select(selectFields)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

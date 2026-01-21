@@ -57,7 +57,7 @@ export function BookingCalendar({
       if (!response.ok) throw new Error("Failed to fetch bookings");
 
       const data = await response.json();
-      setBookings(data);
+      setBookings(data?.data || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
     } finally {
@@ -242,8 +242,11 @@ export function BookingCalendar({
                           "border-l border-gray-200 p-2 cursor-pointer transition-all",
                           weekend && "bg-yellow-50",
                           isTodayDate && "bg-green-50",
+                          loading && "pointer-events-none opacity-75",
                         )}
-                        onClick={() => !weekend && onCellClick(user.id, date)}
+                        onClick={() =>
+                          !weekend && !loading && onCellClick(user.id, date)
+                        }
                       >
                         <div
                           className={cn(
@@ -256,6 +259,7 @@ export function BookingCalendar({
                               "bg-gray-200 hover:bg-gray-300 hover:scale-105",
                             weekend &&
                               "bg-gray-300 cursor-not-allowed opacity-50",
+                            loading && "cursor-wait",
                           )}
                         >
                           {isBooked && !weekend && (

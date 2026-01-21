@@ -22,11 +22,11 @@ export default function UserCalender({
   const [loading, setLoading] = React.useState(true);
   const months = getPreviousAndNextMonths();
   const [selectedMonth, setSelectedMonth] = React.useState(
-    getMonthFormat(months[1])
+    getMonthFormat(months[1]),
   );
 
   const monthNumber = months.findIndex(
-    (month) => getMonthFormat(month) === selectedMonth
+    (month) => getMonthFormat(month) === selectedMonth,
   );
 
   const days = getMonthDays(months[monthNumber].getMonth());
@@ -39,10 +39,11 @@ export default function UserCalender({
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/seatbookings?userId=${userId}&fromDate=${fromDate}&toDate=${toDate}`
+          `/api/seatbookings?userId=${userId}&fromDate=${fromDate}&toDate=${toDate}`,
         );
         const data = await res.json();
-        setBookings(data);
+
+        setBookings(data?.data || []);
       } catch (_err) {
         // Optionally handle error
       } finally {
@@ -75,7 +76,7 @@ export default function UserCalender({
         <div className="grid auto-rows-min gap-4 grid-cols-3 sm:grid-cols-6 lg:grid-cols-10 text-xs md:text-base">
           {days.map((day, i) => {
             const dayBooking = bookings?.find(
-              (b) => b.startDate === getDateFormat(day)
+              (b) => b.startDate === getDateFormat(day),
             );
             const seat = seats?.find((r) => r.id === dayBooking?.seatId);
             if (dayBooking && seat) {
@@ -101,7 +102,7 @@ export default function UserCalender({
                   ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
                     ? "bg-yellow-50 border-yellow-400 border text-yellow-700"
                     : "border",
-                  loading ? "animate-caret-blink" : ""
+                  loading ? "animate-caret-blink" : "",
                 )}
               >
                 {getDateFormat(day, "EEE d")}

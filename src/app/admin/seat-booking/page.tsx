@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BookingForm } from "./booking-form";
 import { BookingCalendar } from "./booking-calendar";
 import {
@@ -34,6 +34,9 @@ import { useToast } from "@/hooks/use-toast";
 export default function SeatBookingPage() {
   const { toast } = useToast();
 
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isProcessingRef = useRef(false);
+
   const [refreshKey, setRefreshKey] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [group, setGroup] = useState<string>("All");
@@ -64,9 +67,9 @@ export default function SeatBookingPage() {
       const [seatsResponse, usersResponse, bookingsResponse] =
         await Promise.all([
           fetch("/api/seats"),
-          fetch("/api/users?role=SPP,GST&limit=500"),
+          fetch("/api/users?role=SPP,GST"),
           fetch(
-            `/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}&limit=1000`,
+            `/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}`,
           ),
         ]);
 
@@ -76,19 +79,15 @@ export default function SeatBookingPage() {
         bookingsResponse.json(),
       ]);
 
-      const seats = seatsData;
-      const users = usersData.data || usersData;
-      const bookings = bookingsData.data || bookingsData;
-
       const totalSeats =
-        seats?.reduce(
+        seatsData?.reduce(
           (sum: number, seat: any) => sum + seat.units * seat.seatsPerUnit,
           0,
         ) || 0;
 
-      setUsers(users || []);
-      const totalUsers = users?.length || 0;
-      const bookedToday = bookings?.length || 0;
+      setUsers(usersData || []);
+      const totalUsers = usersData?.length || 0;
+      const bookedToday = bookingsData?.length || 0;
 
       console.log({ totalSeats, bookedToday, totalUsers, bookingsData });
       setStats({ totalSeats, bookedToday, totalUsers });
@@ -97,45 +96,79 @@ export default function SeatBookingPage() {
     }
   };
 
-  const handleCellClick = async (userId: string, date: string) => {
-    try {
-      const response = await fetch("/api/admin/toggle-booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, date }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to toggle booking");
+  const handleCellClick = useCallback(
+    async (userId: string, date: string) => {
+      // Clear any existing debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
 
-      const result = await response.json();
-
-      if (result.action === "booked") {
+      // If already processing, ignore the click
+      if (isProcessingRef.current) {
         toast({
-          title: "Seat booked successfully!",
-          variant: "success",
+          title: "Please wait...",
+          description: "Processing previous request",
+          variant: "default",
         });
-      } else {
-        toast({
-          title: "Booking cancelled",
-          variant: "info",
-        });
+        return;
       }
 
-      setRefreshKey((prev) => prev + 1);
-    } catch (error) {
-      console.error("Toggle booking error:", error);
-      const message =
-        error instanceof Error ? error.message : "Failed to update booking";
-      toast({
-        title: "Error",
-        description: message,
-        variant: "destructive",
-      });
-    }
-  };
+      // Set up debounce timer (300ms delay)
+      debounceTimerRef.current = setTimeout(async () => {
+        isProcessingRef.current = true;
+
+        try {
+          const response = await fetch("/api/admin/toggle-booking", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, date }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to toggle booking");
+          }
+
+          const result = await response.json();
+
+          if (result.action === "booked") {
+            toast({
+              title: "Seat booked successfully!",
+              variant: "success",
+            });
+          } else {
+            toast({
+              title: "Booking cancelled",
+              variant: "info",
+            });
+          }
+
+          setRefreshKey((prev) => prev + 1);
+        } catch (error) {
+          console.error("Toggle booking error:", error);
+          const message =
+            error instanceof Error ? error.message : "Failed to update booking";
+          toast({
+            title: "Error",
+            description: message,
+            variant: "destructive",
+          });
+        } finally {
+          isProcessingRef.current = false;
+        }
+      }, 1000);
+    },
+    [toast],
+  );
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleBookingSuccess = () => {
     setRefreshKey((prev) => prev + 1);

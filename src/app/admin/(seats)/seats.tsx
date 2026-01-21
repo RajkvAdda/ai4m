@@ -76,7 +76,7 @@ export default function Seats({
                         <Badge variant="secondary">{seat.type}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        {seat?.totalCapacity}
+                        {seat?.seatsPerUnit}
                       </TableCell>
                       <TableCell className="text-right">
                         {/* <IconButton

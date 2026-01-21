@@ -76,7 +76,7 @@ export default function BookingClient({
   const getWeekNumber = (date: Date): number => {
     const oneJan = new Date(date.getFullYear(), 0, 1);
     const numberOfDays = Math.floor(
-      (date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000)
+      (date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000),
     );
     return Math.ceil((numberOfDays + oneJan.getDay() + 1) / 7);
   };
@@ -143,7 +143,7 @@ export default function BookingClient({
       const res = await fetch(`/api/seatbookings?date=${selectedDate}`);
       const bookings: ISeatBooking[] = await res.json();
       const booked: ISeatBooking[] = [];
-      bookings.forEach((b) => {
+      bookings?.data.forEach((b) => {
         if (b?.userId == session?.user?.id) {
           setexistingBooking((b?._id as string) || "");
         }
@@ -307,7 +307,7 @@ export default function BookingClient({
           <div className="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-12 md:gap-8 gap-4 items-center justify-center">
             {Array.from(
               { length: seatDetails.totalCapacity || 0 },
-              (_, i) => i + 1
+              (_, i) => i + 1,
             ).map((seatNumber) => {
               const isBooked =
                 bookedSeats.find((list) => list?.seatNumber == seatNumber) ||
@@ -319,7 +319,7 @@ export default function BookingClient({
                   <div
                     key={seatNumber as number}
                     className={cn(
-                      "h-full w-full aspect-square overflow-hidden bg-blue-200 text-blue-900 border flex items-center justify-center rounded-lg relative cursor-pointer"
+                      "h-full w-full aspect-square overflow-hidden bg-blue-200 text-blue-900 border flex items-center justify-center rounded-lg relative cursor-pointer",
                     )}
                     onDoubleClick={async () => {
                       if (isLoading || isPending) return;
@@ -365,7 +365,7 @@ export default function BookingClient({
                   <div
                     key={seatNumber as number}
                     className={cn(
-                      "h-full w-full aspect-square overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer"
+                      "h-full w-full aspect-square overflow-hidden border bg-green-200 text-green-900 flex items-center justify-center rounded-lg relative cursor-pointer",
                     )}
                   >
                     <Tooltip>
@@ -404,7 +404,7 @@ export default function BookingClient({
                     "h-full w-full aspect-square text-sm font-semibold transition-all duration-200",
                     isSelected &&
                       "ring-2 ring-offset-2 ring-primary scale-110 shadow-lg",
-                    isLoading && "cursor-not-allowed animate-caret-blink"
+                    isLoading && "cursor-not-allowed animate-caret-blink",
                   )}
                   onClick={() => setSelectedSeat(seatNumber as number)}
                   onDoubleClick={() => {

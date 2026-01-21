@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
     const [bookings, total] = await Promise.all([
       SeatBooking.find(query)
-        .select("-__v")
+        .select("-__v -avator")
         .sort({ startDate: -1 })
         .skip(skip)
         .limit(limit)

@@ -78,7 +78,7 @@ export default function Room({ room }: { room: IRoom }) {
       const res = await fetch(`/api/roombookings?date=${selectedDate}`);
       const bookings: IRoomBooking[] = await res.json();
       const booked: IRoomBooking[] = [];
-      bookings.forEach((b) => {
+      bookings?.data.forEach((b) => {
         if (b?.roomId == room.id) booked.push(b);
       });
       setAllBookings(booked);

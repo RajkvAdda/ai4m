@@ -51,7 +51,7 @@ export default function SeatDashboard({
         if (!res.ok) return;
 
         const data = await res.json();
-        setBookings(data);
+        setBookings(data?.data);
       } catch (_err) {
       } finally {
         setLoading(false);
@@ -127,7 +127,12 @@ function BookingDetails({
                     src={user?.avator}
                     alt={user?.name}
                   />
-                  <AvatarFallback className="rounded-none bg-emerald-100 text-emerald-800 text-xs">
+                  <AvatarFallback
+                    className={cn(
+                      "rounded-none bg-emerald-100 text-emerald-800 text-xs",
+                      user.role == "GST" && "bg-blue-100 text-blue-800",
+                    )}
+                  >
                     <H5>{getNameFistKey(user?.name)}</H5>
                   </AvatarFallback>
                 </Avatar>
