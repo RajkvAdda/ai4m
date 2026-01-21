@@ -46,7 +46,7 @@ function SeatCard({
   bookingCount: number;
   isAccessAllowed: boolean;
 }) {
-  const totalCapacity = seat.totalCapacity || 0;
+  const totalCapacity = seat.seatsPerUnit || 0;
   const availableSeats = totalCapacity - bookingCount;
   const progressValue =
     totalCapacity > 0 ? (availableSeats / totalCapacity) * 100 : 0;
@@ -235,7 +235,7 @@ export default function Seats() {
       const fetchBookings = async () => {
         try {
           const res = await fetch(
-            `/api/seatbookings?date=${selectedDate}&limit=1000`,
+            `/api/seatbookings?date=${selectedDate}&limit=100`,
           );
           if (!res.ok) {
             throw new Error("Failed to fetch bookings");

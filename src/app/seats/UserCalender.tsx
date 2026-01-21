@@ -78,7 +78,7 @@ export default function UserCalender({
             const dayBooking = bookings?.find(
               (b) => b.startDate === getDateFormat(day),
             );
-            const seat = seats?.find((r) => r.id === dayBooking?.seatId);
+            const seat = seats?.find((r) => r._id === dayBooking?.seatId);
             if (dayBooking && seat) {
               return (
                 <div

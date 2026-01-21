@@ -7,16 +7,11 @@ import {
   getNameFistKey,
 } from "@/lib/utils";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { H5 } from "@/components/ui/typography";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { IUser } from "@/types/user";
 import { ISeat, ISeatBooking } from "@/types/seat";
+import { Badge } from "@/components/ui/badge";
 
 export default function SeatDashboard({
   seats,
@@ -61,42 +56,56 @@ export default function SeatDashboard({
   }, [fromDate, toDate]);
 
   return (
-    <Card>
-      <CardContent>
-        <div className="grid gap-1 sm:grid-cols-3 md:grid-cols-7 ">
-          {days.map((day, i) => {
-            const dayBookings = bookings?.filter(
-              (b) => b.startDate === getDateFormat(day),
-            );
-            if (dayBookings.length > 0) {
-              return (
-                <div
-                  key={i}
-                  className=" border border-emerald-400 aspect-square"
-                >
-                  <BookingDetails
-                    bookings={dayBookings}
-                    seats={seats}
-                    users={users}
-                  />
-                </div>
-              );
-            }
-            return (
-              <div
-                key={i}
-                className={cn(
-                  "bg-muted/30 aspect-square text-shadow-lg flex items-center text-center justify-center text-md border-emerald-400 border",
-                  ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
-                    ? "bg-yellow-50 text-yellow-700"
-                    : "",
-                  loading ? "animate-caret-blink" : "",
-                )}
-              >
-                {getDateFormat(day, "EEE d")}
-              </div>
-            );
-          })}
+    <Card className="p-0">
+      <CardContent className="p-0">
+        <div className="overflow-hidden">
+          <table className="w-full">
+            <tbody>
+              {days.map((day, i) => {
+                const dayBookings = bookings?.filter(
+                  (b) => b.startDate === getDateFormat(day),
+                );
+                return (
+                  <tr
+                    key={i}
+                    className={cn(
+                      "border-b border-emerald-200",
+                      ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
+                        ? "bg-yellow-50/50"
+                        : "",
+                    )}
+                  >
+                    <td
+                      style={{ minWidth: "80px", width: "80px" }}
+                      className="p-3 text-center font-medium text-sm border-r border-emerald-200"
+                    >
+                      {getDateFormat(day, "EEE, d")}{" "}
+                      <Badge className="mt-1">{dayBookings.length}</Badge>
+                    </td>
+                    <td className="p-2">
+                      {dayBookings.length > 0 ? (
+                        <BookingDetails
+                          bookings={dayBookings}
+                          seats={seats}
+                          users={users}
+                          loading={loading}
+                        />
+                      ) : (
+                        <div
+                          className={cn(
+                            "text-sm text-muted-foreground py-1",
+                            loading ? "animate-pulse" : "",
+                          )}
+                        >
+                          No bookings
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
@@ -107,64 +116,71 @@ function BookingDetails({
   bookings,
   seats,
   users,
+  loading,
 }: {
   bookings: ISeatBooking[];
   seats: ISeat[];
   users: IUser[];
+  loading: boolean;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = React.useState(false);
+
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+    if (!scrollElement || isPaused) return;
+
+    let animationId: number;
+    let scrollPosition = 0;
+
+    const scroll = () => {
+      scrollPosition += 0.5;
+      if (scrollPosition >= scrollElement.scrollWidth / 2) {
+        scrollPosition = 0;
+      }
+      scrollElement.scrollLeft = scrollPosition;
+      animationId = requestAnimationFrame(scroll);
+    };
+
+    animationId = requestAnimationFrame(scroll);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [isPaused, bookings]);
+
   return (
-    <div className="grid grid-cols-5 gap-1 p-1">
-      {bookings.map((booking) => {
+    <div
+      ref={scrollRef}
+      className="flex gap-3 overflow-x-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Duplicate bookings for seamless infinite scroll */}
+      {[...bookings, ...bookings].map((booking, index) => {
         const seat = seats.find((r) => r.id === booking.seatId);
         const user = users.find((u) => u.id === booking.userId);
         return (
-          <div key={booking.id}>
-            <HoverCard>
-              <HoverCardTrigger>
-                <Avatar className="w-full h-full rounded-none">
-                  <AvatarImage
-                    className="rounded-none"
-                    src={user?.avator}
-                    alt={user?.name}
-                  />
-                  <AvatarFallback
-                    className={cn(
-                      "rounded-none bg-emerald-100 text-emerald-800 text-xs",
-                      user.role == "GST" && "bg-blue-100 text-blue-800",
-                    )}
-                  >
-                    <H5>{getNameFistKey(user?.name)}</H5>
-                  </AvatarFallback>
-                </Avatar>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-80">
-                <div className="grid grid-cols-[80px_auto] gap-2 ">
-                  <div>
-                    <Avatar className="w-full h-full rounded-lg">
-                      <AvatarImage
-                        className="rounded-lg"
-                        src={user?.avator}
-                        alt={user?.name}
-                      />
-                      <AvatarFallback className="rounded-lg p-4 px-8 bg-emerald-100 text-emerald-800 text-xs">
-                        <H5>{getNameFistKey(user?.name)}</H5>
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="bg-emerald-50 p-0.5 pl-2 ">
-                      {user?.name}
-                    </div>
-                    <div className="bg-emerald-50 p-0.5 pl-2 ">
-                      {seat?.name}
-                    </div>
-                    <div className="bg-emerald-50 p-0.5 pl-2 ">
-                      Seat: {booking.seatNumber}
-                    </div>
-                  </div>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
+          <div
+            key={`${booking.id}-${index}`}
+            className="flex items-center gap-2 bg-emerald-50 rounded-lg p-2 min-w-fit border border-emerald-200"
+          >
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={user?.avator} alt={user?.name} />
+              <AvatarFallback
+                className={cn(
+                  "bg-emerald-100 text-emerald-800 text-xs",
+                  user?.role == "GST" && "bg-blue-100 text-blue-800",
+                )}
+              >
+                {getNameFistKey(user?.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col text-xs">
+              <span className="font-medium text-gray-900">{user?.name}</span>
+              <span className="text-gray-600">{seat?.name}</span>
+              <span className="text-gray-500">Seat: {booking.seatNumber}</span>
+            </div>
           </div>
         );
       })}

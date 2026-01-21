@@ -19,8 +19,6 @@ import {
 import { ISeat } from "@/types/seat";
 import React from "react";
 import CreateSeatForm from "./create-seat-form";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 
 export default function Seats({
   seats,
@@ -31,7 +29,6 @@ export default function Seats({
   handleDelete: (id: string) => void;
   fetchSeats: () => void;
 }) {
-  const router = useRouter();
   return (
     <div>
       <div className="grid gap-8 lg:grid-cols-3">
@@ -42,14 +39,6 @@ export default function Seats({
               <CardDescription>
                 A list of all currently configured seats.
               </CardDescription>
-              <CardAction>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push("/admin/seat-booking")}
-                >
-                  Booking
-                </Button>
-              </CardAction>
             </CardHeader>
             <CardContent>
               <Table>

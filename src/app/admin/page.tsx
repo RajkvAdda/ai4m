@@ -14,6 +14,7 @@ import { IRoom } from "@/types/room";
 import { ISeat } from "@/types/seat";
 import { IUser } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -150,18 +151,23 @@ export default function AdminPage() {
           </TabsList>
           <div>
             {activeTab === "Dashboard" && (
-              <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
-                <TabsList>
-                  {months.map((month) => (
-                    <TabsTrigger
-                      key={month.getTime()}
-                      value={getMonthFormat(month)}
-                    >
-                      {getMonthFormat(month)}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+              <div className="flex flex-wrap gap-4 items-center">
+                <Button onClick={() => router.push("/admin/seat-booking")}>
+                  Seat Booking
+                </Button>
+                <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <TabsList>
+                    {months.map((month) => (
+                      <TabsTrigger
+                        key={month.getTime()}
+                        value={getMonthFormat(month)}
+                      >
+                        {getMonthFormat(month)}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
             )}
           </div>
         </div>
