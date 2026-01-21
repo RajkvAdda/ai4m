@@ -48,7 +48,6 @@ export const RoomBookingZodSchema = z.object({
   roomId: z.string(),
   userId: z.string(),
   userName: z.string(),
-  avator: z.any(),
   date: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format",
   }),

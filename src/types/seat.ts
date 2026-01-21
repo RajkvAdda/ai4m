@@ -35,7 +35,6 @@ export const SeatBookingZodSchema = z.object({
   seatNumber: z.number(),
   userId: z.string(),
   userName: z.string(),
-  avator: z.any(),
   startDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid start date format",
   }),

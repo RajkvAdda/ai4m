@@ -85,9 +85,10 @@ export default function SeatBookingPage() {
           0,
         ) || 0;
 
-      setUsers(usersData || []);
-      const totalUsers = usersData?.length || 0;
-      const bookedToday = bookingsData?.length || 0;
+      setUsers(usersData?.data || usersData || []);
+      const totalUsers = usersData?.data?.length || usersData?.length || 0;
+      const bookedToday =
+        bookingsData?.data?.length || bookingsData?.length || 0;
 
       console.log({ totalSeats, bookedToday, totalUsers, bookingsData });
       setStats({ totalSeats, bookedToday, totalUsers });
@@ -307,8 +308,8 @@ export default function SeatBookingPage() {
                       <span className="text-xs text-gray-600">Available</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded bg-gray-300"></div>
-                      <span className="text-xs text-gray-600">Weekend</span>
+                      <div className="h-4 w-4 rounded bg-yellow-100"></div>
+                      <span className="text-xs text-yellow-400">Weekend</span>
                     </div>
                   </div>
                 </div>

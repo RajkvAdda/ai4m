@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       });
     } else {
       // Create new booking
-      const user = await User.findOne({ id: userId });
+      const user = await User.findOne({ id: userId }).select("id name");
       if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
@@ -108,7 +108,6 @@ export async function POST(request: Request) {
         seatNumber: assignedSeat.seatNumber,
         userId: user.id,
         userName: user.name,
-        avator: user.avator || "",
         startDate: date,
         endDate: date,
         status: "booked_by_admin",

@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     // Get all users
-    const users = await User.find({ id: { $in: userIds } });
+    const users = await User.find({ id: { $in: userIds } }).select("id name");
     if (users.length !== userIds.length) {
       return NextResponse.json(
         { error: "Some users not found" },
@@ -189,7 +189,6 @@ export async function POST(request: Request) {
             seatNumber: assignedSeat.seatNumber,
             userId: user.id,
             userName: user.name,
-            avator: user.avator || "",
             startDate: dateStr,
             endDate: dateStr,
             status: "booked_by_admin",
