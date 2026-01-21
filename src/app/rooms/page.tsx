@@ -106,12 +106,14 @@ export default function Rooms() {
     if (selectedDate) {
       const fetchBookings = async () => {
         try {
-          const res = await fetch(`/api/roombookings?date=${selectedDate}`);
+          const res = await fetch(
+            `/api/roombookings?date=${selectedDate}&limit=1000`,
+          );
           if (!res.ok) {
             throw new Error("Failed to fetch bookings");
           }
           const data = await res.json();
-          setBookings(data);
+          setBookings(data.data || data);
         } catch (error) {
           console.error("Error fetching bookings:", error);
           setError("Failed to load bookings. Please try again.");

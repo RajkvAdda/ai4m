@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Rooms from "./(rooms)/rooms";
 import Users from "./users";
 import SeatDashboard from "./(seats)/seat-dashboard";
-import RoomDashboard from "./(rooms)/room-dashboard";
 import { getMonthFormat, getPreviousAndNextMonths } from "@/lib/utils";
 import Seats from "./(seats)/seats";
 import { IRoom } from "@/types/room";
@@ -26,72 +25,35 @@ export default function AdminPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const { status } = useSession();
-  const fetchRooms = async () => {
+
+  // Fetch all data in parallel
+  const fetchAllData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/rooms");
-      const data = await res.json();
-      setRooms(data);
+      const [roomsRes, seatsRes, usersRes] = await Promise.all([
+        fetch("/api/rooms"),
+        fetch("/api/seats"),
+        fetch("/api/users?limit=500"),
+      ]);
+
+      const [roomsData, seatsData, usersData] = await Promise.all([
+        roomsRes.json(),
+        seatsRes.json(),
+        usersRes.json(),
+      ]);
+
+      setRooms(roomsData);
+      setSeats(seatsData);
+      setUsers(usersData.data || usersData);
     } catch (_err) {
       // Optionally handle error
     } finally {
       setLoading(false);
     }
   };
-  const fetchSeats = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/seats");
-      const data = await res.json();
-      setSeats(data);
-    } catch (_err) {
-      // Optionally handle error
-    } finally {
-      setLoading(false);
-    }
-  };
-  async function fetchUsers() {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/users");
-      const data = await res.json();
-      setUsers(data);
-    } catch (_err) {
-      // Optionally handle error
-    } finally {
-      setLoading(false);
-    }
-  }
-  // async function fetchRoomBookings() {
-  //   try {
-  //     setLoading(true);
-  //     const res = await fetch("/api/roombookings");
-  //     const data = await res.json();
-  //     setRoomBookings(data);
-  //   } catch (_err) {
-  //     // Optionally handle error
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
-  // async function fetchSeatBookings() {
-  //   try {
-  //     setLoading(true);
-  //     const res = await fetch("/api/seatbookings");
-  //     const data = await res.json();
-  //     setSeatBookings(data);
-  //   } catch (_err) {
-  //     // Optionally handle error
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
+
   useEffect(() => {
-    fetchUsers();
-    fetchRooms();
-    fetchSeats();
-    // fetchRoomBookings();
-    // fetchSeatBookings();
+    fetchAllData();
   }, []);
 
   useEffect(() => {
@@ -115,9 +77,7 @@ export default function AdminPage() {
           description: data.message,
           variant: "destructive",
         });
-        setRooms((prev) =>
-          prev.filter((room) => room._id !== id && room.id !== id)
-        );
+        setRooms((prev) => prev.filter((room) => room._id !== id));
       } else {
         toast({
           title: "Failed to delete room",
@@ -126,7 +86,11 @@ export default function AdminPage() {
         });
       }
     } catch (_err) {
-      toast.error("Error deleting room");
+      toast({
+        title: "Error",
+        description: "Error deleting room",
+        variant: "destructive",
+      });
     }
   };
 
@@ -139,21 +103,30 @@ export default function AdminPage() {
       const res = await fetch(`/api/seats/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
-        setSeats((prev) =>
-          prev.filter((seat) => seat._id !== id && seat.id !== id)
-        );
+        toast({
+          title: "Success",
+          description: data.message,
+        });
+        setSeats((prev) => prev.filter((seat) => seat._id !== id));
       } else {
-        alert(data.error || "Failed to delete seat");
+        toast({
+          title: "Error",
+          description: data.error || "Failed to delete seat",
+          variant: "destructive",
+        });
       }
     } catch (_err) {
-      alert("Error deleting seat");
+      toast({
+        title: "Error",
+        description: "Error deleting seat",
+        variant: "destructive",
+      });
     }
   };
 
   const months = getPreviousAndNextMonths();
   const [selectedMonth, setSelectedMonth] = React.useState(
-    getMonthFormat(months[1])
+    getMonthFormat(months[1]),
   );
 
   if (loading)
@@ -204,14 +177,14 @@ export default function AdminPage() {
           <Rooms
             rooms={rooms}
             handleDelete={handleRoomDelete}
-            fetchRooms={fetchRooms}
+            fetchRooms={fetchAllData}
           />
         </TabsContent>
         <TabsContent value="Seats">
           <Seats
             seats={seats}
             handleDelete={handleSeatDelete}
-            fetchSeats={fetchSeats}
+            fetchSeats={fetchAllData}
           />
         </TabsContent>
         <TabsContent value="Users">

@@ -91,9 +91,9 @@ export default function Room({ room }: { room: IRoom }) {
   async function fetchUsers() {
     try {
       setLoading(true);
-      const res = await fetch("/api/users");
+      const res = await fetch("/api/users?limit=500");
       const data = await res.json();
-      setUsers(data);
+      setUsers(data.data || data);
     } catch (_err) {
       // Optionally handle error
     } finally {
@@ -154,7 +154,7 @@ export default function Room({ room }: { room: IRoom }) {
     merged.push({
       startTime: currentGroup[0],
       endTime: minutesToTime(
-        timeToMinutes(currentGroup[currentGroup.length - 1]) + interval
+        timeToMinutes(currentGroup[currentGroup.length - 1]) + interval,
       ),
     });
 
@@ -164,7 +164,7 @@ export default function Room({ room }: { room: IRoom }) {
     if (!selectedSlots) return;
     const mergedSlots = mergeContinuousSlots(
       selectedSlots,
-      parseInt(room.minBookingTime, 10)
+      parseInt(room.minBookingTime, 10),
     );
     let res, data;
     mergedSlots.forEach(async (slotGroup) => {
@@ -258,7 +258,7 @@ export default function Room({ room }: { room: IRoom }) {
               </p>
               {mergeContinuousSlots(
                 selectedSlots,
-                parseInt(room.minBookingTime, 10)
+                parseInt(room.minBookingTime, 10),
               ).map((group, index) => (
                 <div
                   className="bg-primary text-primary-foreground p-4 rounded-lg mb-4"

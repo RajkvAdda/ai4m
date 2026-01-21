@@ -9,6 +9,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const seatId = searchParams.get("seatId");
     const date = searchParams.get("date");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "100");
+    const skip = (page - 1) * limit;
 
     const query: Record<string, unknown> = {};
     if (seatId) query.seatId = seatId;
@@ -22,8 +25,32 @@ export async function GET(request: Request) {
       query.startDate = { $eq: searchParams.get("startDate") };
     }
 
-    const bookings = await SeatBooking.find(query).exec();
-    return NextResponse.json(bookings);
+    const [bookings, total] = await Promise.all([
+      SeatBooking.find(query)
+        .select("-__v")
+        .sort({ startDate: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      SeatBooking.countDocuments(query).exec(),
+    ]);
+
+    const response = NextResponse.json({
+      data: bookings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=60, stale-while-revalidate=120",
+    );
+    return response;
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) {

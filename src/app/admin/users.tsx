@@ -43,8 +43,6 @@ export default function Users({ users }: { users: IUser[] }) {
         throw new Error(error.error || "Failed to delete user");
       }
 
-      const result = await response.json();
-
       // Remove the deleted user from the list
       setUsersList(usersList.filter((user) => user.id !== userId));
 

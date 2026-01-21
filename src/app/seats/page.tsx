@@ -147,7 +147,7 @@ export default function Seats() {
       console.log(
         isAfter7AM,
         `${currentHour}:${currentMinutes} IST`,
-        "currentTime"
+        "currentTime",
       );
     };
 
@@ -159,7 +159,7 @@ export default function Seats() {
   function getWeekNumber(date: Date): number {
     const oneJan = new Date(date.getFullYear(), 0, 1);
     const numberOfDays = Math.floor(
-      (date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000)
+      (date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000),
     );
     return Math.ceil((numberOfDays + oneJan.getDay() + 1) / 7);
   }
@@ -234,12 +234,14 @@ export default function Seats() {
     if (selectedDate) {
       const fetchBookings = async () => {
         try {
-          const res = await fetch(`/api/seatbookings?date=${selectedDate}`);
+          const res = await fetch(
+            `/api/seatbookings?date=${selectedDate}&limit=1000`,
+          );
           if (!res.ok) {
             throw new Error("Failed to fetch bookings");
           }
           const data = await res.json();
-          setBookings(data);
+          setBookings(data.data || data);
         } catch (error) {
           console.error("Error fetching bookings:", error);
           setError("Failed to load bookings. Please try again.");

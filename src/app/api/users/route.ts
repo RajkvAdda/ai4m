@@ -10,6 +10,9 @@ export async function GET(request: Request) {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const roleParam = searchParams.get("role");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "100");
+    const skip = (page - 1) * limit;
 
     // Build query filter
     let query = {};
@@ -19,8 +22,32 @@ export async function GET(request: Request) {
       query = { role: { $in: roles } };
     }
 
-    const allUsers = await User.find(query).exec();
-    return NextResponse.json(allUsers);
+    const [allUsers, total] = await Promise.all([
+      User.find(query)
+        .select("-password -__v")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      User.countDocuments(query).exec(),
+    ]);
+
+    const response = NextResponse.json({
+      data: allUsers,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=120, stale-while-revalidate=240",
+    );
+    return response;
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) {

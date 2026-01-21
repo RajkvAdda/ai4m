@@ -33,7 +33,7 @@ export default function RoomDashboard({
   const [loading, setLoading] = React.useState(true);
 
   const monthNumber = months.findIndex(
-    (month) => getMonthFormat(month) === selectedMonth
+    (month) => getMonthFormat(month) === selectedMonth,
   );
 
   const days = getMonthDays(months[monthNumber].getMonth());
@@ -46,11 +46,13 @@ export default function RoomDashboard({
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/bookings?fromDate=${fromDate}&toDate=${toDate}`
+          `/api/roombookings?fromDate=${fromDate}&toDate=${toDate}&limit=1000`,
         );
+        if (!res.ok) return;
         const data = await res.json();
-        setBookings(data);
+        setBookings(data.data || data);
       } catch (_err) {
+        // Error handled silently
       } finally {
         setLoading(false);
       }
@@ -64,7 +66,7 @@ export default function RoomDashboard({
         <div className="grid gap-1 sm:grid-cols-3 md:grid-cols-7 ">
           {days.map((day, i) => {
             const dayBookings = bookings?.filter(
-              (b) => b.startDate === getDateFormat(day)
+              (b) => b.date === getDateFormat(day),
             );
             if (dayBookings.length > 0) {
               return (
@@ -88,7 +90,7 @@ export default function RoomDashboard({
                   ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
                     ? "bg-yellow-50 text-yellow-700"
                     : "",
-                  loading ? "animate-caret-blink" : ""
+                  loading ? "animate-caret-blink" : "",
                 )}
               >
                 {getDateFormat(day, "EEE d")}
@@ -112,11 +114,11 @@ function BookingDetails({
 }) {
   return (
     <div className="grid grid-cols-5 gap-1 p-1">
-      {bookings.map((booking) => {
-        const room = rooms.find((r) => r.id === booking.roomId);
+      {bookings.map((booking, index) => {
+        const room = rooms.find((r) => r._id === booking.roomId);
         const user = users.find((u) => u.id === booking.userId);
         return (
-          <div key={booking.id}>
+          <div key={index}>
             <HoverCard>
               <HoverCardTrigger>
                 <Avatar className="w-full h-full rounded-none">
@@ -152,7 +154,7 @@ function BookingDetails({
                       {room?.name}
                     </div>
                     <div className="bg-emerald-50 p-0.5 pl-2 ">
-                      Room: {booking.roomNumber}
+                      {booking.startTime} - {booking.endTime}
                     </div>
                   </div>
                 </div>

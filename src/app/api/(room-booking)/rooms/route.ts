@@ -6,11 +6,18 @@ import { roomZodSchema } from "@/types/room";
 export async function GET() {
   try {
     await connectToDatabase();
-    const allRooms = await Room.find({}).exec();
-    const roomsWithVirtuals = allRooms.map((room) =>
-      room.toObject({ virtuals: true })
+    const allRooms = await Room.find({})
+      .select("-__v")
+      .sort({ name: 1 })
+      .lean({ virtuals: true })
+      .exec();
+
+    const response = NextResponse.json(allRooms);
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=600",
     );
-    return NextResponse.json(roomsWithVirtuals);
+    return response;
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) {

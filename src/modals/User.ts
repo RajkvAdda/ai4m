@@ -4,16 +4,16 @@ import { IUser } from "@/types/user";
 
 const userSchema = new Schema<IUser>(
   {
-    id: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
+    id: { type: String, required: true, unique: true, index: true },
+    email: { type: String, required: true, unique: true, index: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
     avator: { type: String },
-    role: { type: String, required: true },
+    role: { type: String, required: true, index: true },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 userSchema.pre("save", async function (next) {

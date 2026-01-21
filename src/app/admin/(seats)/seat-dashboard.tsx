@@ -33,7 +33,7 @@ export default function SeatDashboard({
   const [loading, setLoading] = React.useState(true);
 
   const monthNumber = months.findIndex(
-    (month) => getMonthFormat(month) === selectedMonth
+    (month) => getMonthFormat(month) === selectedMonth,
   );
 
   const days = getMonthDays(months[monthNumber].getMonth());
@@ -46,8 +46,10 @@ export default function SeatDashboard({
       setLoading(true);
       try {
         const res = await fetch(
-          `/api/seatbookings?fromDate=${fromDate}&toDate=${toDate}`
+          `/api/seatbookings?fromDate=${fromDate}&toDate=${toDate}`,
         );
+        if (!res.ok) return;
+
         const data = await res.json();
         setBookings(data);
       } catch (_err) {
@@ -64,7 +66,7 @@ export default function SeatDashboard({
         <div className="grid gap-1 sm:grid-cols-3 md:grid-cols-7 ">
           {days.map((day, i) => {
             const dayBookings = bookings?.filter(
-              (b) => b.startDate === getDateFormat(day)
+              (b) => b.startDate === getDateFormat(day),
             );
             if (dayBookings.length > 0) {
               return (
@@ -88,7 +90,7 @@ export default function SeatDashboard({
                   ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
                     ? "bg-yellow-50 text-yellow-700"
                     : "",
-                  loading ? "animate-caret-blink" : ""
+                  loading ? "animate-caret-blink" : "",
                 )}
               >
                 {getDateFormat(day, "EEE d")}

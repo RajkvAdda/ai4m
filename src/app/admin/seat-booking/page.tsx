@@ -64,9 +64,9 @@ export default function SeatBookingPage() {
       const [seatsResponse, usersResponse, bookingsResponse] =
         await Promise.all([
           fetch("/api/seats"),
-          fetch("/api/users?role=SPP,GST"),
+          fetch("/api/users?role=SPP,GST&limit=500"),
           fetch(
-            `/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}`,
+            `/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}&limit=1000`,
           ),
         ]);
 
@@ -76,15 +76,19 @@ export default function SeatBookingPage() {
         bookingsResponse.json(),
       ]);
 
+      const seats = seatsData;
+      const users = usersData.data || usersData;
+      const bookings = bookingsData.data || bookingsData;
+
       const totalSeats =
-        seatsData?.reduce(
+        seats?.reduce(
           (sum: number, seat: any) => sum + seat.units * seat.seatsPerUnit,
           0,
         ) || 0;
 
-      setUsers(usersData || []);
-      const totalUsers = usersData?.length || 0;
-      const bookedToday = bookingsData?.length || 0;
+      setUsers(users || []);
+      const totalUsers = users?.length || 0;
+      const bookedToday = bookings?.length || 0;
 
       console.log({ totalSeats, bookedToday, totalUsers, bookingsData });
       setStats({ totalSeats, bookedToday, totalUsers });

@@ -6,11 +6,18 @@ import { seatZodSchema } from "@/types/seat";
 export async function GET() {
   try {
     await connectToDatabase();
-    const allSeats = await Seat.find({}).exec();
-    const seatsWithVirtuals = allSeats.map((seat) =>
-      seat.toObject({ virtuals: true })
+    const allSeats = await Seat.find({})
+      .select("-__v")
+      .sort({ name: 1 })
+      .lean({ virtuals: true })
+      .exec();
+
+    const response = NextResponse.json(allSeats);
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=600",
     );
-    return NextResponse.json(seatsWithVirtuals);
+    return response;
   } catch (error) {
     let errorMsg = "Unknown error";
     if (error instanceof Error) {
