@@ -177,7 +177,7 @@ export default function Seats() {
       GST: isOddWeek
         ? ["Wednesday", "Thursday", "Friday"]
         : ["Thursday", "Friday"],
-      User: [...dayNames],
+      User: [],
     };
 
     return (

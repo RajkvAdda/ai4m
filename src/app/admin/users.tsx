@@ -1,7 +1,13 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -62,6 +68,27 @@ export default function Users({ users }: { users: IUser[] }) {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline">Existing Users</CardTitle>
+          <CardAction>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Search by name..."
+                className="px-3 py-2 border rounded-md text-sm"
+                onChange={(e) => {
+                  const searchTerm = e.target.value.toLowerCase();
+                  if (searchTerm === "") {
+                    setUsersList(users);
+                  } else {
+                    setUsersList(
+                      users.filter((user) =>
+                        user.name.toLowerCase().includes(searchTerm),
+                      ),
+                    );
+                  }
+                }}
+              />
+            </div>
+          </CardAction>
         </CardHeader>
         <CardContent>
           <Table>

@@ -13,13 +13,15 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
 
-  const { status } = useSession();
+  const { status, data: session } = useSession();
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
+    } else if (session?.user.email !== "kumarshivaray@gmail.com") {
+      if (localStorage.getItem("raj_admin") !== "true") router.push("/");
     }
-  }, [router, status]);
+  }, [router, status, session]);
   return (
     <div className="min-h-screen flex flex-col p-8">
       <main className="flex-1">
