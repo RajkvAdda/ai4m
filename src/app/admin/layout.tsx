@@ -18,7 +18,10 @@ export default function AdminLayout({
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
-    } else if (session?.user.email !== "kumarshivaray@gmail.com") {
+    } else if (
+      session?.user.email !== "kumarshivaray@gmail.com" &&
+      session?.user.email !== "naveenbgowda@gmail.com"
+    ) {
       if (localStorage.getItem("raj_admin") !== "true") router.push("/");
     }
   }, [router, status, session]);

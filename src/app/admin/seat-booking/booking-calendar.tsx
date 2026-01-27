@@ -202,7 +202,7 @@ export function BookingCalendar({
                     userIndex % 2 === 0 ? "bg-white" : "bg-gray-100",
                   )}
                 >
-                  <td className="sticky left-0 z-10 bg-inherit border-r-2 border-primary/20 px-4 py-3">
+                  <td className="sticky left-0 z-10 bg-inherit border-r-2 border-primary/20 px-2 py-0.5">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8 border-2 border-primary/20">
                         <AvatarImage src={user.avator} alt={user.name} />
@@ -239,7 +239,7 @@ export function BookingCalendar({
                       <td
                         key={`${user.id}-${date}`}
                         className={cn(
-                          "border-l border-gray-200 p-2 cursor-pointer transition-all",
+                          "border-l border-gray-200 px-1 py-0.5 cursor-pointer transition-all",
                           weekend && "bg-yellow-50",
                           isTodayDate && "bg-green-50",
                           loading && "pointer-events-none opacity-75",
@@ -250,10 +250,10 @@ export function BookingCalendar({
                       >
                         <div
                           className={cn(
-                            "h-12 rounded-lg flex items-center justify-center transition-all duration-200",
+                            "h-9 rounded-lg flex items-center justify-center transition-all duration-200",
                             isBooked &&
                               !weekend &&
-                              "bg-gradient-to-br from-green-400 to-green-500 shadow-md hover:shadow-lg hover:scale-105",
+                              "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
                             !isBooked &&
                               !weekend &&
                               "bg-gray-200 hover:bg-gray-300 hover:scale-105",
@@ -267,12 +267,6 @@ export function BookingCalendar({
                               <span className="text-white text-xs font-semibold">
                                 Seat {booking.seatNumber}
                               </span>
-                              <Badge
-                                variant="secondary"
-                                className="mt-1 text-[10px] bg-white/20 text-white border-white/30"
-                              >
-                                Booked
-                              </Badge>
                             </div>
                           )}
                           {weekend && (

@@ -313,6 +313,25 @@ export default function SeatBookingPage() {
                     </div>
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Search by name..."
+                    className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    onChange={(e) => {
+                      const searchTerm = e.target.value.toLowerCase();
+                      if (searchTerm) {
+                        setUsers((prevUsers) =>
+                          prevUsers.filter((user) =>
+                            user.name?.toLowerCase().includes(searchTerm)
+                          )
+                        );
+                      } else {
+                        fetchStats();
+                      }
+                    }}
+                  />
+                </div>
                 <Tabs defaultValue="All" value={group} onValueChange={setGroup}>
                   <TabsList>
                     <TabsTrigger value="All">
