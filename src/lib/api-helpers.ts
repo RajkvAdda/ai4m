@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
  */
 export function createCachedResponse(data: unknown, maxAge: number = 60) {
   const response = NextResponse.json(data);
-  response.headers.set(
-    "Cache-Control",
-    `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`,
-  );
+  // response.headers.set(
+  //   "Cache-Control",
+  //   `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`,
+  // );
   return response;
 }
 
@@ -43,10 +43,10 @@ export function createPaginatedResponse(
     },
   });
 
-  response.headers.set(
-    "Cache-Control",
-    `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`,
-  );
+  // response.headers.set(
+  //   "Cache-Control",
+  //   `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`,
+  // );
 
   return response;
 }

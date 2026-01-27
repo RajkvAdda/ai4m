@@ -49,10 +49,10 @@ export async function GET(request: Request) {
       },
     });
 
-    response.headers.set(
-      "Cache-Control",
-      "public, s-maxage=120, stale-while-revalidate=240",
-    );
+    // response.headers.set(
+    //   "Cache-Control",
+    //   "public, s-maxage=120, stale-while-revalidate=240",
+    // );
     return response;
   } catch (error) {
     let errorMsg = "Unknown error";

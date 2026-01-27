@@ -13,10 +13,10 @@ export async function GET() {
       .exec();
 
     const response = NextResponse.json(allSeats);
-    response.headers.set(
-      "Cache-Control",
-      "public, s-maxage=300, stale-while-revalidate=600",
-    );
+    // response.headers.set(
+    //   "Cache-Control",
+    //   "public, s-maxage=300, stale-while-revalidate=600",
+    // );
     return response;
   } catch (error) {
     let errorMsg = "Unknown error";
