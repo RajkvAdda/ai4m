@@ -119,7 +119,8 @@ export default function BookingClient({
         GST: isOddWeek
           ? ["Wednesday", "Thursday", "Friday"]
           : ["Thursday", "Friday"],
-        User: [...dayNames],
+        User: [],
+        Intern: [...dayNames],
       };
 
       const hasAccess =

@@ -157,33 +157,38 @@ function BookingDetails({
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Duplicate bookings for seamless infinite scroll */}
-      {[...bookings, ...bookings].map((booking, index) => {
-        const seat = seats.find((r) => r.id === booking.seatId);
-        const user = users.find((u) => u.id === booking.userId);
-        return (
-          <div
-            key={`${booking.id}-${index}`}
-            className="flex items-center gap-2 bg-emerald-50 rounded-lg p-2 min-w-fit border border-emerald-200"
-          >
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={user?.avator} alt={user?.name} />
-              <AvatarFallback
-                className={cn(
-                  "bg-emerald-100 text-emerald-800 text-xs",
-                  user?.role == "GST" && "bg-blue-100 text-blue-800",
-                )}
-              >
-                {getNameFistKey(user?.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col text-xs">
-              <span className="font-medium text-gray-900">{user?.name}</span>
-              <span className="text-gray-600">{seat?.name}</span>
-              <span className="text-gray-500">Seat: {booking.seatNumber}</span>
+      {[...bookings, ...(bookings?.length > 8 ? bookings : [])].map(
+        (booking, index) => {
+          const seat = seats.find((r) => r.id === booking.seatId);
+          const user = users.find((u) => u.id === booking.userId);
+          return (
+            <div
+              key={`${booking.id}-${index}`}
+              className="flex items-center gap-2 bg-emerald-50 rounded-lg p-2 min-w-fit border border-emerald-200"
+            >
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={user?.avator} alt={user?.name} />
+                <AvatarFallback
+                  className={cn(
+                    "bg-emerald-100 text-emerald-800 text-xs",
+                    user?.role == "GST" && "bg-blue-100 text-blue-800",
+                    user?.role == "Intern" && "bg-orange-100 text-orange-600",
+                  )}
+                >
+                  {getNameFistKey(user?.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col text-xs">
+                <span className="font-medium text-gray-900">{user?.name}</span>
+                <span className="text-gray-600">{seat?.name}</span>
+                <span className="text-gray-500">
+                  Seat: {booking.seatNumber}
+                </span>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        },
+      )}
     </div>
   );
 }

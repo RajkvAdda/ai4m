@@ -166,7 +166,7 @@ export default function Seats() {
 
   const isAccessAllowed = () => {
     if (!role) return false;
-    if (role !== "SPP" && role !== "GST") return false;
+    if (role !== "SPP" && role !== "GST" && role !== "Intern") return false;
     const week = getWeekNumber(new Date(selectedDate));
     const isOddWeek = week % 2 === 1;
 
@@ -178,6 +178,7 @@ export default function Seats() {
         ? ["Wednesday", "Thursday", "Friday"]
         : ["Thursday", "Friday"],
       User: [],
+      Intern: [...dayNames],
     };
 
     return (

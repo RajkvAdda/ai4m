@@ -216,6 +216,15 @@ export function BookingForm({
                             </Badge>
                             GST
                           </TabsTrigger>
+                          <TabsTrigger value="Intern">
+                            <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                              {
+                                users.filter((user) => user.role === "Intern")
+                                  .length
+                              }
+                            </Badge>
+                            Intern
+                          </TabsTrigger>
                         </TabsList>
                       </Tabs>
                     </div>

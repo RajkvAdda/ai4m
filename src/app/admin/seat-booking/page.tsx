@@ -67,7 +67,7 @@ export default function SeatBookingPage() {
       const [seatsResponse, usersResponse, bookingsResponse] =
         await Promise.all([
           fetch("/api/seats"),
-          fetch("/api/users?role=SPP,GST"),
+          fetch("/api/users?role=SPP,GST,Intern"),
           fetch(
             `/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}`,
           ),
@@ -267,7 +267,7 @@ export default function SeatBookingPage() {
               {stats.totalUsers}
             </div>
             <p className="text-xs text-purple-600 mt-1">
-              Registered members role (SPP, GST)
+              Registered members role (SPP, GST, Intern)
             </p>
           </CardContent>
         </Card>
@@ -333,6 +333,12 @@ export default function SeatBookingPage() {
                       </Badge>
                       GST
                     </TabsTrigger>
+                    <TabsTrigger value="Intern">
+                      <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                        {users.filter((user) => user.role === "Intern").length}
+                      </Badge>
+                      Intern
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -358,7 +364,7 @@ export default function SeatBookingPage() {
                 users={users
                   .filter((user) => group === "All" || user.role === group)
                   .sort((a, b) => {
-                    const roleOrder = { SPP: 1, GST: 2 };
+                    const roleOrder = { SPP: 1, GST: 2, Intern: 3 };
                     return (
                       (roleOrder[a.role as keyof typeof roleOrder] || 999) -
                       (roleOrder[b.role as keyof typeof roleOrder] || 999)
@@ -374,7 +380,7 @@ export default function SeatBookingPage() {
           <BookingForm
             onSuccess={handleBookingSuccess}
             users={users.sort((a, b) => {
-              const roleOrder = { SPP: 1, GST: 2 };
+              const roleOrder = { SPP: 1, GST: 2, Intern: 3 };
               return (
                 (roleOrder[a.role as keyof typeof roleOrder] || 999) -
                 (roleOrder[b.role as keyof typeof roleOrder] || 999)
