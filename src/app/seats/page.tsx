@@ -92,9 +92,9 @@ function SeatCard({
         >
           <Link
             href={
-              // selectedDate && isAccessAllowed?
-              `/seats/${seat._id}?date=${selectedDate}`
-              // : "#"
+              selectedDate && isAccessAllowed
+                ? `/seats/${seat._id}?date=${selectedDate}`
+                : "#"
             }
           >
             View & Book <ArrowRight className="ml-2 h-4 w-4" />
@@ -166,7 +166,7 @@ export default function Seats() {
 
   const isAccessAllowed = () => {
     if (!role) return false;
-
+    if (role !== "SPP" && role !== "GST") return false;
     const week = getWeekNumber(new Date(selectedDate));
     const isOddWeek = week % 2 === 1;
 
@@ -312,7 +312,7 @@ export default function Seats() {
                   }. If you need to book on other days, you can book after 7 AM.`;
                 }
 
-                return "Access restricted: Please log in or check your role.";
+                return "Access restricted: Please check your role.";
               })()}
             </Alert>
           )}
