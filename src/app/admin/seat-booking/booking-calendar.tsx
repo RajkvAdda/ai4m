@@ -25,6 +25,7 @@ interface BookingCalendarProps {
   onCellClick: (userId: string, date: string) => void;
   users: IUser[];
   days: Date[];
+  stats: any;
 }
 
 export function BookingCalendar({
@@ -34,6 +35,7 @@ export function BookingCalendar({
   onCellClick,
   users,
   days,
+  stats,
 }: BookingCalendarProps) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,227 +107,238 @@ export function BookingCalendar({
   };
 
   return (
-    <Card className="overflow-hidden p-0">
-      <div className="overflow-x-auto" ref={scrollContainerRef}>
-        <div className="inline-block min-w-full align-middle">
-          <table className="min-w-full border-collapse">
-            <thead className="sticky top-0 z-30 shadow-sm">
-              <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
-                <th className="sticky left-0 z-20 bg-white border-r-2 border-primary/20 px-4 py-3 text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-primary">
-                      Team Members
-                    </span>
-                    <Badge variant="secondary" className="text-xs">
-                      {users.length}
-                    </Badge>
-                  </div>
-                </th>
-                {days.map((date) => {
-                  const dateKey = getDateFormat(date);
-                  const isTodayDate = isToday(date);
-                  return (
-                    <th
-                      key={dateKey}
-                      ref={isTodayDate ? todayRef : null}
-                      className={cn(
-                        "px-4 py-3 text-center border-l border-gray-200 min-w-[120px]",
-                        isWeekend(date) && "bg-yellow-50",
-                        isTodayDate && "bg-green-50 relative",
-                      )}
-                    >
-                      <div className="flex flex-col gap-1">
-                        <span
-                          className={cn(
-                            "text-md font-bold",
-                            isWeekend(date)
-                              ? "text-yellow-400"
-                              : "text-primary",
-                            isTodayDate && "font-bold text-primary",
-                          )}
-                        >
-                          {getDayName(date)}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-sm font-medium",
-                            isWeekend(date)
-                              ? "text-yellow-400"
-                              : "text-gray-600",
-                            isTodayDate && "font-bold text-primary",
-                          )}
-                        >
-                          {getDateDisplay(date)}
-                        </span>
-                        {isTodayDate && (
-                          <Badge variant="default" className="justify-center">
-                            Today
-                          </Badge>
+    <div className="relative">
+      <Card className={cn("p-0 transition-all duration-200")}>
+        <div
+          className="overflow-x-auto max-h-screen overflow-y-auto"
+          ref={scrollContainerRef}
+        >
+          <div className="inline-block min-w-full align-middle">
+            <table className="min-w-full border-collapse">
+              <thead className="sticky top-0 z-30 bg-white shadow-md">
+                <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
+                  <th className="sticky left-0 z-20 bg-white border-r-2 border-primary/20 px-1 py-2 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-primary">
+                        Team Members
+                      </span>
+                      <Badge variant="secondary" className="text-xs">
+                        {users.length}
+                      </Badge>
+                    </div>
+                  </th>
+                  {days.map((date) => {
+                    const dateKey = getDateFormat(date);
+                    const isTodayDate = isToday(date);
+                    return (
+                      <th
+                        key={dateKey}
+                        ref={isTodayDate ? todayRef : null}
+                        className={cn(
+                          "p-2 text-center border-l border-gray-200 min-w-[20px]",
+                          isWeekend(date) && "bg-yellow-50",
+                          isTodayDate && "bg-green-100 relative",
                         )}
-                      </div>
-                    </th>
-                  );
-                })}
-                <th className="sticky right-0 z-20 bg-white border-l-2 border-primary/20 px-4 py-3 text-center">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-primary">
-                      Total
-                    </span>
-                    <span className="text-xs text-gray-600">Bookings</span>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users?.length > 0 ? null : (
-                <tr key="loading" className="animate-pulse">
-                  <td colSpan={days.length + 1} className="px-4 py-3">
-                    <div className="flex items-center justify-center">
-                      <Loader className="h-5 w-5 text-primary animate-spin" />
+                      >
+                        <div className="flex flex-col gap-1 justify-center items-center">
+                          <span
+                            className={cn(
+                              "text-md font-bold",
+                              isWeekend(date)
+                                ? "text-yellow-400"
+                                : "text-primary",
+                              isTodayDate && "font-bold text-primary",
+                            )}
+                          >
+                            {getDayName(date)}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              isWeekend(date)
+                                ? "text-yellow-400"
+                                : "text-gray-600",
+                              isTodayDate && "font-bold text-primary",
+                            )}
+                          >
+                            {getDateDisplay(date)}
+                          </span>
+                          {isTodayDate && (
+                            <Badge
+                              variant="default"
+                              className="justify-center px-1 w-max"
+                            >
+                              Today
+                            </Badge>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
+                  <th className="sticky right-0 z-20 bg-white border-l-2 border-primary/20 px-4 py-3 text-center">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-semibold text-primary">
+                        Total
+                      </span>
+                      <span className="text-xs text-gray-600">Bookings</span>
                     </div>
-                  </td>
+                  </th>
                 </tr>
-              )}
-              {users.map((user, userIndex) => (
-                <tr
-                  key={user.id}
-                  className={cn(
-                    "hover:bg-gray-50 transition-colors",
-                    loading ? "animate-pulse" : "",
-                    userIndex % 2 === 0 ? "bg-white" : "bg-gray-100",
-                  )}
-                >
-                  <td className="sticky left-0 z-10 bg-inherit border-r-2 border-primary/20 px-2 py-0.5">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8 border-2 border-primary/20">
-                        <AvatarImage src={user.avator} alt={user.name} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                          {user.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900">
-                          {user.name}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {user.email}
-                        </span>
+              </thead>
+              <tbody>
+                {users?.length > 0 ? null : (
+                  <tr key="loading" className="animate-pulse">
+                    <td colSpan={days.length + 1} className="px-4 py-3">
+                      <div className="flex items-center justify-center">
+                        <Loader className="h-5 w-5 text-primary animate-spin" />
                       </div>
-                    </div>
+                    </td>
+                  </tr>
+                )}
+                {users.map((user, userIndex) => (
+                  <tr
+                    key={user.id}
+                    className={cn(
+                      "hover:bg-green-100 transition-colors",
+                      loading ? "animate-pulse" : "",
+                      userIndex % 2 === 0 ? "bg-white" : "bg-gray-100",
+                    )}
+                  >
+                    <td className="sticky left-0 z-10 bg-inherit border-r-2 border-primary/20 px-2 py-1">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8 border-2 border-primary/20">
+                          <AvatarImage src={user.avator} alt={user.name} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                            {user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900">
+                            {user.name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {user.email}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    {days.map((date) => {
+                      const booking = bookings.find(
+                        (b) =>
+                          b.userId === user.id &&
+                          isSameDay(new Date(b.startDate), new Date(date)),
+                      );
+
+                      const isBooked = !!booking;
+                      const weekend = isWeekend(date);
+                      const isTodayDate = isToday(new Date(date));
+
+                      return (
+                        <td
+                          key={`${user.id}-${date}`}
+                          className={cn(
+                            "border-l border-gray-200 px-1 py-0.5 cursor-pointer transition-all",
+                            weekend && "bg-yellow-50",
+                            isTodayDate && "bg-green-100",
+                            loading && "pointer-events-none opacity-75",
+                          )}
+                          onClick={() =>
+                            !weekend &&
+                            !loading &&
+                            onCellClick(user.id, getDateFormat(date))
+                          }
+                        >
+                          <div
+                            className={cn(
+                              "h-7 rounded-lg flex items-center justify-center transition-all duration-200",
+                              isBooked &&
+                                !weekend &&
+                                "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
+                              !isBooked &&
+                                !weekend &&
+                                "bg-gray-200 hover:bg-gray-300 hover:scale-105",
+                              weekend &&
+                                "bg-gray-300 cursor-not-allowed opacity-50",
+                              loading && "cursor-wait",
+                            )}
+                          >
+                            {isBooked && !weekend ? (
+                              <div className="flex flex-col items-center">
+                                <span className="text-white text-xs font-semibold">
+                                  Booked
+                                </span>
+                              </div>
+                            ) : weekend ? (
+                              <span className="text-xs text-gray-500 font-medium px-1">
+                                WO
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-500 font-medium">
+                                WFH
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td className="sticky right-0 z-10 bg-inherit border-l-2 border-primary/20 px-2 py-0.5">
+                      <div className="flex items-center justify-center">
+                        <Badge
+                          variant="default"
+                          className="text-sm font-bold bg-primary"
+                        >
+                          {getUserBookingTotal(user.id)}
+                        </Badge>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-t-2 border-primary/20 sticky bottom-0 z-20">
+                  <td className="sticky left-0 z-30 bg-gray-100 px-4 py-3 font-semibold text-primary text-sm">
+                    Daily Total
                   </td>
                   {days.map((date) => {
-                    const booking = bookings.find(
-                      (b) =>
-                        b.userId === user.id &&
-                        isSameDay(new Date(b.startDate), new Date(date)),
-                    );
-
-                    const isBooked = !!booking;
                     const weekend = isWeekend(date);
                     const isTodayDate = isToday(new Date(date));
+                    const dayTotal = getDayBookingTotal(date);
 
                     return (
                       <td
-                        key={`${user.id}-${date}`}
+                        key={`total-${date}`}
                         className={cn(
-                          "border-l border-gray-200 px-1 py-0.5 cursor-pointer transition-all",
+                          "border-l border-gray-200 px-4 py-3 text-center ",
                           weekend && "bg-yellow-50",
-                          isTodayDate && "bg-green-50",
-                          loading && "pointer-events-none opacity-75",
+                          isTodayDate && "bg-green-100",
                         )}
-                        onClick={() =>
-                          !weekend &&
-                          !loading &&
-                          onCellClick(user.id, getDateFormat(date))
-                        }
                       >
-                        <div
-                          className={cn(
-                            "h-8 rounded-lg flex items-center justify-center transition-all duration-200",
-                            isBooked &&
-                              !weekend &&
-                              "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
-                            !isBooked &&
-                              !weekend &&
-                              "bg-gray-200 hover:bg-gray-300 hover:scale-105",
-                            weekend &&
-                              "bg-gray-300 cursor-not-allowed opacity-50",
-                            loading && "cursor-wait",
-                          )}
+                        <Badge
+                          variant={dayTotal > 0 ? "default" : "secondary"}
+                          className="text-sm font-bold"
                         >
-                          {isBooked && !weekend && (
-                            <div className="flex flex-col items-center">
-                              <span className="text-white text-xs font-semibold">
-                                Booked
-                              </span>
-                            </div>
-                          )}
-                          {weekend && (
-                            <span className="text-xs text-gray-500 font-medium">
-                              Weekend
-                            </span>
-                          )}
-                        </div>
+                          {dayTotal}/{stats.totalSeats}
+                        </Badge>
                       </td>
                     );
                   })}
-                  <td className="sticky right-0 z-10 bg-inherit border-l-2 border-primary/20 px-4 py-3">
-                    <div className="flex items-center justify-center">
-                      <Badge
-                        variant="default"
-                        className="text-sm font-bold bg-primary"
-                      >
-                        {getUserBookingTotal(user.id)}
-                      </Badge>
-                    </div>
+                  <td className="sticky right-0 z-30 bg-gray-100 border-l-2 border-primary/20 px-4 py-3 text-center">
+                    <Badge
+                      variant="default"
+                      className="text-sm font-bold bg-primary"
+                    >
+                      {bookings.length}
+                    </Badge>
                   </td>
                 </tr>
-              ))}
-              <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-t-2 border-primary/20 sticky bottom-0 z-20">
-                <td className="sticky left-0 z-30 bg-gray-100 px-4 py-3 font-semibold text-primary text-sm">
-                  Daily Total
-                </td>
-                {days.map((date) => {
-                  const weekend = isWeekend(date);
-                  const isTodayDate = isToday(new Date(date));
-                  const dayTotal = getDayBookingTotal(date);
-
-                  return (
-                    <td
-                      key={`total-${date}`}
-                      className={cn(
-                        "border-l border-gray-200 px-4 py-3 text-center ",
-                        weekend && "bg-yellow-50",
-                        isTodayDate && "bg-green-50",
-                      )}
-                    >
-                      <Badge
-                        variant={dayTotal > 0 ? "default" : "secondary"}
-                        className="text-sm font-bold"
-                      >
-                        {dayTotal}
-                      </Badge>
-                    </td>
-                  );
-                })}
-                <td className="sticky right-0 z-30 bg-gray-100 border-l-2 border-primary/20 px-4 py-3 text-center">
-                  <Badge
-                    variant="default"
-                    className="text-sm font-bold bg-primary"
-                  >
-                    {bookings.length}
-                  </Badge>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 }

@@ -596,6 +596,14 @@ export default function Seats() {
                         startDate={fromDate}
                         endDate={toDate}
                         days={days}
+                        stats={{
+                          totalSeats: seats.reduce(
+                            (acc, seat) => acc + (seat.seatsPerUnit || 0),
+                            0,
+                          ),
+                          bookedToday: bookings.length,
+                          totalUsers: users.length,
+                        }}
                         refreshKey={refreshKey}
                         users={users
                           .filter(

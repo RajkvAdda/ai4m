@@ -216,7 +216,7 @@ export default function EditProfilePage({
                 </Label>
                 <Select
                   value={watchedRole}
-                  // disabled
+                  disabled
                   onValueChange={(value) => {
                     setValue("role", value, { shouldDirty: true });
                   }}

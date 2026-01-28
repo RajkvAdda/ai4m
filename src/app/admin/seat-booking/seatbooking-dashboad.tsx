@@ -392,6 +392,7 @@ export default function SeatBookingPage() {
                     endDate={toDate}
                     days={days}
                     refreshKey={refreshKey}
+                    stats={stats}
                     users={users
                       .filter(
                         (user) =>
