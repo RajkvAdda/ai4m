@@ -199,20 +199,19 @@ export default function Seats() {
     const isOddWeek = week % 2 === 1;
 
     const allowedDays: Record<string, string[]> = {
-      SPP: !isOddWeek
-        ? ["Monday", "Tuesday", "Wednesday"]
-        : ["Monday", "Tuesday"],
-      GST: isOddWeek
-        ? ["Wednesday", "Thursday", "Friday"]
-        : ["Thursday", "Friday"],
+      SPP: [...dayNames],
+      GST: [...dayNames],
+      // SPP: !isOddWeek
+      //   ? ["Monday", "Tuesday", "Wednesday"]
+      //   : ["Monday", "Tuesday"],
+      // GST: isOddWeek
+      //   ? ["Wednesday", "Thursday", "Friday"]
+      //   : ["Thursday", "Friday"],
       User: [],
       Intern: [...dayNames],
     };
 
-    return (
-      allowedDays[role]?.includes(dayName) ||
-      (isSameDate(new Date(selectedDate), new Date()) && isAfter5PM)
-    );
+    return allowedDays[role]?.includes(dayName);
   };
 
   useEffect(() => {
