@@ -7,18 +7,18 @@ import { useSession } from "next-auth/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Rooms from "./(rooms)/rooms";
 import Users from "./users";
-import SeatDashboard from "./(seats)/seat-dashboard";
+// import SeatDashboard from "./(seats)/seat-dashboard";
+import SeatDashboard from "./seat-booking/seatbooking-dashboad";
 import { getMonthFormat, getPreviousAndNextMonths } from "@/lib/utils";
 import Seats from "./(seats)/seats";
 import { IRoom } from "@/types/room";
 import { ISeat } from "@/types/seat";
 import { IUser } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 
 export default function AdminPage() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = React.useState("Dashboard");
+  const [activeTab, setActiveTab] = React.useState("Seat Booking");
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [seats, setSeats] = useState<ISeat[]>([]);
   const [users, setUsers] = useState<IUser[]>([]);
@@ -143,35 +143,14 @@ export default function AdminPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex flex-wrap gap-2 items-center justify-between mb-2">
           <TabsList>
-            {["Dashboard", "Rooms", "Seats", "Users"].map((tab) => (
+            {["Seat Booking", "Rooms", "Seats", "Users"].map((tab) => (
               <TabsTrigger key={tab} value={tab}>
                 {tab}
               </TabsTrigger>
             ))}
           </TabsList>
-          <div>
-            {activeTab === "Dashboard" && (
-              <div className="flex flex-wrap gap-4 items-center">
-                <Button onClick={() => router.push("/admin/seat-booking")}>
-                  Seat Booking
-                </Button>
-                <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <TabsList>
-                    {months.map((month) => (
-                      <TabsTrigger
-                        key={month.getTime()}
-                        value={getMonthFormat(month)}
-                      >
-                        {getMonthFormat(month)}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
-              </div>
-            )}
-          </div>
         </div>
-        <TabsContent value="Dashboard">
+        <TabsContent value="Seat Booking">
           <SeatDashboard
             seats={seats}
             months={months}
