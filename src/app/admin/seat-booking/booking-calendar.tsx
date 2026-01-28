@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
-import { cn, isSameDay } from "@/lib/utils";
+import { cn, getDateFormat, isSameDay } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -231,6 +231,7 @@ export function BookingCalendar({
                         b.userId === user.id &&
                         isSameDay(new Date(b.startDate), new Date(date)),
                     );
+
                     const isBooked = !!booking;
                     const weekend = isWeekend(date);
                     const isTodayDate = isToday(new Date(date));
@@ -245,7 +246,9 @@ export function BookingCalendar({
                           loading && "pointer-events-none opacity-75",
                         )}
                         onClick={() =>
-                          !weekend && !loading && onCellClick(user.id, date)
+                          !weekend &&
+                          !loading &&
+                          onCellClick(user.id, getDateFormat(date))
                         }
                       >
                         <div

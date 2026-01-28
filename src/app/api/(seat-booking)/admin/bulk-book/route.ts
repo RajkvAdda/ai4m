@@ -143,9 +143,7 @@ export async function POST(request: Request) {
       const existingBookings = await SeatBooking.find({
         startDate: dateStr,
         endDate: dateStr,
-      })
-        .select("-avator")
-        .lean<SeatBookingDocument[]>();
+      });
 
       const bookedSeats = existingBookings.length;
       const availableCapacity = totalCapacity - bookedSeats;

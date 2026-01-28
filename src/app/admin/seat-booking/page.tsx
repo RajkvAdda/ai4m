@@ -27,6 +27,7 @@ import {
   getMonthDays,
   getMonthFormat,
   getPreviousAndNextMonths,
+  getTodayDate,
 } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -68,9 +69,7 @@ export default function SeatBookingPage() {
         await Promise.all([
           fetch("/api/seats"),
           fetch("/api/users?role=SPP,GST,Intern"),
-          fetch(
-            `/api/seatbookings?startDate=${new Date().toISOString().split("T")[0]}`,
-          ),
+          fetch(`/api/seatbookings?startDate=${getTodayDate()}`),
         ]);
 
       const [seatsData, usersData, bookingsData] = await Promise.all([
@@ -323,8 +322,8 @@ export default function SeatBookingPage() {
                       if (searchTerm) {
                         setUsers((prevUsers) =>
                           prevUsers.filter((user) =>
-                            user.name?.toLowerCase().includes(searchTerm)
-                          )
+                            user.name?.toLowerCase().includes(searchTerm),
+                          ),
                         );
                       } else {
                         fetchStats();
