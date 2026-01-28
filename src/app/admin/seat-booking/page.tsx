@@ -37,7 +37,7 @@ export default function SeatBookingPage() {
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
-
+  const [searchUser, setSearchUser] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [group, setGroup] = useState<string>("All");
@@ -320,13 +320,9 @@ export default function SeatBookingPage() {
                     onChange={(e) => {
                       const searchTerm = e.target.value.toLowerCase();
                       if (searchTerm) {
-                        setUsers((prevUsers) =>
-                          prevUsers.filter((user) =>
-                            user.name?.toLowerCase().includes(searchTerm),
-                          ),
-                        );
+                        setSearchUser(searchTerm);
                       } else {
-                        fetchStats();
+                        setSearchUser("");
                       }
                     }}
                   />
@@ -380,7 +376,12 @@ export default function SeatBookingPage() {
                 days={days}
                 refreshKey={refreshKey}
                 users={users
-                  .filter((user) => group === "All" || user.role === group)
+                  .filter(
+                    (user) =>
+                      (group === "All" || user.role === group) &&
+                      (user.name?.toLowerCase().includes(searchUser) ||
+                        !searchUser),
+                  )
                   .sort((a, b) => {
                     const roleOrder = { SPP: 1, GST: 2, Intern: 3 };
                     return (

@@ -10,10 +10,23 @@ import {
 } from "@/components/ui/card";
 import { BackButton, Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Users, ArrowRight, Rows, TableRowsSplit } from "lucide-react";
+import {
+  Users,
+  ArrowRight,
+  Rows,
+  TableRowsSplit,
+  BookA,
+  CalendarDays,
+  TrendingUp,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { ISeat, SeatType, ISeatBooking } from "@/types/seat";
-import { getTodayOrNextDate } from "@/lib/utils";
+import {
+  getTodayOrNextDate,
+  getMonthDays,
+  getMonthFormat,
+  getPreviousAndNextMonths,
+} from "@/lib/utils";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +34,13 @@ import UserCalender from "./UserCalender";
 import UserAvator from "@/components/user-avator";
 import { useSession } from "next-auth/react";
 import { IUser } from "@/types/user";
+import { useToast } from "@/hooks/use-toast";
+import { useCallback, useRef } from "react";
 import { Flex } from "@/components/ui/flex";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@radix-ui/react-tabs";
+import { Badge } from "@/components/ui/badge";
+import { BookingCalendar } from "../admin/seat-booking/booking-calendar";
 
 const seatIcons: Record<SeatType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
@@ -115,6 +134,15 @@ export default function Seats() {
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isAfter5PM, setIsAfter5PM] = useState<boolean>(false);
+  const [searchUser, setSearchUser] = useState<string>("");
+  const [group, setGroup] = useState<string>("All");
+  const [users, setUsers] = useState<IUser[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const months = getPreviousAndNextMonths();
+  const [selectedMonth, setSelectedMonth] = useState(getMonthFormat(months[1]));
+  const { toast } = useToast();
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isProcessingRef = useRef(false);
   console.log(role, "role-123");
 
   const isSameDate = (d1: Date, d2: Date) =>
@@ -232,6 +260,22 @@ export default function Seats() {
   }, []);
 
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch("/api/users?role=SPP,GST,Intern");
+        if (!res.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const data = await res.json();
+        setUsers(data?.data || data || []);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    fetchUsers();
+  }, [refreshKey]);
+
+  useEffect(() => {
     if (selectedDate) {
       const fetchBookings = async () => {
         try {
@@ -257,6 +301,98 @@ export default function Seats() {
   const getBookingCount = (seatId: string) => {
     return bookings.filter((b) => b.seatId === seatId).length;
   };
+
+  const monthNumber = months.findIndex(
+    (month) => getMonthFormat(month) === selectedMonth,
+  );
+
+  const days = getMonthDays(months[monthNumber].getMonth());
+  const fromDate = days[0];
+  const toDate = days[days.length - 1];
+
+  const handleCellClick = useCallback(
+    async (userId: string, date: string) => {
+      // Only allow users to toggle their own bookings
+      if (userId !== session?.user?.id) {
+        toast({
+          title: "Access Denied",
+          description: "You can only manage your own bookings",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Clear any existing debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // If already processing, ignore the click
+      if (isProcessingRef.current) {
+        toast({
+          title: "Please wait...",
+          description: "Processing previous request",
+          variant: "default",
+        });
+        return;
+      }
+
+      // Set up debounce timer (300ms delay)
+      debounceTimerRef.current = setTimeout(async () => {
+        isProcessingRef.current = true;
+
+        try {
+          const response = await fetch("/api/admin/toggle-booking", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, date }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to toggle booking");
+          }
+
+          const result = await response.json();
+
+          if (result.action === "booked") {
+            toast({
+              title: "Seat booked successfully!",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Booking cancelled",
+              variant: "default",
+            });
+          }
+
+          setRefreshKey((prev) => prev + 1);
+        } catch (error) {
+          console.error("Toggle booking error:", error);
+          const message =
+            error instanceof Error ? error.message : "Failed to update booking";
+          toast({
+            title: "Error",
+            description: message,
+            variant: "destructive",
+          });
+        } finally {
+          isProcessingRef.current = false;
+        }
+      }, 1000);
+    },
+    [toast, session?.user?.id],
+  );
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="container p-8 m-auto">
@@ -336,7 +472,157 @@ export default function Seats() {
                   />
                 ))}
               </div>
-              <UserCalender userId={session?.user?.id} seats={seats} />
+              <Tabs defaultValue="team_calendar" className="space-y-4">
+                <TabsList>
+                  <TabsTrigger value="team_calendar">
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Team Calendar
+                  </TabsTrigger>
+                  <TabsTrigger value="booking">
+                    <BookA className="h-4 w-4 mr-2" />
+                    My Bookings
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="team_calendar" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5" />
+                            Booking Calendar
+                          </CardTitle>
+                          <CardDescription className="mt-2">
+                            Click on any cell to book or cancel a seat for a
+                            user
+                          </CardDescription>
+                          <div className="flex gap-4 items-center mt-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-4 w-4 rounded bg-gradient-to-br from-green-400 to-green-500"></div>
+                              <span className="text-xs text-gray-600">
+                                Booked
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="h-4 w-4 rounded bg-gray-200"></div>
+                              <span className="text-xs text-gray-600">
+                                Available
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="h-4 w-4 rounded bg-yellow-100"></div>
+                              <span className="text-xs text-yellow-400">
+                                Weekend
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Search by name..."
+                            className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                            onChange={(e) => {
+                              const searchTerm = e.target.value.toLowerCase();
+                              if (searchTerm) {
+                                setSearchUser(searchTerm);
+                              } else {
+                                setSearchUser("");
+                              }
+                            }}
+                          />
+                        </div>
+                        <Tabs
+                          defaultValue="All"
+                          value={group}
+                          onValueChange={setGroup}
+                        >
+                          <TabsList>
+                            <TabsTrigger value="All">
+                              <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                                {users.length}
+                              </Badge>
+                              All
+                            </TabsTrigger>
+                            <TabsTrigger value="SPP">
+                              <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                                {
+                                  users.filter((user) => user.role === "SPP")
+                                    .length
+                                }
+                              </Badge>
+                              SPP
+                            </TabsTrigger>
+                            <TabsTrigger value="GST">
+                              <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                                {
+                                  users.filter((user) => user.role === "GST")
+                                    .length
+                                }
+                              </Badge>
+                              GST
+                            </TabsTrigger>
+                            <TabsTrigger value="Intern">
+                              <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                                {
+                                  users.filter((user) => user.role === "Intern")
+                                    .length
+                                }
+                              </Badge>
+                              Intern
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
+                        <Tabs
+                          value={selectedMonth}
+                          onValueChange={setSelectedMonth}
+                        >
+                          <TabsList>
+                            {months.map((month) => (
+                              <TabsTrigger
+                                key={month.getTime()}
+                                value={getMonthFormat(month)}
+                              >
+                                {getMonthFormat(month)}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+                        </Tabs>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <BookingCalendar
+                        startDate={fromDate}
+                        endDate={toDate}
+                        days={days}
+                        refreshKey={refreshKey}
+                        users={users
+                          .filter(
+                            (user) =>
+                              (group === "All" || user.role === group) &&
+                              (user.name?.toLowerCase().includes(searchUser) ||
+                                !searchUser),
+                          )
+                          .sort((a, b) => {
+                            const roleOrder = { SPP: 1, GST: 2, Intern: 3 };
+                            return (
+                              (roleOrder[a.role as keyof typeof roleOrder] ||
+                                999) -
+                              (roleOrder[b.role as keyof typeof roleOrder] ||
+                                999)
+                            );
+                          })}
+                        onCellClick={handleCellClick}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="booking">
+                  <UserCalender userId={session?.user?.id} seats={seats} />
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </>

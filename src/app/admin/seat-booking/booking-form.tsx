@@ -19,7 +19,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, Calendar, Check } from "lucide-react";
-import { User } from "next-auth";
+import { IUser } from "@/types/user";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUpcomingWednesdayWeekNumber } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +44,7 @@ type BookingFormData = z.infer<typeof bookingSchema>;
 
 interface BookingFormProps {
   onSuccess: () => void;
-  users: User[];
+  users: IUser[];
   fromDate: Date;
   toDate: Date;
 }

@@ -7,18 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
 import { cn, getDateFormat, isSameDay } from "@/lib/utils";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avator?: string;
-}
+import { IUser } from "@/types/user";
 
 interface Booking {
   _id: string;
+  userId: string;
   seatId: string;
   seatNumber: number;
+  startDate: string;
   status: string;
 }
 
@@ -27,8 +23,8 @@ interface BookingCalendarProps {
   endDate: Date;
   refreshKey: number;
   onCellClick: (userId: string, date: string) => void;
-  users: User[];
-  days: any[];
+  users: IUser[];
+  days: Date[];
 }
 
 export function BookingCalendar({
@@ -84,18 +80,15 @@ export function BookingCalendar({
     }
   }, [loading, users]);
 
-  const getDayName = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const getDayName = (date: Date) => {
     return format(date, "EEE");
   };
 
-  const getDateDisplay = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const getDateDisplay = (date: Date) => {
     return format(date, "d MMM");
   };
 
-  const isWeekend = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const isWeekend = (date: Date) => {
     const day = date.getDay();
     return day === 0 || day === 6;
   };
@@ -106,10 +99,9 @@ export function BookingCalendar({
   };
 
   // Calculate day-wise booking totals
-  const getDayBookingTotal = (date: string) => {
-    return bookings.filter((b) =>
-      isSameDay(new Date(b.startDate), new Date(date)),
-    ).length;
+  const getDayBookingTotal = (date: Date) => {
+    return bookings.filter((b) => isSameDay(new Date(b.startDate), date))
+      .length;
   };
 
   return (
@@ -130,10 +122,11 @@ export function BookingCalendar({
                   </div>
                 </th>
                 {days.map((date) => {
-                  const isTodayDate = isToday(new Date(date));
+                  const dateKey = getDateFormat(date);
+                  const isTodayDate = isToday(date);
                   return (
                     <th
-                      key={date}
+                      key={dateKey}
                       ref={isTodayDate ? todayRef : null}
                       className={cn(
                         "px-4 py-3 text-center border-l border-gray-200 min-w-[120px]",
@@ -253,7 +246,7 @@ export function BookingCalendar({
                       >
                         <div
                           className={cn(
-                            "h-9 rounded-lg flex items-center justify-center transition-all duration-200",
+                            "h-8 rounded-lg flex items-center justify-center transition-all duration-200",
                             isBooked &&
                               !weekend &&
                               "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
@@ -268,7 +261,7 @@ export function BookingCalendar({
                           {isBooked && !weekend && (
                             <div className="flex flex-col items-center">
                               <span className="text-white text-xs font-semibold">
-                                Seat {booking.seatNumber}
+                                Booked
                               </span>
                             </div>
                           )}
