@@ -315,6 +315,7 @@ export default function SeatBookingPage() {
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
+                    value={searchUser}
                     placeholder="Search by name..."
                     className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     onChange={(e) => {

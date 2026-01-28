@@ -522,6 +522,7 @@ export default function Seats() {
                           <input
                             type="text"
                             placeholder="Search by name..."
+                            value={searchUser}
                             className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             onChange={(e) => {
                               const searchTerm = e.target.value.toLowerCase();
