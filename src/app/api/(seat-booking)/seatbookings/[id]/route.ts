@@ -3,17 +3,18 @@ import { connectToDatabase } from "@/lib/db";
 import { Types } from "mongoose";
 import { SeatBooking } from "@/modals/(Seat)/SeatBooking";
 import { SeatBookingZodSchema } from "@/types/seat";
+import UserActivity from "@/modals/UserActivity";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: "Invalid booking ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     await connectToDatabase();
@@ -21,7 +22,7 @@ export async function GET(
     if (!booking) {
       return NextResponse.json(
         { error: "SeatBooking not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return NextResponse.json(booking);
@@ -34,14 +35,14 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: "Invalid booking ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const body = await request.json();
@@ -56,9 +57,16 @@ export async function PUT(
     if (!updateResult) {
       return NextResponse.json(
         { error: "SeatBooking not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
+    UserActivity.create({
+      userId: result.data.userId,
+      description: `Updated seat booking ${result.data.startDate}`,
+      date: result.data.startDate,
+      userName: result.data.userName,
+      status: "USER_UPDATED_SEAT_BOOKING",
+    });
     const booking = updateResult.toObject();
     return NextResponse.json({
       message: "Booking updated successfully",
@@ -73,14 +81,14 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: "Invalid booking ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     await connectToDatabase();
@@ -88,9 +96,16 @@ export async function DELETE(
     if (!deleteResult) {
       return NextResponse.json(
         { error: "SeatBooking not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
+    UserActivity.create({
+      userId: deleteResult.userId,
+      description: `Deleted seat booking ${deleteResult.startDate}`,
+      date: deleteResult.startDate,
+      userName: deleteResult.userName,
+      status: "USER_DELETED_SEAT_BOOKING",
+    });
     const booking = deleteResult.toObject();
     return NextResponse.json({
       message: "Booking deleted successfully",

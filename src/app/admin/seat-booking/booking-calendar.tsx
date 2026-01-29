@@ -8,6 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
 import { cn, getDateFormat, isSameDay } from "@/lib/utils";
 import { IUser } from "@/types/user";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface Booking {
   _id: string;
@@ -37,6 +44,7 @@ export function BookingCalendar({
   days,
   stats,
 }: BookingCalendarProps) {
+  const toast = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const todayRef = useRef<HTMLTableCellElement>(null);
@@ -105,6 +113,34 @@ export function BookingCalendar({
     return bookings.filter((b) => isSameDay(new Date(b.startDate), date))
       .length;
   };
+
+  async function handleStatus(
+    user: IUser,
+    date: Date,
+    status: string,
+    description: string,
+  ) {
+    const activityData = {
+      userId: user.id,
+      date: getDateFormat(date),
+      status: status,
+      userName: user.name,
+      description: description,
+    };
+    await fetch("/api/user_activity", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(activityData),
+    });
+
+    toast({
+      title: "Status Updated",
+      description: "Status updated",
+      variant: "default",
+    });
+  }
 
   return (
     <div className="relative">
@@ -247,42 +283,92 @@ export function BookingCalendar({
                             isTodayDate && "bg-green-100",
                             loading && "pointer-events-none opacity-75",
                           )}
-                          onClick={() =>
+                          onDoubleClick={() =>
                             !weekend &&
                             !loading &&
                             onCellClick(user.id, getDateFormat(date))
                           }
                         >
-                          <div
-                            className={cn(
-                              "h-7 rounded-lg flex items-center justify-center transition-all duration-200",
-                              isBooked &&
-                                !weekend &&
-                                "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
-                              !isBooked &&
-                                !weekend &&
-                                "bg-gray-200 hover:bg-gray-300 hover:scale-105",
-                              weekend &&
-                                "bg-gray-300 cursor-not-allowed opacity-50",
-                              loading && "cursor-wait",
-                            )}
-                          >
-                            {isBooked && !weekend ? (
-                              <div className="flex flex-col items-center">
-                                <span className="text-white text-xs font-semibold">
-                                  Booked
-                                </span>
+                          <ContextMenu>
+                            <ContextMenuTrigger disabled={isBooked || weekend}>
+                              <div
+                                className={cn(
+                                  "h-7 rounded-lg flex items-center justify-center transition-all duration-200",
+                                  isBooked &&
+                                    !weekend &&
+                                    "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
+                                  !isBooked &&
+                                    !weekend &&
+                                    "bg-gray-200 hover:bg-gray-300 hover:scale-105",
+                                  weekend &&
+                                    "bg-gray-300 cursor-not-allowed opacity-50",
+                                  loading && "cursor-wait",
+                                )}
+                              >
+                                {isBooked && !weekend ? (
+                                  <div className="flex flex-col items-center">
+                                    <span className="text-white text-xs font-semibold">
+                                      Booked
+                                    </span>
+                                  </div>
+                                ) : weekend ? (
+                                  <span className="text-xs text-gray-500 font-medium px-1">
+                                    WO
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-gray-500 font-medium">
+                                    WFH
+                                  </span>
+                                )}
                               </div>
-                            ) : weekend ? (
-                              <span className="text-xs text-gray-500 font-medium px-1">
-                                WO
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-500 font-medium">
-                                WFH
-                              </span>
-                            )}
-                          </div>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent>
+                              <ContextMenuItem
+                                onClick={() => {
+                                  handleStatus(
+                                    user,
+                                    date,
+                                    location.href.includes("admin")
+                                      ? "LEAVE_BY_ADMIN"
+                                      : "LEAVE_BY_USER",
+                                    "Marked leave",
+                                  );
+                                  // handle user activity create here
+                                }}
+                              >
+                                Status: Leave
+                              </ContextMenuItem>
+                              <ContextMenuItem
+                                onClick={() => {
+                                  handleStatus(
+                                    user,
+                                    date,
+
+                                    location.href.includes("admin")
+                                      ? "WFO_BY_ADMIN"
+                                      : "WFO_BY_USER",
+                                    "Marked WFO",
+                                  );
+                                }}
+                              >
+                                Status: WFO
+                              </ContextMenuItem>
+                              <ContextMenuItem
+                                onClick={() => {
+                                  handleStatus(
+                                    user,
+                                    date,
+                                    location.href.includes("admin")
+                                      ? "WFH_BY_ADMIN"
+                                      : "WFH_BY_USER",
+                                    "Marked WFH",
+                                  );
+                                }}
+                              >
+                                Status: WFH
+                              </ContextMenuItem>
+                            </ContextMenuContent>
+                          </ContextMenu>
                         </td>
                       );
                     })}

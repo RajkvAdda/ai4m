@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { SeatBooking } from "@/modals/(Seat)/SeatBooking";
 import { SeatBookingZodSchema } from "@/types/seat";
+import UserActivity from "@/modals/UserActivity";
 
 export async function GET(request: Request) {
   try {
@@ -71,6 +72,16 @@ export async function POST(request: Request) {
     await connectToDatabase();
     const newBooking = new SeatBooking(result.data);
     await newBooking.save();
+
+    // insert user activity log to db here
+    // Log user activity
+    UserActivity.create({
+      userId: result.data.userId,
+      description: `Created seat booking ${result.data.startDate}`,
+      date: result.data.startDate,
+      userName: result.data.userName,
+      status: "USER_BOOKED_SEAT",
+    });
 
     return NextResponse.json({
       message: "Booking created successfully",

@@ -27,6 +27,8 @@ import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { IUser, userZodSchema } from "@/types/user";
 
+export const ROLES = ["SPP", "GST", "User", "Intern"];
+
 export default function EditProfilePage({
   params,
 }: {
@@ -54,7 +56,6 @@ export default function EditProfilePage({
   const watchedPassword = watch("password") || "";
   const watchedName = watch("name") || "";
   const watchedRole = watch("role");
-  const ROLES = ["SPP", "GST", "User", "Intern"];
 
   // Fetch user data when id is available
   useEffect(() => {
