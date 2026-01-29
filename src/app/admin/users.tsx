@@ -40,12 +40,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ROLES } from "../users/[id]/page";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Users({ users }: { users: IUser[] }) {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [usersList, setUsersList] = useState<IUser[]>(users);
   const [search, setSearch] = useState("");
-
+  const [group, setGroup] = useState("All");
   const handleDeleteUser = async (userId: string, userName: string) => {
     setDeletingUserId(userId);
     try {
@@ -79,6 +80,48 @@ export default function Users({ users }: { users: IUser[] }) {
           <CardTitle className="font-headline">Existing Users</CardTitle>
           <CardAction>
             <div className="flex items-center gap-2">
+              <Tabs defaultValue="All" value={group} onValueChange={setGroup}>
+                <TabsList>
+                  <TabsTrigger value="All">
+                    <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                      {usersList.length}
+                    </Badge>
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="User">
+                    <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                      {
+                        usersList.filter(
+                          (user) =>
+                            user.role === "User" || user.role === "user",
+                        ).length
+                      }
+                    </Badge>
+                    User
+                  </TabsTrigger>
+                  <TabsTrigger value="SPP">
+                    <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                      {usersList.filter((user) => user.role === "SPP").length}
+                    </Badge>
+                    SPP
+                  </TabsTrigger>
+                  <TabsTrigger value="GST">
+                    <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                      {usersList.filter((user) => user.role === "GST").length}
+                    </Badge>
+                    GST
+                  </TabsTrigger>
+                  <TabsTrigger value="Intern">
+                    <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                      {
+                        usersList.filter((user) => user.role === "Intern")
+                          .length
+                      }
+                    </Badge>
+                    Intern
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               <input
                 type="text"
                 value={search}
@@ -104,6 +147,11 @@ export default function Users({ users }: { users: IUser[] }) {
             </TableHeader>
             <TableBody>
               {usersList
+                .filter(
+                  (user) =>
+                    group === "All" ||
+                    user.role.toLowerCase() === group.toLowerCase(),
+                )
                 .filter((user) =>
                   user.name.toLowerCase().includes(search.toLowerCase()),
                 )
