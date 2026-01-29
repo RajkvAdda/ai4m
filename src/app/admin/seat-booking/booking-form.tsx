@@ -28,6 +28,7 @@ const weekdays = [
   { value: "Mon", label: "Monday" },
   { value: "Tue", label: "Tuesday" },
   { value: "Wed_even", label: "Wednesday (SPP)" },
+  { value: "Wed", label: "Wednesday (All)" },
   { value: "Wed_odd", label: "Wednesday (GST)" },
   { value: "Thu", label: "Thursday" },
   { value: "Fri", label: "Friday" },
@@ -291,7 +292,7 @@ export function BookingForm({
                       : "Odd"}{" "}
                     Week )
                   </FormDescription>
-                  <div className="grid grid-cols-2 md:grid-cols-6 gap-3  mb-2">
+                  <div className="grid grid-cols-2 md:grid-cols-7 gap-3  mb-2">
                     {weekdays.map((day) => (
                       <FormField
                         key={day.value}

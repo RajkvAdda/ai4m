@@ -58,6 +58,10 @@ export async function POST(request: Request) {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
+    // Normalize dates to avoid timezone issues
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
     // Generate dates based on configuration
     const datesToBook: Date[] = [];
     const currentDate = new Date(start);
@@ -88,9 +92,12 @@ export async function POST(request: Request) {
       const isOddWeek = weekNumber % 2 === 1;
       const isEvenWeek = weekNumber % 2 === 0;
 
+      // If no weekdays specified, book all weekdays
+      if (!weekdays || weekdays.length === 0) {
+        shouldBook = true;
+      }
       // Case 1: Odd Wednesday booking
-      if (
-        weekdays &&
+      else if (
         weekdays.includes("Wed_odd") &&
         currentDayName === "Wed" &&
         isOddWeek
@@ -99,7 +106,6 @@ export async function POST(request: Request) {
       }
       // Case 2: Even Wednesday booking
       else if (
-        weekdays &&
         weekdays.includes("Wed_even") &&
         currentDayName === "Wed" &&
         isEvenWeek
@@ -107,11 +113,7 @@ export async function POST(request: Request) {
         shouldBook = true;
       }
       // Case 3: Regular weekday booking (not Wed_odd or Wed_even)
-      else if (
-        weekdays &&
-        weekdays.length > 0 &&
-        weekdays.includes(currentDayName)
-      ) {
+      else if (weekdays.includes(currentDayName)) {
         shouldBook = true;
       }
 
@@ -137,46 +139,56 @@ export async function POST(request: Request) {
     }
 
     for (const date of datesToBook) {
-      const dateStr = date.toISOString().split("T")[0];
+      // Format date as YYYY-MM-DD in local timezone
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const dateStr = `${year}-${month}-${day}`;
 
-      // Check existing bookings for this date
+      // Check existing bookings for this date (including multi-day bookings that overlap)
       const existingBookings = await SeatBooking.find({
-        startDate: dateStr,
-        endDate: dateStr,
+        startDate: { $lte: dateStr },
+        endDate: { $gte: dateStr },
       });
 
-      const bookedSeats = existingBookings.length;
-      const availableCapacity = totalCapacity - bookedSeats;
+      // Create a set of occupied seats for quick lookup
+      const occupiedSeatsSet = new Set(
+        existingBookings.map((b) => `${b.seatId}-${b.seatNumber}`),
+      );
 
-      if (availableCapacity < userIds.length) {
-        // Not enough capacity for this date
-        continue;
-      }
+      // Track seats assigned in this iteration
+      const currentDateAssignments = new Set<string>();
 
       // Assign seats to users for this date
-      for (let i = 0; i < users.length; i++) {
-        const user = users[i];
-
+      for (const user of users) {
         // Check if user already has a booking for this date
-        const existingUserBooking = await SeatBooking.findOne({
-          userId: user.id,
-          startDate: dateStr,
-          endDate: dateStr,
-        });
+        const userAlreadyBooked = existingBookings.some(
+          (b) => b.userId === user.id,
+        );
 
-        if (existingUserBooking) {
-          continue; // Skip if already booked
+        if (userAlreadyBooked) {
+          continue; // Skip if user already has a booking on this date
+        }
+
+        // Check if we've exceeded capacity
+        const totalBookedSeats =
+          occupiedSeatsSet.size + currentDateAssignments.size;
+        if (totalBookedSeats >= totalCapacity) {
+          break; // No more seats available for this date
         }
 
         // Find available seat
         let assignedSeat = null;
         for (const seat of seatPool) {
-          const isOccupied = existingBookings.some(
-            (b) => b.seatId === seat.seatId && b.seatNumber === seat.seatNumber,
-          );
+          const seatKey = `${seat.seatId}-${seat.seatNumber}`;
 
-          if (!isOccupied) {
+          // Check if seat is not occupied and not already assigned in this iteration
+          if (
+            !occupiedSeatsSet.has(seatKey) &&
+            !currentDateAssignments.has(seatKey)
+          ) {
             assignedSeat = seat;
+            currentDateAssignments.add(seatKey);
             break;
           }
         }
@@ -193,19 +205,28 @@ export async function POST(request: Request) {
           };
 
           bookings.push(booking);
-          existingBookings.push(booking as SeatBookingDocument);
         }
       }
     }
 
     // Save all bookings
     if (bookings.length > 0) {
-      await SeatBooking.insertMany(bookings);
+      try {
+        await SeatBooking.insertMany(bookings, { ordered: false });
+      } catch (insertError: any) {
+        // Handle duplicate key errors gracefully
+        if (insertError.code === 11000) {
+          console.log("Some bookings already exist, continuing with others");
+        } else {
+          throw insertError;
+        }
+      }
     }
 
     return NextResponse.json({
       message: "Bulk booking completed successfully",
       bookingsCreated: bookings.length,
+      totalDatesProcessed: datesToBook.length,
       bookings,
     });
   } catch (error) {
