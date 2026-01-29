@@ -9,7 +9,7 @@ const userActivitySchema = new Schema<IUserActivity>(
     status: { type: String, required: true },
     description: { type: String, required: true },
   },
-  { toJSON: { virtuals: true }, toObject: { virtuals: true } },
+  { timestamps: true },
 );
 
 export const UserActivity: Model<IUserActivity> =

@@ -81,7 +81,7 @@ export function BookingCalendar({
       const end = format(endDate, "yyyy-MM-dd");
 
       const response = await fetch(
-        `/api/user_activity?fromDate=${start}&toDate=${end}`,
+        `/api/useractivity?fromDate=${start}&toDate=${end}`,
       );
 
       if (!response.ok) throw new Error("Failed to fetch user activities");
@@ -150,7 +150,7 @@ export function BookingCalendar({
       userName: user.name,
       description: description,
     };
-    const response = await fetch("/api/user_activity", {
+    const response = await fetch("/api/useractivity", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
