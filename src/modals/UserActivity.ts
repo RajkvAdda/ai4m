@@ -1,17 +1,16 @@
 import mongoose, { Model, Schema } from "mongoose";
 import { IUserActivity } from "@/types/userActivity";
 
-const userActivitySchema = new Schema<IUserActivity>(
-  {
-    userId: { type: String, required: true },
-    userName: { type: String, required: true },
-    date: { type: String, required: true },
-    status: { type: String, required: true },
-    description: { type: String, required: true },
-  },
-  { timestamps: true },
-);
+const UserActivitySchema = new Schema<IUserActivity>({
+  userId: { type: String, required: true, index: true },
+  userName: { type: String, required: true },
+  date: { type: String, required: true, index: true },
+  status: { type: String, required: true, index: true },
+  description: { type: String, required: true },
+});
+UserActivitySchema.index({ userId: 1, date: -1 });
+UserActivitySchema.index({ status: 1, date: -1 });
 
 export const UserActivity: Model<IUserActivity> =
   mongoose.models.UserActivity ||
-  mongoose.model<IUserActivity>("UserActivity", userActivitySchema);
+  mongoose.model<IUserActivity>("UserActivity", UserActivitySchema);
