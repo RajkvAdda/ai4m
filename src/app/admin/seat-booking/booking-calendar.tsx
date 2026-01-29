@@ -19,6 +19,7 @@ import { IUserActivity } from "@/types/userActivity";
 import { HoverCard } from "@/components/ui/hover-card";
 import { HoverCardContent, HoverCardTrigger } from "@radix-ui/react-hover-card";
 import { H5 } from "@/components/ui/typography";
+import { useSession } from "next-auth/react";
 
 interface Booking {
   _id: string;
@@ -37,6 +38,7 @@ interface BookingCalendarProps {
   users: IUser[];
   days: Date[];
   stats: any;
+  isUserView: boolean;
 }
 
 export function BookingCalendar({
@@ -47,8 +49,11 @@ export function BookingCalendar({
   users,
   days,
   stats,
+  isUserView,
 }: BookingCalendarProps) {
   const { toast } = useToast();
+  const { data: session } = useSession();
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [userActivities, setUserActivities] = useState<IUserActivity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,6 +148,14 @@ export function BookingCalendar({
     status: string,
     description: string,
   ) {
+    if (isUserView && user.id !== session?.user?.id) {
+      toast({
+        title: "Access Denied",
+        description: "You can only manage your own status.",
+        variant: "destructive",
+      });
+      return;
+    }
     const activityData = {
       userId: user.id,
       date: getDateFormat(date),
@@ -332,6 +345,7 @@ export function BookingCalendar({
                           }
                         >
                           <TableCell
+                            key={`${user.id}-${date}`}
                             isBooked={isBooked}
                             weekend={weekend}
                             loading={loading}
@@ -422,19 +436,25 @@ function TableCell({
   ) => void;
   userActivity: IUserActivity[] | undefined;
 }) {
-  const Cell = ({ className }: { className?: string }) => (
+  const Cell = ({
+    className,
+    children,
+  }: {
+    className?: string;
+    children?: React.ReactNode;
+  }) => (
     <div
       className={cn(
         "h-7 rounded-lg flex items-center justify-center transition-all duration-200",
-        isBooked &&
-          !weekend &&
-          "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
         !isBooked &&
           !weekend &&
           "bg-gray-200 hover:bg-gray-300 hover:scale-105",
         weekend && "bg-gray-300 cursor-not-allowed opacity-50",
-        loading && "cursor-wait",
         className,
+        isBooked &&
+          !weekend &&
+          "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
+        loading && "cursor-wait",
       )}
     >
       {isBooked && !weekend ? (
@@ -444,10 +464,16 @@ function TableCell({
       ) : weekend ? (
         <span className="text-xs text-gray-500 font-medium px-1">WO</span>
       ) : (
-        <span className="text-xs text-gray-500 font-medium">WFH</span>
+        <span className="text-xs text-gray-500 font-medium">{children}</span>
       )}
     </div>
   );
+  const dayActivity =
+    userActivity?.length > 0
+      ? userActivity.sort((a, b) => {
+          return a._id < b._id ? 1 : -1;
+        })[0]
+      : undefined;
   return (
     <ContextMenu>
       <ContextMenuTrigger disabled={isBooked || weekend}>
@@ -457,14 +483,13 @@ function TableCell({
               <div className="relative">
                 <Cell
                   className={cn(
-                    userActivity
-                      .sort((a, b) => {
-                        return a._id < b._id ? 1 : -1;
-                      })
-                      .some((a) => a.status.includes("LEAVE")) &&
+                    dayActivity?.status.includes("LEAVE") &&
+                      !isBooked &&
                       "animate-pulse bg-red-200 rounded-lg",
                   )}
-                />
+                >
+                  {dayActivity.status.split("_")?.[0] || "WFH"}
+                </Cell>
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border-2 border-white rounded-full"></span>
               </div>
             </HoverCardTrigger>
@@ -486,7 +511,7 @@ function TableCell({
             </HoverCardContent>
           </HoverCard>
         ) : (
-          <Cell />
+          <Cell>WFH</Cell>
         )}
       </ContextMenuTrigger>
       <ContextMenuContent>

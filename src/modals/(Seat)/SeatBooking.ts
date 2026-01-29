@@ -11,13 +11,6 @@ export const SeatBookingSchema: Schema = new Schema({
   endDate: { type: String, required: true, index: true },
   status: {
     type: String,
-    enum: [
-      "booked",
-      "cancelled",
-      "booked_by_admin",
-      "cancelled_by_admin",
-      "not_came",
-    ],
     required: true,
     index: true,
   },

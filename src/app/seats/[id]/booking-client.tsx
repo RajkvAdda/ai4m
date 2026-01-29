@@ -103,39 +103,35 @@ export default function BookingClient({
     fetchUserRole();
   }, [session?.user?.id]);
 
+  const today = new Date(selectedDate);
+
+  const dayName = dayNames[today.getDay()];
+
   useEffect(() => {
     const checkAccess = () => {
-      if (!role || isRoleLoading) return;
-
-      const today = new Date(selectedDate);
-      const dayName = dayNames[today.getDay()];
-      const week = getWeekNumber(today);
+      if (!role) return false;
+      if (role !== "SPP" && role !== "GST" && role !== "Intern") return false;
+      const week = getWeekNumber(new Date(selectedDate));
       const isOddWeek = week % 2 === 1;
 
       const allowedDays: Record<string, string[]> = {
-        SPP: !isOddWeek
-          ? ["Monday", "Tuesday", "Wednesday"]
-          : ["Monday", "Tuesday"],
-        GST: isOddWeek
-          ? ["Wednesday", "Thursday", "Friday"]
-          : ["Thursday", "Friday"],
+        SPP: [...dayNames],
+        GST: [...dayNames],
+        // SPP: !isOddWeek
+        //   ? ["Monday", "Tuesday", "Wednesday"]
+        //   : ["Monday", "Tuesday"],
+        // GST: isOddWeek
+        //   ? ["Wednesday", "Thursday", "Friday"]
+        //   : ["Thursday", "Friday"],
         User: [],
         Intern: [...dayNames],
       };
 
-      const hasAccess =
-        allowedDays[role]?.includes(dayName) ||
-        (new Date(selectedDate).toDateString() === new Date().toDateString() &&
-          isAfter5PM);
-      setAccessAllowed(hasAccess);
+      setAccessAllowed(allowedDays[role]?.includes(dayName));
     };
 
     checkAccess();
-  }, [selectedDate, role, isRoleLoading, isAfter5PM]);
-
-  const week = getWeekNumber(new Date(selectedDate));
-  const isOddWeek = week % 2 === 1;
-  // --- End of New Code ---
+  }, [selectedDate, role, dayName, dayNames]);
 
   const fetchBookings = async () => {
     try {

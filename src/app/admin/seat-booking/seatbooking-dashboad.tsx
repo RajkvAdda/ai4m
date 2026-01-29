@@ -121,7 +121,11 @@ export default function SeatBookingPage() {
           const response = await fetch("/api/admin/toggle-booking", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, date }),
+            body: JSON.stringify({
+              userId,
+              date,
+              userType: "ADMIN",
+            }),
           });
 
           if (!response.ok) {

@@ -344,7 +344,7 @@ export default function Seats() {
           const response = await fetch("/api/admin/toggle-booking", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, date }),
+            body: JSON.stringify({ userId, date, userType: "USER" }),
           });
 
           if (!response.ok) {
@@ -621,6 +621,7 @@ export default function Seats() {
                                 999)
                             );
                           })}
+                        isUserView={true}
                         onCellClick={handleCellClick}
                       />
                     </CardContent>

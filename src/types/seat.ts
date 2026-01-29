@@ -41,23 +41,8 @@ export const SeatBookingZodSchema = z.object({
   endDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid end date format",
   }),
-  status: z
-    .enum([
-      "booked",
-      "cancelled",
-      "booked_by_admin",
-      "cancelled_by_admin",
-      "not_came",
-    ])
-    .default("booked"),
+  status: z.string().default("BOOKED_BY_ADMIN"),
 });
-
-export type TBookingStatus =
-  | "booked"
-  | "cancelled"
-  | "booked_by_admin"
-  | "cancelled_by_admin"
-  | "not_came";
 
 export interface ISeatBooking extends Document {
   seatId: string;
@@ -67,5 +52,5 @@ export interface ISeatBooking extends Document {
   avator: string;
   startDate: string;
   endDate: string;
-  status: TBookingStatus;
+  status: string;
 }

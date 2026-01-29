@@ -1,8 +1,10 @@
+import { use } from "react";
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { SeatBooking } from "@/modals/(Seat)/SeatBooking";
 import { Seat } from "@/modals/(Seat)/Seat";
 import { User } from "@/modals/User";
+import { UserActivity } from "@/modals/UserActivity";
 
 interface SeatBookingDocument {
   _id: string;
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
     await connectToDatabase();
 
     const body = await request.json();
-    const { userId, date } = body;
+    const { userId, date, userType } = body;
 
     if (!userId || !date) {
       return NextResponse.json(
@@ -40,10 +42,19 @@ export async function POST(request: Request) {
     if (existingBooking) {
       // Delete the booking (unbook)
       await SeatBooking.deleteOne({ _id: existingBooking._id });
+      UserActivity.create({
+        userId: existingBooking.userId,
+        description: `Cancelled seat booking ${existingBooking.startDate}`,
+        date: existingBooking.startDate,
+        userName: existingBooking.userName,
+        status: `${userType}_CANCELLED_BOOKING`,
+      });
       return NextResponse.json({
         message: "Booking cancelled",
         action: "cancelled",
       });
+      // insert user activity log to db here
+      // Log user activity
     } else {
       // Create new booking
       const user = await User.findOne({ id: userId }).select("id name");
@@ -108,10 +119,18 @@ export async function POST(request: Request) {
         userName: user.name,
         startDate: date,
         endDate: date,
-        status: "booked_by_admin",
+        status: `booked_by_admin`,
       });
 
       await newBooking.save();
+
+      UserActivity.create({
+        userId: newBooking.userId,
+        description: `Created seat booking ${newBooking.startDate}`,
+        date: newBooking.startDate,
+        userName: newBooking.userName,
+        status: `${userType}_BOOKED_SEAT`,
+      });
 
       return NextResponse.json({
         message: "Booking created",
