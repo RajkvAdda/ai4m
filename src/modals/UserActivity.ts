@@ -9,12 +9,9 @@ const userActivitySchema = new Schema<IUserActivity>(
     status: { type: String, required: true },
     description: { type: String, required: true },
   },
-  {
-    timestamps: true,
-  },
+  { toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
 
 export const UserActivity: Model<IUserActivity> =
   mongoose.models.UserActivity ||
   mongoose.model<IUserActivity>("UserActivity", userActivitySchema);
-export default UserActivity;

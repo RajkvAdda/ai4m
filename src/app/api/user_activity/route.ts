@@ -65,35 +65,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }
-
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-    const result = userActivityZodSchema.partial().safeParse(body);
-    if (!result.success) {
-      return NextResponse.json({ error: result.error.issues }, { status: 400 });
-    }
-    await connectToDatabase();
-    const updatedUserActivity = await UserActivity.findByIdAndUpdate(
-      result.data.id,
-      result.data,
-      { new: true },
-    );
-    if (!updatedUserActivity) {
-      return NextResponse.json(
-        { error: "User Activity not found" },
-        { status: 404 },
-      );
-    }
-    return NextResponse.json({
-      message: "User Activity updated successfully",
-      data: updatedUserActivity,
-    });
-  } catch (error) {
-    let errorMsg = "Unknown error";
-    if (error instanceof Error) {
-      errorMsg = error.message;
-    }
-    return NextResponse.json({ error: errorMsg }, { status: 500 });
-  }
-}

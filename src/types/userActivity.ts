@@ -8,4 +8,11 @@ export const userActivityZodSchema = z.object({
   date: z.string().min(1, "Date is required"),
 });
 
-export type IUserActivity = z.infer<typeof userActivityZodSchema>;
+export type IUserActivity = {
+  _id: string | any;
+  userId: string;
+  userName: string;
+  date: string;
+  status: string;
+  description: string;
+};

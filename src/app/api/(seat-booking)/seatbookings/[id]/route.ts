@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/db";
 import { Types } from "mongoose";
 import { SeatBooking } from "@/modals/(Seat)/SeatBooking";
 import { SeatBookingZodSchema } from "@/types/seat";
-import UserActivity from "@/modals/UserActivity";
+import { UserActivity } from "@/modals/UserActivity";
 
 export async function GET(
   request: Request,

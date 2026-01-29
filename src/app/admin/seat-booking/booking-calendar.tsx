@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { IUserActivity } from "@/types/userActivity";
 import { HoverCard } from "@/components/ui/hover-card";
 import { HoverCardContent, HoverCardTrigger } from "@radix-ui/react-hover-card";
-import { H4, H5 } from "@/components/ui/typography";
+import { H5 } from "@/components/ui/typography";
 
 interface Booking {
   _id: string;
@@ -48,7 +48,7 @@ export function BookingCalendar({
   days,
   stats,
 }: BookingCalendarProps) {
-  const toast = useToast();
+  const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [userActivities, setUserActivities] = useState<IUserActivity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,13 +150,24 @@ export function BookingCalendar({
       userName: user.name,
       description: description,
     };
-    await fetch("/api/user_activity", {
+    const response = await fetch("/api/user_activity", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(activityData),
     });
+
+    if (!response.ok) {
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    fetchUserActivities();
 
     toast({
       title: "Status Updated",
