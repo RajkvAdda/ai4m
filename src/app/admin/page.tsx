@@ -141,8 +141,8 @@ export default function AdminPage() {
   return (
     <>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex flex-wrap gap-2 items-center justify-between mb-2">
-          <TabsList>
+        <div className="flex flex-wrap gap-2 items-center justify-between mb-3 sm:mb-4 overflow-x-auto">
+          <TabsList className="w-max sm:w-auto">
             {["Seat Booking", "Rooms", "Seats", "Users"].map((tab) => (
               <TabsTrigger key={tab} value={tab}>
                 {tab}

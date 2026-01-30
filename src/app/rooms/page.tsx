@@ -42,7 +42,9 @@ function RoomCard({
     <Card className="flex flex-col transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300 ">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="font-headline text-2xl">{room.name}</CardTitle>
+          <CardTitle className="font-headline text-xl sm:text-2xl">
+            {room.name}
+          </CardTitle>
           <div className="p-2 opacity-30 rounded-lg">
             {roomIcons[room.type as RoomType] || ""}
           </div>
@@ -126,8 +128,8 @@ export default function Rooms() {
   }, [selectedDate]);
 
   return (
-    <div className="container p-8 m-auto">
-      <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap justify-center gap-5">
+    <div className="container p-4 sm:p-6 md:p-8 m-auto">
+      <Alert className="mb-4 sm:mb-6 md:mb-8 border-primary/50 text-primary flex flex-wrap justify-between gap-3 sm:gap-5">
         <UserAvator
           discription={"Choose a room to see details and book your seat."}
         />
@@ -160,8 +162,8 @@ export default function Rooms() {
           <span className="text-lg font-semibold">Loading...</span>
         </div>
       ) : (
-        <div className="space-y-5">
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {rooms?.map((room: IRoom) => (
               <RoomCard
                 key={room._id}

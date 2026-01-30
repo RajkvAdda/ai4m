@@ -38,8 +38,8 @@ export default function Main() {
   }, [router, status]);
 
   return (
-    <div className="container p-8 m-auto">
-      <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap items-center justify-center gap-5">
+    <div className="container p-4 sm:p-6 md:p-8 m-auto">
+      <Alert className="mb-4 sm:mb-6 md:mb-8 border-primary/50 text-primary flex flex-wrap items-center justify-between gap-3 sm:gap-5">
         <UserAvator
           discription={"Choose your preference of booking room or seat."}
         />
@@ -56,13 +56,13 @@ export default function Main() {
       </Alert>
 
       <div
-        className="flex flex-col md:flex-row rounded-xl overflow-hidden  gap-5 "
-        style={{ minHeight: "60vh" }}
+        className="flex flex-col md:flex-row rounded-xl overflow-hidden gap-4 sm:gap-5"
+        style={{ minHeight: "50vh" }}
       >
         {bookingOptions.map((option) => (
           <div
             key={option.title}
-            className="group relative w-full md:w-1+/2 p-8 flex flex-col items-center justify-center text-center text-white overflow-hidden"
+            className="group relative w-full md:w-1/2 p-6 sm:p-8 flex flex-col items-center justify-center text-center text-white overflow-hidden min-h-[300px] md:min-h-0"
           >
             <div
               className="absolute inset-0 bg-cover bg-center transform transition-all rounded duration-500 ease-in-out group-hover:scale-110"
@@ -71,9 +71,13 @@ export default function Main() {
             <div className="absolute inset-0 bg-black/60 transition-all duration-300 group-hover:bg-black/50" />
 
             <div className="relative z-10">
-              <option.Icon className="h-12 w-12 mx-auto mb-4 text-white/80" />
-              <h2 className="text-3xl font-bold mb-2">{option.title}</h2>
-              <p className="text-white/90 mb-6">{option.description} </p>
+              <option.Icon className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-white/80" />
+              <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+                {option.title}
+              </h2>
+              <p className="text-sm sm:text-base text-white/90 mb-4 sm:mb-6">
+                {option.description}{" "}
+              </p>
               <Button
                 asChild
                 size="lg"

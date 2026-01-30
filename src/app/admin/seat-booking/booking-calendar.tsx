@@ -203,12 +203,15 @@ export function BookingCalendar({
             <table className="min-w-full border-collapse">
               <thead className="sticky top-0 z-30 bg-white shadow-md">
                 <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
-                  <th className="sticky left-0 z-20 bg-white border-r-2 border-primary/20 px-1 py-2 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-primary">
+                  <th className="sticky left-0 z-20 bg-white border-r-2 border-primary/20 px-2 sm:px-4 py-2 text-left min-w-[120px] sm:min-w-[180px]">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <span className="text-xs sm:text-sm font-semibold text-primary truncate">
                         Team Members
                       </span>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs hidden sm:inline-flex"
+                      >
                         {users.length}
                       </Badge>
                     </div>
@@ -221,15 +224,15 @@ export function BookingCalendar({
                         key={dateKey}
                         ref={isTodayDate ? todayRef : null}
                         className={cn(
-                          "p-2 text-center border-l border-gray-200 min-w-[20px]",
+                          "p-1 sm:p-2 text-center border-l border-gray-200 min-w-[50px] sm:min-w-[80px]",
                           isWeekend(date) && "bg-yellow-50",
                           isTodayDate && "bg-green-100 relative",
                         )}
                       >
-                        <div className="flex flex-col gap-1 justify-center items-center">
+                        <div className="flex flex-col gap-0.5 sm:gap-1 justify-center items-center">
                           <span
                             className={cn(
-                              "text-md font-bold",
+                              "text-xs sm:text-sm font-bold",
                               isWeekend(date)
                                 ? "text-yellow-400"
                                 : "text-primary",
@@ -240,7 +243,7 @@ export function BookingCalendar({
                           </span>
                           <span
                             className={cn(
-                              "text-sm font-medium",
+                              "text-[10px] sm:text-xs font-medium",
                               isWeekend(date)
                                 ? "text-yellow-400"
                                 : "text-gray-600",
@@ -261,9 +264,9 @@ export function BookingCalendar({
                       </th>
                     );
                   })}
-                  <th className="sticky right-0 z-20 bg-white border-l-2 border-primary/20 px-4 py-3 text-center">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-semibold text-primary">
+                  <th className="sm:sticky right-0 z-20 bg-white border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center min-w-[60px] sm:min-w-[80px]">
+                    <div className="flex flex-col gap-0.5 sm:gap-1">
+                      <span className="text-xs sm:text-sm font-semibold text-primary">
                         Total
                       </span>
                       <span className="text-xs text-gray-600">Bookings</span>
@@ -290,11 +293,11 @@ export function BookingCalendar({
                       userIndex % 2 === 0 ? "bg-white" : "bg-gray-100",
                     )}
                   >
-                    <td className="sticky left-0 z-10 bg-inherit border-r-2 border-primary/20 px-2 py-1">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8 border-2 border-primary/20">
+                    <td className="sticky left-0 z-10 bg-inherit border-r-2 border-primary/20 px-2 sm:px-3 py-1 sm:py-2">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-primary/20">
                           <AvatarImage src={user.avator} alt={user.name} />
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          <AvatarFallback className="bg-primary/10 text-primary text-[10px] sm:text-xs font-semibold">
                             {user.name
                               .split(" ")
                               .map((n) => n[0])
@@ -303,11 +306,11 @@ export function BookingCalendar({
                               .slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-900">
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs sm:text-sm font-medium text-gray-900 truncate w-[100px] sm:w-auto">
                             {user.name}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-[10px] sm:text-xs text-gray-500 truncate hidden sm:inline w-[100px] sm:w-auto">
                             {user.email}
                           </span>
                         </div>
@@ -357,7 +360,7 @@ export function BookingCalendar({
                         </td>
                       );
                     })}
-                    <td className="sticky right-0 z-10 bg-inherit border-l-2 border-primary/20 px-2 py-0.5">
+                    <td className="sm:sticky right-0 z-10 bg-inherit border-l-2 border-primary/20 px-2 py-0.5">
                       <div className="flex items-center justify-center">
                         <Badge
                           variant="default"
@@ -370,7 +373,7 @@ export function BookingCalendar({
                   </tr>
                 ))}
                 <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-t-2 border-primary/20 sticky bottom-0 z-20">
-                  <td className="sticky left-0 z-30 bg-gray-100 px-4 py-3 font-semibold text-primary text-sm">
+                  <td className="sticky left-0 z-30 bg-gray-100 px-2 sm:px-4 py-2 sm:py-3 font-semibold text-primary text-xs sm:text-sm">
                     Daily Total
                   </td>
                   {days.map((date) => {
@@ -382,24 +385,24 @@ export function BookingCalendar({
                       <td
                         key={`total-${date}`}
                         className={cn(
-                          "border-l border-gray-200 px-4 py-3 text-center ",
+                          "border-l border-gray-200 px-2 sm:px-4 py-2 sm:py-3 text-center",
                           weekend && "bg-yellow-50",
                           isTodayDate && "bg-green-100",
                         )}
                       >
                         <Badge
                           variant={dayTotal > 0 ? "default" : "secondary"}
-                          className="text-sm font-bold"
+                          className="text-xs sm:text-sm font-bold"
                         >
                           {dayTotal}/{stats.totalSeats}
                         </Badge>
                       </td>
                     );
                   })}
-                  <td className="sticky right-0 z-30 bg-gray-100 border-l-2 border-primary/20 px-4 py-3 text-center">
+                  <td className="sticky right-0 z-30 bg-gray-100 border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center">
                     <Badge
                       variant="default"
-                      className="text-sm font-bold bg-primary"
+                      className="text-xs sm:text-sm font-bold bg-primary"
                     >
                       {bookings.length}
                     </Badge>
@@ -445,7 +448,7 @@ function TableCell({
   }) => (
     <div
       className={cn(
-        "h-7 rounded-lg flex items-center justify-center transition-all duration-200",
+        "h-6 sm:h-7 rounded-lg flex items-center justify-center transition-all duration-200",
         !isBooked &&
           !weekend &&
           "bg-gray-200 hover:bg-gray-300 hover:scale-105",
@@ -459,12 +462,18 @@ function TableCell({
     >
       {isBooked && !weekend ? (
         <div className="flex flex-col items-center">
-          <span className="text-white text-xs font-semibold">Booked</span>
+          <span className="text-white text-[10px] sm:text-xs font-semibold">
+            Booked
+          </span>
         </div>
       ) : weekend ? (
-        <span className="text-xs text-gray-500 font-medium px-1">WO</span>
+        <span className="text-[10px] sm:text-xs text-gray-500 font-medium px-1">
+          WO
+        </span>
       ) : (
-        <span className="text-xs text-gray-500 font-medium">{children}</span>
+        <span className="text-[10px] sm:text-xs text-gray-500 font-medium">
+          {children}
+        </span>
       )}
     </div>
   );

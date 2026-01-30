@@ -193,40 +193,44 @@ export default function SeatBookingPage() {
   return (
     <Card className="p-0">
       <CardContent className="p-0">
-        <div className="container mx-auto p-6 space-y-6">
+        <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3">
-                <Armchair className="h-8 w-8 text-primary" />
+              <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3">
+                <Armchair className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                 Seat Booking Management
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
                 Manage team seat bookings with bulk operations and calendar view
               </p>
             </div>
-            <Button onClick={handleRefresh} variant="outline">
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <Card
               className={cn(
                 "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200",
                 stats?.totalSeats === 0 && "animate-pulse",
               )}
             >
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-blue-700 flex items-center gap-2">
+              <CardHeader className="pb-2 sm:pb-3">
+                <CardTitle className="text-xs sm:text-sm font-medium text-blue-700 flex items-center gap-2">
                   <Armchair className="h-4 w-4" />
                   Total Seats
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-blue-900">
+                <div className="text-2xl sm:text-3xl font-bold text-blue-900">
                   {stats.totalSeats}
                 </div>
                 <p className="text-xs text-blue-600 mt-1">Available capacity</p>
@@ -293,17 +297,17 @@ export default function SeatBookingPage() {
 
             <TabsContent value="calendar" className="space-y-4">
               <Card>
-                <CardHeader>
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <CardHeader className="md:px-4 px-0.5">
+                  <div className="flex justify-between items-center flex-wrap gap-3 sm:gap-4">
                     <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5" />
+                      <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                        <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                         Booking Calendar
                       </CardTitle>
-                      <CardDescription className="mt-2">
+                      <CardDescription className="mt-1 sm:mt-2 text-sm">
                         Click on any cell to book or cancel a seat for a user
                       </CardDescription>
-                      <div className="flex gap-4 items-center mt-2">
+                      <div className="flex flex-wrap gap-2 sm:gap-4 items-center mt-2">
                         <div className="flex items-center gap-2">
                           <div className="h-4 w-4 rounded bg-gradient-to-br from-green-400 to-green-500"></div>
                           <span className="text-xs text-gray-600">Booked</span>
@@ -322,12 +326,12 @@ export default function SeatBookingPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                       <input
                         type="text"
                         value={searchUser}
                         placeholder="Search by name..."
-                        className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
                         onChange={(e) => {
                           const searchTerm = e.target.value.toLowerCase();
                           if (searchTerm) {
@@ -373,24 +377,26 @@ export default function SeatBookingPage() {
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
-                    <Tabs
-                      value={selectedMonth}
-                      onValueChange={setSelectedMonth}
-                    >
-                      <TabsList>
-                        {months.map((month) => (
-                          <TabsTrigger
-                            key={month.getTime()}
-                            value={getMonthFormat(month)}
-                          >
-                            {getMonthFormat(month)}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
+                    <div className="overflow-x-auto w-full">
+                      <Tabs
+                        value={selectedMonth}
+                        onValueChange={setSelectedMonth}
+                      >
+                        <TabsList className="w-max sm:w-auto">
+                          {months.map((month) => (
+                            <TabsTrigger
+                              key={month.getTime()}
+                              value={getMonthFormat(month)}
+                            >
+                              {getMonthFormat(month)}
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                      </Tabs>
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="md:px-4 px-0.5">
                   <BookingCalendar
                     startDate={fromDate}
                     endDate={toDate}

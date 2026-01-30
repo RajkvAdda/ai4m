@@ -74,7 +74,9 @@ function SeatCard({
     <Card className="flex flex-col transition-transform transform hover:-translate-y-1 hover:shadow-xl duration-300">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="font-headline text-2xl">{seat.name}</CardTitle>
+          <CardTitle className="font-headline text-xl sm:text-2xl">
+            {seat.name}
+          </CardTitle>
           <div className="p-2 opacity-30 rounded-lg">
             {seatIcons[seat.type as SeatType] || ""}
           </div>
@@ -389,8 +391,8 @@ export default function Seats() {
   }, []);
 
   return (
-    <div className="container p-8 m-auto">
-      <Alert className="mb-8 border-primary/50 text-primary flex items-center flex-wrap justify-center gap-5">
+    <div className="container p-4 sm:p-6 md:p-8 m-auto">
+      <Alert className="mb-4 sm:mb-6 md:mb-8 border-primary/50 text-primary flex items-center flex-wrap justify-between gap-3 sm:gap-5">
         <UserAvator
           discription={"Choose a table to see details and book your seat."}
         />
@@ -454,8 +456,8 @@ export default function Seats() {
               <span className="text-lg font-semibold">Loading...</span>
             </div>
           ) : (
-            <div className="space-y-5">
-              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-4 sm:space-y-5">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {seats?.map((seat: ISeat) => (
                   <SeatCard
                     key={seat._id}
@@ -480,18 +482,18 @@ export default function Seats() {
 
                 <TabsContent value="team_calendar" className="space-y-4">
                   <Card>
-                    <CardHeader>
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <CardHeader className="md:px-4 px-0.5">
+                      <div className="flex justify-between items-center flex-wrap  gap-4">
                         <div>
-                          <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5" />
+                          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                             Booking Calendar
                           </CardTitle>
-                          <CardDescription className="mt-2">
+                          <CardDescription className="mt-2 text-sm">
                             Click on any cell to book or cancel a seat for a
                             user
                           </CardDescription>
-                          <div className="flex gap-4 items-center mt-2">
+                          <div className="flex flex-wrap gap-3 sm:gap-4 items-center mt-2">
                             <div className="flex items-center gap-2">
                               <div className="h-4 w-4 rounded bg-gradient-to-br from-green-400 to-green-500"></div>
                               <span className="text-xs text-gray-600">
@@ -512,12 +514,12 @@ export default function Seats() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
                           <input
                             type="text"
                             placeholder="Search by name..."
                             value={searchUser}
-                            className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
                             onChange={(e) => {
                               const searchTerm = e.target.value.toLowerCase();
                               if (searchTerm) {
@@ -569,24 +571,26 @@ export default function Seats() {
                             </TabsTrigger>
                           </TabsList>
                         </Tabs>
-                        <Tabs
-                          value={selectedMonth}
-                          onValueChange={setSelectedMonth}
-                        >
-                          <TabsList>
-                            {months.map((month) => (
-                              <TabsTrigger
-                                key={month.getTime()}
-                                value={getMonthFormat(month)}
-                              >
-                                {getMonthFormat(month)}
-                              </TabsTrigger>
-                            ))}
-                          </TabsList>
-                        </Tabs>
+                        <div className="overflow-x-auto w-full sm:w-auto">
+                          <Tabs
+                            value={selectedMonth}
+                            onValueChange={setSelectedMonth}
+                          >
+                            <TabsList className="w-max sm:w-auto">
+                              {months.map((month) => (
+                                <TabsTrigger
+                                  key={month.getTime()}
+                                  value={getMonthFormat(month)}
+                                >
+                                  {getMonthFormat(month)}
+                                </TabsTrigger>
+                              ))}
+                            </TabsList>
+                          </Tabs>
+                        </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="md:px-4 px-0">
                       <BookingCalendar
                         startDate={fromDate}
                         endDate={toDate}

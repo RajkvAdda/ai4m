@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: "Seatbooking - Smart Workspace Booking",
   description:
     "Book your perfect workspace with intelligent seatbook management",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  },
 };
 
 const inter = Inter({ subsets: ["latin"] });

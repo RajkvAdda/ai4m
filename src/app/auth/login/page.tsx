@@ -14,26 +14,31 @@ export default function LoginPage() {
     signIn("google", { callbackUrl: "/" });
   };
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-3xl">
+    <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-4 sm:p-6 md:p-10">
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-3xl">
         <div className={cn("flex flex-col gap-6")}>
           <Card className="overflow-hidden p-0">
-            <CardContent className="grid p-0 md:grid-cols-2 min-h-[400px]">
-              <form className="p-6 md:p-8 h-full flex flex-col items-center justify-center">
-                <div className="flex flex-col gap-6">
+            <CardContent className="grid p-0 md:grid-cols-2 min-h-[350px] sm:min-h-[400px]">
+              <form className="p-4 sm:p-6 md:p-8 h-full flex flex-col items-center justify-center">
+                <div className="flex flex-col gap-4 sm:gap-6">
                   <div className="flex flex-col items-center text-center">
-                    <h1 className="text-2xl font-bold">Welcome back</h1>
-                    <p className="text-muted-foreground text-balance">
+                    <h1 className="text-xl sm:text-2xl font-bold">
+                      Welcome back
+                    </h1>
+                    <p className="text-sm sm:text-base text-muted-foreground text-balance">
                       Login to your Seat Booking account
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <Button
                       onClick={handleGoogleSignIn}
-                      className="w-full h-12 "
+                      className="w-full h-11 sm:h-12 text-sm sm:text-base"
                       variant="secondary"
                     >
-                      <svg className="w-10 h-10 mr-3" viewBox="0 0 24 24">
+                      <svg
+                        className="w-8 h-8 sm:w-10 sm:h-10 mr-2 sm:mr-3"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

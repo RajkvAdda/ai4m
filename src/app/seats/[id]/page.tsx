@@ -42,23 +42,23 @@ export default async function SeatDetailsPage({
 // Client Component
 function SeatDetails({ seat, date }: { seat: ISeat; date: string }) {
   return (
-    <div className="container p-8">
-      <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-4 flex-wrap">
+    <div className="container p-4 sm:p-6 md:p-8">
+      <Alert className="mb-4 sm:mb-6 md:mb-8 border-primary/50 text-primary flex flex-wrap items-center gap-3 justify-between">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
           <div className="text-primary opacity-50">
             {seatIcons[seat.type as SeatType] || ""}
           </div>
           <div>
-            <CardTitle className="text-3xl font-headline">
+            <CardTitle className="text-xl sm:text-2xl md:text-3xl font-headline">
               {seat.name}
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="text-sm sm:text-base">
               Capacity: {seat?.totalCapacity} seats ({seat.units}{" "}
               {seat.type === "table"
                 ? "tables"
                 : seat.type === "row"
-                ? "rows"
-                : "areas"}
+                  ? "rows"
+                  : "areas"}
               )
             </CardDescription>
           </div>

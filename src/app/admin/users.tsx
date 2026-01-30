@@ -77,9 +77,11 @@ export default function Users({ users }: { users: IUser[] }) {
     <div>
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="font-headline">Existing Users</CardTitle>
+          <CardTitle className="font-headline text-xl sm:text-2xl">
+            Existing Users
+          </CardTitle>
           <CardAction>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <Tabs defaultValue="All" value={group} onValueChange={setGroup}>
                 <TabsList>
                   <TabsTrigger value="All">
@@ -126,7 +128,7 @@ export default function Users({ users }: { users: IUser[] }) {
                 type="text"
                 value={search}
                 placeholder="Search by name..."
-                className="px-3 py-2 border rounded-md text-sm"
+                className="px-3 py-2 border rounded-md text-sm w-full sm:w-auto"
                 onChange={(e) => {
                   const searchTerm = e.target.value.toLowerCase();
                   setSearch(searchTerm);
@@ -136,115 +138,125 @@ export default function Users({ users }: { users: IUser[] }) {
           </CardAction>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usersList
-                .filter(
-                  (user) =>
-                    group === "All" ||
-                    user.role.toLowerCase() === group.toLowerCase(),
-                )
-                .filter((user) =>
-                  user.name.toLowerCase().includes(search.toLowerCase()),
-                )
-                .map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium p-2">
-                      {user.name}
-                    </TableCell>
-                    <TableCell className="p-2">{user.email}</TableCell>
-                    <TableCell className="p-1">
-                      <Select
-                        value={user.role}
-                        onValueChange={async (newRole) => {
-                          try {
-                            const response = await fetch(
-                              `/api/users/${user.id}`,
-                              {
-                                method: "PATCH",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ role: newRole }),
-                              },
-                            );
-
-                            if (!response.ok) {
-                              throw new Error("Failed to update role");
-                            }
-
-                            setUsersList(
-                              usersList.map((u) =>
-                                u.id === user.id ? { ...u, role: newRole } : u,
-                              ),
-                            );
-                            toast.success(`Role updated to ${newRole}`);
-                          } catch (error) {
-                            console.error("Update role error:", error);
-                            toast.error("Failed to update role");
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ROLES.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-right p-2">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={deletingUserId === user.id}
-                          >
-                            {deletingUserId === user.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            )}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently delete{" "}
-                              <strong>{user.name}</strong> ({user.email}). This
-                              action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() =>
-                                handleDeleteUser(user.id, user.name)
-                              }
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {usersList
+                    .filter(
+                      (user) =>
+                        group === "All" ||
+                        user.role.toLowerCase() === group.toLowerCase(),
+                    )
+                    .filter((user) =>
+                      user.name.toLowerCase().includes(search.toLowerCase()),
+                    )
+                    .map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium p-2">
+                          {user.name}
+                        </TableCell>
+                        <TableCell className="p-2">{user.email}</TableCell>
+                        <TableCell className="p-1">
+                          <Select
+                            value={user.role}
+                            onValueChange={async (newRole) => {
+                              try {
+                                const response = await fetch(
+                                  `/api/users/${user.id}`,
+                                  {
+                                    method: "PATCH",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ role: newRole }),
+                                  },
+                                );
+
+                                if (!response.ok) {
+                                  throw new Error("Failed to update role");
+                                }
+
+                                setUsersList(
+                                  usersList.map((u) =>
+                                    u.id === user.id
+                                      ? { ...u, role: newRole }
+                                      : u,
+                                  ),
+                                );
+                                toast.success(`Role updated to ${newRole}`);
+                              } catch (error) {
+                                console.error("Update role error:", error);
+                                toast.error("Failed to update role");
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select your role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ROLES.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {role}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-right p-2">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={deletingUserId === user.id}
+                              >
+                                {deletingUserId === user.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Are you sure?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete{" "}
+                                  <strong>{user.name}</strong> ({user.email}).
+                                  This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleDeleteUser(user.id, user.name)
+                                  }
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

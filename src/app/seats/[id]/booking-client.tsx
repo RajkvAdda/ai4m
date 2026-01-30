@@ -115,8 +115,12 @@ export default function BookingClient({
       const isOddWeek = week % 2 === 1;
 
       const allowedDays: Record<string, string[]> = {
-        SPP: [...dayNames],
-        GST: [...dayNames],
+        SPP: [
+          ...dayNames.filter((day) => day !== "Saturday" && day !== "Sunday"),
+        ],
+        GST: [
+          ...dayNames.filter((day) => day !== "Saturday" && day !== "Sunday"),
+        ],
         // SPP: !isOddWeek
         //   ? ["Monday", "Tuesday", "Wednesday"]
         //   : ["Monday", "Tuesday"],
@@ -124,7 +128,9 @@ export default function BookingClient({
         //   ? ["Wednesday", "Thursday", "Friday"]
         //   : ["Thursday", "Friday"],
         User: [],
-        Intern: [...dayNames],
+        Intern: [
+          ...dayNames.filter((day) => day !== "Saturday" && day !== "Sunday"),
+        ],
       };
 
       setAccessAllowed(allowedDays[role]?.includes(dayName));
@@ -282,21 +288,7 @@ export default function BookingClient({
           <Alert variant="destructive" className="mb-4">
             <AlertCircleIcon className="h-4 w-4" />
             <AlertDescription>
-              {(() => {
-                const week = getWeekNumber(new Date(selectedDate));
-                const isOddWeek = week % 2 === 1;
-                if (role === "SPP") {
-                  return `Access restricted: SPP users can only book on Monday, Tuesday${
-                    !isOddWeek ? ", and Wednesday (this week)" : ""
-                  }. If you need to book on other days, you can book after 7 AM.`;
-                }
-                if (role === "GST") {
-                  return `Access restricted: GST users can only book on Thursday, Friday${
-                    isOddWeek ? ", and Wednesday (this week)" : ""
-                  }. If you need to book on other days, you can book after 7 AM.`;
-                }
-                return "Access restricted: Please log in or check your role.";
-              })()}
+              Access restricted: Please log in or check your date you can book.
             </AlertDescription>
           </Alert>
         )}

@@ -41,23 +41,23 @@ export default async function RoomDetailsPage({
 // Client Component
 function RoomDetails({ room, date }: { room: IRoom; date: string }) {
   return (
-    <div className="container p-8">
-      <Alert className="mb-8 border-primary/50 text-primary flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-4 flex-wrap">
+    <div className="container p-4 sm:p-6 md:p-8">
+      <Alert className="mb-4 sm:mb-6 md:mb-8 border-primary/50 text-primary flex flex-wrap items-center gap-3 justify-between">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
           <div className="text-primary opacity-50">
             {roomIcons[room.type as RoomType] || ""}
           </div>
           <div>
-            <CardTitle className="text-3xl font-headline">
+            <CardTitle className="text-xl sm:text-2xl md:text-3xl font-headline">
               {room.name}
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="text-sm sm:text-base">
               Capacity: {room?.totalCapacity} seats ({room.units}{" "}
               {room.type === "table_room"
                 ? "tables"
                 : room.type === "open_room"
-                ? "areas"
-                : "rows"}
+                  ? "areas"
+                  : "rows"}
               )
             </CardDescription>
           </div>

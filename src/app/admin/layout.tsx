@@ -29,10 +29,10 @@ export default function AdminLayout({
     }
   }, [router, status, session]);
   return (
-    <div className="min-h-screen flex flex-col p-8">
+    <div className="min-h-screen flex flex-col p-4 sm:p-6 md:p-8">
       <main className="flex-1">
-        <div className="container">
-          <Alert className="mb-4 border-primary/50 text-primary flex gap-3 items-center flex-wrap">
+        <div className="container px-2 sm:px-4">
+          <Alert className="mb-4 border-primary/50 text-primary flex gap-3 items-center flex-wrap justify-between">
             <UserAvator
               discription="You have administrative privileges. Changes made here will
                   affect all users."
