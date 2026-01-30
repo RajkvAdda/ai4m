@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const seatId = searchParams.get("seatId");
     const date = searchParams.get("date");
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "500");
+    const limit = parseInt(searchParams.get("limit") || "1000");
     const skip = (page - 1) * limit;
 
     const query: Record<string, unknown> = {};
