@@ -399,7 +399,7 @@ export function BookingCalendar({
                       </td>
                     );
                   })}
-                  <td className="sticky right-0 z-30 bg-gray-100 border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center">
+                  <td className="sm:sticky right-0 z-30 bg-gray-100 border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center">
                     <Badge
                       variant="default"
                       className="text-xs sm:text-sm font-bold bg-primary"
