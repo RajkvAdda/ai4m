@@ -55,20 +55,23 @@ export default function UserCalender({
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="text-base sm:text-lg">User Calendar for the month </div>
+          <div className="text-base sm:text-lg">
+            User Calendar for the month{" "}
+          </div>
           <div className="overflow-x-auto w-full sm:w-auto">
             <Tabs value={selectedMonth} onValueChange={setSelectedMonth}>
               <TabsList className="w-max sm:w-auto">
-              {months.map((month) => (
-                <TabsTrigger
-                  key={month.getTime()}
-                  value={getMonthFormat(month)}
-                >
-                  {getMonthFormat(month)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+                {months.map((month) => (
+                  <TabsTrigger
+                    key={month.getTime()}
+                    value={getMonthFormat(month)}
+                  >
+                    {getMonthFormat(month)}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
