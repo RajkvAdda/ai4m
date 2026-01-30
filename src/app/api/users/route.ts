@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const roleParam = searchParams.get("role");
     const excludeAvatar = searchParams.get("excludeAvatar") === "true" || true;
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "100");
+    const limit = parseInt(searchParams.get("limit") || "1000");
     const skip = (page - 1) * limit;
 
     // Build query filter

@@ -91,7 +91,7 @@ export default function Room({ room }: { room: IRoom }) {
   async function fetchUsers() {
     try {
       setLoading(true);
-      const res = await fetch("/api/users?limit=500");
+      const res = await fetch("/api/users?limit=1000");
       const data = await res.json();
       setUsers(data.data || data);
     } catch (_err) {

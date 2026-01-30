@@ -274,7 +274,7 @@ export default function Seats() {
       const fetchBookings = async () => {
         try {
           const res = await fetch(
-            `/api/seatbookings?date=${selectedDate}&limit=500`,
+            `/api/seatbookings?date=${selectedDate}&limit=1000`,
           );
           if (!res.ok) {
             throw new Error("Failed to fetch bookings");

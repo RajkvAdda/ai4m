@@ -17,7 +17,7 @@ export function createCachedResponse(data: unknown, maxAge: number = 60) {
  */
 export function parsePaginationParams(searchParams: URLSearchParams) {
   const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "100");
+  const limit = parseInt(searchParams.get("limit") || "1000");
   const skip = (page - 1) * limit;
 
   return { page, limit, skip };

@@ -34,7 +34,7 @@ export default function AdminPage() {
       const [roomsRes, seatsRes, usersRes] = await Promise.all([
         fetch("/api/rooms"),
         fetch("/api/seats"),
-        fetch("/api/users?limit=500"),
+        fetch("/api/users?limit=1000"),
       ]);
 
       const [roomsData, seatsData, usersData] = await Promise.all([

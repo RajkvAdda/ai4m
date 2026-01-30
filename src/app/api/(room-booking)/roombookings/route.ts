@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     const roomId = searchParams.get("roomId");
     const date = searchParams.get("date");
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "100");
+    const limit = parseInt(searchParams.get("limit") || "1000");
     const skip = (page - 1) * limit;
 
     const query: Record<string, unknown> = {};
