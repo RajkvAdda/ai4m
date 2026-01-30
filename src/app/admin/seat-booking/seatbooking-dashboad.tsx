@@ -406,10 +406,16 @@ export default function SeatBookingPage() {
                       )
                       .sort((a, b) => {
                         const roleOrder = { SPP: 1, GST: 2, Intern: 3 };
-                        return (
+                        const roleComparison =
                           (roleOrder[a.role as keyof typeof roleOrder] || 999) -
-                          (roleOrder[b.role as keyof typeof roleOrder] || 999)
-                        );
+                          (roleOrder[b.role as keyof typeof roleOrder] || 999);
+
+                        if (roleComparison !== 0) {
+                          return roleComparison;
+                        }
+
+                        // If roles are the same, sort by name
+                        return (a.name || "").localeCompare(b.name || "");
                       })}
                     onCellClick={handleCellClick}
                   />

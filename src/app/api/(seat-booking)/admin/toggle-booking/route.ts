@@ -1,4 +1,3 @@
-import { use } from "react";
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { SeatBooking } from "@/modals/(Seat)/SeatBooking";
@@ -42,13 +41,15 @@ export async function POST(request: Request) {
     if (existingBooking) {
       // Delete the booking (unbook)
       await SeatBooking.deleteOne({ _id: existingBooking._id });
-      UserActivity.create({
-        userId: existingBooking.userId,
-        description: `Cancelled seat booking ${existingBooking.startDate}`,
-        date: existingBooking.startDate,
-        userName: existingBooking.userName,
-        status: `${userType}_CANCELLED_BOOKING`,
-      });
+      if (userType !== "ADMIN") {
+        UserActivity.create({
+          userId: existingBooking.userId,
+          description: `Cancelled seat booking ${existingBooking.startDate}`,
+          date: existingBooking.startDate,
+          userName: existingBooking.userName,
+          status: `${userType}_CANCELLED_BOOKING`,
+        });
+      }
       return NextResponse.json({
         message: "Booking cancelled",
         action: "cancelled",
@@ -123,14 +124,15 @@ export async function POST(request: Request) {
       });
 
       await newBooking.save();
-
-      UserActivity.create({
-        userId: newBooking.userId,
-        description: `Created seat booking ${newBooking.startDate}`,
-        date: newBooking.startDate,
-        userName: newBooking.userName,
-        status: `${userType}_BOOKED_SEAT`,
-      });
+      if (userType !== "ADMIN") {
+        UserActivity.create({
+          userId: newBooking.userId,
+          description: `Created seat booking ${newBooking.startDate}`,
+          date: newBooking.startDate,
+          userName: newBooking.userName,
+          status: `${userType}_BOOKED_SEAT`,
+        });
+      }
 
       return NextResponse.json({
         message: "Booking created",

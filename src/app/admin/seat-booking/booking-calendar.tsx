@@ -493,7 +493,7 @@ function TableCell({
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border-2 border-white rounded-full"></span>
               </div>
             </HoverCardTrigger>
-            <HoverCardContent className="flex w-64 flex-col gap-0.5 bg-white rounded-2xl p-4 shadow-lg border border-gray-200 z-10">
+            <HoverCardContent className="flex w-64 flex-col gap-0.5 bg-white rounded-2xl p-4 shadow-lg border border-gray-200 z-50">
               <H5>Activity Log</H5>
               {userActivity.map((activity) => (
                 <div
