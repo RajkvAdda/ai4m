@@ -11,7 +11,7 @@ export default function RoomLayput({
 }) {
   const router = useRouter();
 
-  const { status } = useSession();
+  const { status, data: session } = useSession();
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -19,10 +19,15 @@ export default function RoomLayput({
     }
   }, [router, status]);
   const sequence = useSequence();
+
   useEffect(() => {
-    if (sequence == SequenceEnum.admin) {
+    if (
+      sequence == SequenceEnum.admin ||
+      session?.user.email == "kumarshivaray@gmail.com" ||
+      session?.user.email == "naveenbgowda@gmail.com"
+    ) {
       router.push("/admin");
     }
-  }, [sequence]);
+  }, [sequence, session]);
   return <div>{children}</div>;
 }
