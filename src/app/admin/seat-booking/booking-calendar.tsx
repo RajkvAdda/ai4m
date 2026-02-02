@@ -506,7 +506,7 @@ function TableCell({
                       "animate-pulse bg-red-200 rounded-lg",
                     dayActivity?.status.includes("ABSENT") &&
                       !isBooked &&
-                      "animate-bounce bg-red-500 rounded-lg",
+                      "animate-bounce bg-orange-300 rounded-lg text-white",
                   )}
                 >
                   {dayActivity.status.split("_")?.[0] || "WFH"}
