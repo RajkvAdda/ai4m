@@ -298,7 +298,7 @@ export default function SeatBookingPage() {
             <TabsContent value="calendar" className="space-y-4">
               <Card>
                 <CardHeader className="md:px-4 px-0.5">
-                  <div className="flex justify-between items-center flex-wrap gap-3 sm:gap-4">
+                  <div className="flex justify-between items-center w-full flex-wrap md:flex-nowrap gap-3 sm:gap-4">
                     <div>
                       <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                         <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -326,7 +326,7 @@ export default function SeatBookingPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <input
                         type="text"
                         value={searchUser}
@@ -377,7 +377,7 @@ export default function SeatBookingPage() {
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
-                    <div className="overflow-x-auto w-full">
+                    <div className="overflow-x-auto ">
                       <Tabs
                         value={selectedMonth}
                         onValueChange={setSelectedMonth}

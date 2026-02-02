@@ -391,7 +391,7 @@ export default function Seats() {
   }, []);
 
   return (
-    <div className="container p-4 sm:p-6 md:p-8 m-auto">
+    <div className="container p-2 sm:p-6 md:p-8 m-auto">
       <Alert className="mb-4 sm:mb-6 md:mb-8 border-primary/50 text-primary flex items-center flex-wrap justify-between gap-3 sm:gap-5">
         <UserAvator
           discription={"Choose a table to see details and book your seat."}

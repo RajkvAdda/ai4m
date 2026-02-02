@@ -22,14 +22,14 @@ export default function AdminLayout({
     if (status === "unauthenticated") {
       router.push("/auth/login");
     } else if (
-      loginEmail !== "kumarshivaray@gmail.com" &&
+      session?.user.email !== "kumarshivaray@gmail.com" &&
       session?.user.email !== "naveenbgowda@gmail.com"
     ) {
       router.push("/");
     }
   }, [router, status, session]);
   return (
-    <div className="min-h-screen flex flex-col p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen flex flex-col p-1 sm:p-4 md:p-8">
       <main className="flex-1">
         <div className="container px-2 sm:px-4">
           <Alert className="mb-4 border-primary/50 text-primary flex gap-3 items-center flex-wrap justify-between">
