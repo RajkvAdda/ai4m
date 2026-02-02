@@ -164,3 +164,13 @@ export function getUpcomingWednesdayWeekNumber(): {
     weekNumber: getWeekNumber(wednesday),
   };
 }
+
+// formatDate with UTC format
+export const displayDateTime = (
+  date: Date,
+  formatStr: string = "dd-MMM-yyyy HH:mm",
+) => {
+  if (!date) return "";
+  const utcDate = new Date(date.getTime());
+  return format(utcDate, formatStr);
+};

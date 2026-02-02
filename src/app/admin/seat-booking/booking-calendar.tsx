@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef, use } from "react";
-import { format, isToday } from "date-fns";
+import { format, formatDate, isToday } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
-import { cn, getDateFormat, isSameDay } from "@/lib/utils";
+import { cn, displayDateTime, getDateFormat, isSameDay } from "@/lib/utils";
 import { IUser } from "@/types/user";
 import {
   ContextMenu,
@@ -504,7 +504,7 @@ function TableCell({
                     dayActivity?.status.includes("LEAVE") &&
                       !isBooked &&
                       "animate-pulse bg-red-200 rounded-lg",
-                    dayActivity?.status.includes("ABSENT") &&
+                    dayActivity?.status.includes("NO-SHOW") &&
                       !isBooked &&
                       "animate-bounce bg-orange-300 rounded-lg",
                   )}
@@ -525,7 +525,7 @@ function TableCell({
                     {activity.status.replace(/_/g, " ")}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {new Date(activity.date).toLocaleString()}
+                    {displayDateTime(new Date(activity.createdAt) || null)}
                   </p>
                 </div>
               ))}
@@ -611,13 +611,13 @@ function TableCell({
               user,
               date,
               location.href.includes("admin")
-                ? "ABSENT_BY_ADMIN"
-                : "ABSENT_BY_USER",
-              "Marked ABSENT",
+                ? "NO-SHOW_BY_ADMIN"
+                : "NO-SHOW_BY_USER",
+              "Marked NO-SHOW",
             );
           }}
         >
-          Status: ABSENT
+          Status: NO-SHOW
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
