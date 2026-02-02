@@ -356,6 +356,13 @@ export function BookingCalendar({
                             date={date}
                             handleStatus={handleStatus}
                             userActivity={userActivity}
+                            isStatusDisabled={
+                              isUserView
+                                ? user.id === session?.user?.id
+                                  ? false
+                                  : true
+                                : false
+                            }
                           />
                         </td>
                       );
@@ -425,6 +432,7 @@ function TableCell({
   date,
   handleStatus,
   userActivity,
+  isStatusDisabled,
 }: {
   isBooked: boolean;
   weekend: boolean;
@@ -438,6 +446,7 @@ function TableCell({
     description: string,
   ) => void;
   userActivity: IUserActivity[] | undefined;
+  isStatusDisabled: boolean;
 }) {
   const Cell = ({
     className,
@@ -485,7 +494,7 @@ function TableCell({
       : undefined;
   return (
     <ContextMenu>
-      <ContextMenuTrigger disabled={isBooked || weekend}>
+      <ContextMenuTrigger disabled={isBooked || weekend || isStatusDisabled}>
         {userActivity?.length > 0 ? (
           <HoverCard openDelay={10} closeDelay={100}>
             <HoverCardTrigger asChild>
@@ -495,6 +504,9 @@ function TableCell({
                     dayActivity?.status.includes("LEAVE") &&
                       !isBooked &&
                       "animate-pulse bg-red-200 rounded-lg",
+                    dayActivity?.status.includes("ABSENT") &&
+                      !isBooked &&
+                      "animate-bounce bg-red-500 rounded-lg",
                   )}
                 >
                   {dayActivity.status.split("_")?.[0] || "WFH"}
@@ -592,6 +604,20 @@ function TableCell({
           }}
         >
           Status: WFH
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => {
+            handleStatus(
+              user,
+              date,
+              location.href.includes("admin")
+                ? "ABSENT_BY_ADMIN"
+                : "ABSENT_BY_USER",
+              "Marked ABSENT",
+            );
+          }}
+        >
+          Status: ABSENT
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

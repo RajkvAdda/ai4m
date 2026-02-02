@@ -15,7 +15,7 @@ export default function AdminLayout({
 
   const { status, data: session } = useSession();
 
-  // const loginEmail = "kumarshivaray@gmail.com";
+  const loginEmail = "kumarshivaray@gmail.com";
   // console.log("AdminLayout session:", session);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function AdminLayout({
       session?.user.email !== "kumarshivaray@gmail.com" &&
       session?.user.email !== "naveenbgowda@gmail.com"
     ) {
-      if (localStorage.getItem("raj_admin") !== "true") router.push("/");
+      router.push("/");
     }
   }, [router, status, session]);
   return (
