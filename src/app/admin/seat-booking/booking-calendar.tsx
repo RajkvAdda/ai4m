@@ -356,6 +356,7 @@ export function BookingCalendar({
                             date={date}
                             handleStatus={handleStatus}
                             userActivity={userActivity}
+                            isTodayDate={isTodayDate}
                             isStatusDisabled={
                               isUserView
                                 ? user.id === session?.user?.id
@@ -433,6 +434,7 @@ function TableCell({
   handleStatus,
   userActivity,
   isStatusDisabled,
+  isTodayDate,
 }: {
   isBooked: boolean;
   weekend: boolean;
@@ -605,20 +607,22 @@ function TableCell({
         >
           Status: WFH
         </ContextMenuItem>
-        <ContextMenuItem
-          onClick={() => {
-            handleStatus(
-              user,
-              date,
-              location.href.includes("admin")
-                ? "NO-SHOW_BY_ADMIN"
-                : "NO-SHOW_BY_USER",
-              "Marked NO-SHOW",
-            );
-          }}
-        >
-          Status: NO-SHOW
-        </ContextMenuItem>
+        {isTodayDate && (
+          <ContextMenuItem
+            onClick={() => {
+              handleStatus(
+                user,
+                date,
+                location.href.includes("admin")
+                  ? "NO-SHOW_BY_ADMIN"
+                  : "NO-SHOW_BY_USER",
+                "Marked NO-SHOW",
+              );
+            }}
+          >
+            Status: NO-SHOW
+          </ContextMenuItem>
+        )}
       </ContextMenuContent>
     </ContextMenu>
   );
