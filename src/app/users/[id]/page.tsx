@@ -38,6 +38,11 @@ export default function EditProfilePage({
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   // Resolve async params
   const { id } = use(params);
 
@@ -53,9 +58,13 @@ export default function EditProfilePage({
     resolver: zodResolver(userZodSchema),
   });
 
-  const watchedPassword = watch("password") || "";
   const watchedName = watch("name") || "";
   const watchedRole = watch("role");
+
+  // Check if password fields have been modified
+  const hasPasswordChanges =
+    isChangingPassword &&
+    (currentPassword || newPassword || confirmNewPassword);
 
   // Fetch user data when id is available
   useEffect(() => {
@@ -72,7 +81,7 @@ export default function EditProfilePage({
           ...userData,
           confirmPassword: userData.password, // Initialize confirmPassword
         });
-      } catch (error) {
+      } catch {
         setFetchError("Failed to load user data. Please try again.");
       }
     };
@@ -85,24 +94,58 @@ export default function EditProfilePage({
   // Handle form submission
   const onSubmit = async (data: IUser & { confirmPassword: string }) => {
     setIsLoading(true);
+    setPasswordError("");
+
     try {
-      // Simulate API call (replace with your actual API call)
-      await fetch(`/api/users/${id}`, {
+      const updateData: Record<string, string> = {
+        name: data.name,
+        avator: data.avator,
+        role: data.role,
+      };
+
+      // Handle password change if user is changing it
+      if (isChangingPassword) {
+        if (!currentPassword) {
+          setPasswordError("Current password is required");
+          setIsLoading(false);
+          return;
+        }
+        if (!newPassword || newPassword.length < 6) {
+          setPasswordError("New password must be at least 6 characters");
+          setIsLoading(false);
+          return;
+        }
+        if (newPassword !== confirmNewPassword) {
+          setPasswordError("New passwords do not match");
+          setIsLoading(false);
+          return;
+        }
+
+        updateData.currentPassword = currentPassword;
+        updateData.newPassword = newPassword;
+      }
+
+      const response = await fetch(`/api/users/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          // email: data.email,
-          // password: data.password, // Keep existing password if not changed
-          name: data.name,
-          avator: data.avator,
-          role: data.role,
-        }),
+        body: JSON.stringify(updateData),
       });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update profile");
+      }
+
       console.log("Profile updated:", data);
-      router.back(); // Redirect to profile view
+      router.back();
     } catch (error) {
       console.error("Failed to update profile:", error);
-      setFetchError("Failed to update profile. Please try again.");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to update profile. Please try again.";
+      setFetchError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -254,40 +297,79 @@ export default function EditProfilePage({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="password">New Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...register("password")}
-                    placeholder="Enter new password"
-                    className={errors.password ? "border-red-500" : ""}
-                  />
-                  {errors.password && (
-                    <p className="text-sm text-red-500">
-                      {errors.password.message}
-                    </p>
-                  )}
-                  <PasswordStrength password={watchedPassword} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    {...register("confirmPassword")}
-                    placeholder="Confirm new password"
-                    className={errors.confirmPassword ? "border-red-500" : ""}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-red-500">
-                      {errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="changePassword"
+                  className="text-base font-medium"
+                >
+                  Change Password
+                </Label>
+                <Button
+                  type="button"
+                  variant={isChangingPassword ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setIsChangingPassword(!isChangingPassword);
+                    setPasswordError("");
+                    setCurrentPassword("");
+                    setNewPassword("");
+                    setConfirmNewPassword("");
+                  }}
+                >
+                  {isChangingPassword ? "Cancel" : "Change Password"}
+                </Button>
               </div>
+
+              {isChangingPassword && (
+                <>
+                  {passwordError && (
+                    <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                      {passwordError}
+                    </div>
+                  )}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Enter current password"
+                      />
+                    </div>
+
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password"
+                        />
+                        <PasswordStrength password={newPassword} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmNewPassword">
+                          Confirm New Password
+                        </Label>
+                        <Input
+                          id="confirmNewPassword"
+                          type="password"
+                          value={confirmNewPassword}
+                          onChange={(e) =>
+                            setConfirmNewPassword(e.target.value)
+                          }
+                          placeholder="Confirm new password"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -303,7 +385,7 @@ export default function EditProfilePage({
                   Logout
                 </Button>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {isDirty && (
+                  {(isDirty || hasPasswordChanges) && (
                     <>
                       <div className="h-2 w-2 rounded-full bg-orange-400" />
                       You have unsaved changes
@@ -322,7 +404,7 @@ export default function EditProfilePage({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isLoading || !isDirty}
+                    disabled={isLoading || (!isDirty && !hasPasswordChanges)}
                     className="sm:w-auto w-full flex items-center gap-2"
                   >
                     <Save className="h-4 w-4" />

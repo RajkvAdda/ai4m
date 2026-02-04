@@ -2,6 +2,8 @@ import { connectToDatabase } from "@/lib/db";
 import User from "@/modals/User";
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 
 const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
@@ -9,6 +11,45 @@ const handler = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "demo-client-id",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "demo-client-secret",
+    }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required");
+        }
+
+        try {
+          await connectToDatabase();
+          const user = await User.findOne({ email: credentials.email });
+
+          if (!user) {
+            throw new Error("No user found with this email");
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password,
+          );
+
+          if (!isPasswordValid) {
+            throw new Error("Invalid password");
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.avator,
+          };
+        } catch (error: any) {
+          throw new Error(error.message || "Authentication failed");
+        }
+      },
     }),
   ],
   callbacks: {
@@ -19,13 +60,14 @@ const handler = NextAuth({
           let loginUser = await User.findOne({ email: user.email });
 
           if (!loginUser) {
+            const hashedPassword = await bcrypt.hash("User@1234", 10);
             loginUser = await User.create({
               id: user.id,
               name: user.name!,
               email: user.email!,
               avator: user.image,
               role: "User",
-              password: "User@1234",
+              password: hashedPassword,
             });
           }
 
@@ -34,6 +76,9 @@ const handler = NextAuth({
           console.error("Error during sign in:", error);
           return false;
         }
+      }
+      if (account?.provider === "credentials") {
+        return true;
       }
       return true;
     },

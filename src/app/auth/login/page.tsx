@@ -9,9 +9,42 @@ import { ArrowRight } from "lucide-react";
 import { signIn } from "next-auth/react";
 import Saral from "@/assets/images/Saral.png";
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/" });
+  };
+
+  const handleEmailPasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(result.error);
+      } else if (result?.ok) {
+        router.push("/");
+      }
+    } catch {
+      setError("An error occurred during login");
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-4 sm:p-6 md:p-10">
@@ -19,8 +52,16 @@ export default function LoginPage() {
         <div className={cn("flex flex-col gap-6")}>
           <Card className="overflow-hidden p-0">
             <CardContent className="grid p-0 md:grid-cols-2 min-h-[350px] sm:min-h-[400px]">
-              <form className="p-4 sm:p-6 md:p-8 h-full flex flex-col items-center justify-center">
+              <form
+                onSubmit={handleEmailPasswordLogin}
+                className="p-4 sm:p-6 md:p-8 h-full flex flex-col items-center justify-center"
+              >
                 <div className="flex flex-col gap-4 sm:gap-6">
+                  {error && (
+                    <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                      {error}
+                    </div>
+                  )}
                   <div className="flex flex-col items-center text-center">
                     <h1 className="text-xl sm:text-2xl font-bold">
                       Welcome back
@@ -60,19 +101,22 @@ export default function LoginPage() {
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
-                  {/* <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                  <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                     <span className="bg-card text-muted-foreground relative z-10 px-2">
                       Or continue with
                     </span>
-                  </div> */}
+                  </div>
 
-                  {/* <div className="grid gap-3">
+                  <div className="grid gap-3">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="m@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={isLoading}
                     />
                   </div>
                   <div className="grid gap-3">
@@ -85,11 +129,18 @@ export default function LoginPage() {
                         Forgot your password?
                       </a>
                     </div>
-                    <Input id="password" type="password" required />
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={isLoading}
+                    />
                   </div>
-                  <Button type="submit" className="w-full">
-                    Login
-                  </Button> */}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Login"}
+                  </Button>
                 </div>
               </form>{" "}
               <div className="bg-blue-200 relative hidden md:flex flex-col items-center justify-center">
