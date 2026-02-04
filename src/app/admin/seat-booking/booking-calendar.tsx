@@ -341,11 +341,24 @@ export function BookingCalendar({
                             isTodayDate && "bg-green-100",
                             loading && "pointer-events-none opacity-75",
                           )}
-                          onDoubleClick={() =>
-                            !weekend &&
-                            !loading &&
-                            onCellClick(user.id, getDateFormat(date))
-                          }
+                          onDoubleClick={() => {
+                            // please check here they can not toogle prevous date
+                            if (
+                              new Date(date) < new Date() ||
+                              weekend ||
+                              loading
+                            ) {
+                              toast({
+                                title: "Action Not Allowed",
+                                description:
+                                  "You cannot change status for past dates.",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+
+                            onCellClick(user.id, getDateFormat(date));
+                          }}
                         >
                           <TableCell
                             key={`${user.id}-${date}`}
@@ -358,11 +371,13 @@ export function BookingCalendar({
                             userActivity={userActivity}
                             isTodayDate={isTodayDate}
                             isStatusDisabled={
-                              isUserView
-                                ? user.id === session?.user?.id
-                                  ? false
-                                  : true
-                                : false
+                              new Date(date) < new Date()
+                                ? true
+                                : isUserView
+                                  ? user.id === session?.user?.id
+                                    ? false
+                                    : true
+                                  : false
                             }
                           />
                         </td>
@@ -380,8 +395,8 @@ export function BookingCalendar({
                     </td>
                   </tr>
                 ))}
-                <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-t-2 border-primary/20 sticky bottom-0 z-20">
-                  <td className="sticky left-0 z-30 bg-gray-100 px-2 sm:px-4 py-2 sm:py-3 font-semibold text-primary text-xs sm:text-sm">
+                <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-t-2 border-primary/20 sticky bottom-0 z-10">
+                  <td className="sticky left-0  bg-gray-100 px-2 sm:px-4 py-2 sm:py-3 font-semibold text-primary text-xs sm:text-sm">
                     Daily Total
                   </td>
                   {days.map((date) => {
@@ -407,7 +422,7 @@ export function BookingCalendar({
                       </td>
                     );
                   })}
-                  <td className="sm:sticky right-0 z-30 bg-gray-100 border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center">
+                  <td className="sm:sticky right-0  bg-gray-100 border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center">
                     <Badge
                       variant="default"
                       className="text-xs sm:text-sm font-bold bg-primary"
