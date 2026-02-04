@@ -380,7 +380,7 @@ export default function EditProfilePage({
                 <Button
                   onClick={() => signOut({ callbackUrl: "/" })}
                   variant="destructive"
-                  className="sm:w-auto w-full"
+                  className="sm:w-auto w-full order-3 sm:order-none"
                 >
                   Logout
                 </Button>

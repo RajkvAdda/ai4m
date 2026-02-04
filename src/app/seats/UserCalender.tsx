@@ -56,7 +56,7 @@ export default function UserCalender({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <CardTitle className="flex flex-col sm:flex-row items-start justify-between sm:items-center gap-3">
           <div className="text-base sm:text-lg">
             User Calendar for the month{" "}
           </div>
@@ -90,10 +90,10 @@ export default function UserCalender({
                   className="bg-emerald-50 text-emerald-500 border border-emerald-400 aspect-square rounded-lg sm:rounded-xl p-1 sm:p-2 text-shadow-lg flex items-center text-center justify-center"
                 >
                   <div className="flex flex-col gap-0.5">
-                    <div className="whitespace-nowrap font-bold text-[10px] sm:text-xs">
+                    <div className="whitespace-nowrap font-bold text-[14px] sm:text-[18px]">
                       {getDateFormat(day, "EEE d")}
                     </div>
-                    <div className="text-[8px] sm:text-[10px] leading-tight break-words">
+                    <div className="text-[14px] sm:text-[18px] leading-tight break-words">
                       {`${seat.name} #${dayBooking.seatNumber}`}
                     </div>
                   </div>
@@ -104,7 +104,7 @@ export default function UserCalender({
               <div
                 key={i}
                 className={cn(
-                  "bg-muted/30 aspect-square rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 text-shadow-lg flex items-center text-center justify-center text-[10px] sm:text-xs md:text-sm",
+                  "bg-muted/30 aspect-square rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 text-shadow-lg flex items-center text-center justify-center text-[14px] sm:text-[18px] md:text-sm",
                   ["Sun", "Sat"].includes(getDateFormat(day, "EEE"))
                     ? "bg-yellow-50 border-yellow-400 border text-yellow-700"
                     : "border",

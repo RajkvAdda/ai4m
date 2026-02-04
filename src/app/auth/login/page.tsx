@@ -4,20 +4,52 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import { signIn } from "next-auth/react";
 import Saral from "@/assets/images/Saral.png";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Preferences } from "@capacitor/preferences";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Load saved credentials on mount
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      try {
+        const { value: savedEmail } = await Preferences.get({
+          key: "savedEmail",
+        });
+        const { value: savedPassword } = await Preferences.get({
+          key: "savedPassword",
+        });
+        const { value: savedRememberMe } = await Preferences.get({
+          key: "rememberMe",
+        });
+
+        if (savedRememberMe === "true" && savedEmail) {
+          setEmail(savedEmail);
+          setRememberMe(true);
+          if (savedPassword) {
+            setPassword(savedPassword);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading saved credentials:", error);
+      }
+    };
+
+    loadSavedCredentials();
+  }, []);
 
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/" });
@@ -38,6 +70,17 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
       } else if (result?.ok) {
+        // Save credentials if remember me is checked
+        if (rememberMe) {
+          await Preferences.set({ key: "savedEmail", value: email });
+          await Preferences.set({ key: "savedPassword", value: password });
+          await Preferences.set({ key: "rememberMe", value: "true" });
+        } else {
+          // Clear saved credentials if not checked
+          await Preferences.remove({ key: "savedEmail" });
+          await Preferences.remove({ key: "savedPassword" });
+          await Preferences.remove({ key: "rememberMe" });
+        }
         router.push("/");
       }
     } catch {
@@ -70,7 +113,7 @@ export default function LoginPage() {
                       Login to your Seat Booking account
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className=" sm:block hidden">
                     <Button
                       onClick={handleGoogleSignIn}
                       className="w-full h-11 sm:h-12 text-sm sm:text-base"
@@ -101,13 +144,13 @@ export default function LoginPage() {
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
-                  <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                  <div className=" sm:block hidden after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                     <span className="bg-card text-muted-foreground relative z-10 px-2">
                       Or continue with
                     </span>
                   </div>
 
-                  <div className="grid gap-3">
+                  <div className="grid gap-3 mt-4 sm:mt-0">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
@@ -137,6 +180,21 @@ export default function LoginPage() {
                       required
                       disabled={isLoading}
                     />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="rememberMe"
+                      checked={rememberMe}
+                      onCheckedChange={(checked) =>
+                        setRememberMe(checked as boolean)
+                      }
+                    />
+                    <label
+                      htmlFor="rememberMe"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Remember me
+                    </label>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Logging in..." : "Login"}

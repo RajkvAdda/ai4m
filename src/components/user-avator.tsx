@@ -8,12 +8,18 @@ import { useSession } from "next-auth/react";
 import { AlertDescription, AlertTitle } from "./ui/alert";
 import { EditIcon } from "lucide-react";
 
-export default function UserAvator({ discription }: { discription: string }) {
+export default function UserAvator({
+  discription,
+  className,
+}: {
+  discription: string;
+  className?: string;
+}) {
   const router = useRouter();
   const { data: session } = useSession();
 
   return (
-    <div className="flex gap-3 ">
+    <div className={`flex gap-3 ${className || ""}`}>
       <div className="relative flex-shrink-0">
         <Avatar
           className="w-15 h-15 rounded-lg cursor-pointer hover:border-2 hover:border-gray-200"

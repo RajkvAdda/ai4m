@@ -394,20 +394,21 @@ export default function Seats() {
     <div className="container p-2 sm:p-6 md:p-8 m-auto">
       <Alert className="mb-4 sm:mb-6 md:mb-8 border-primary/50 text-primary flex items-center flex-wrap justify-between gap-3 sm:gap-5">
         <UserAvator
+          className="flex-1"
           discription={"Choose a table to see details and book your seat."}
         />
-        <div className="flex-1"></div>
-        <Flex className="flex-col sm:flex-row">
+
+        <Flex className="sm:flex-row sm:flex-nowrap ">
           <Label
             htmlFor="booking-date"
-            className="mb-1 font-medium whitespace-nowrap"
+            className="mb-1 font-medium whitespace-nowrap hidden sm:block"
           >
             Date for booking
           </Label>
           <Input
             id="booking-date"
             type="date"
-            className="border rounded px-3 py-2"
+            className="border rounded px-3 py-2 w-auto"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             min={getTodayOrNextDate()}
@@ -482,7 +483,7 @@ export default function Seats() {
 
                 <TabsContent value="team_calendar" className="space-y-4">
                   <Card>
-                    <CardHeader className="md:px-4 px-0.5">
+                    <CardHeader>
                       <div className="flex justify-between items-center flex-wrap  gap-4">
                         <div>
                           <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -514,7 +515,7 @@ export default function Seats() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                        <div className="flex justify-center order-last sm:order-none">
                           <input
                             type="text"
                             placeholder="Search by name..."
@@ -530,64 +531,65 @@ export default function Seats() {
                             }}
                           />
                         </div>
-                        <Tabs
-                          defaultValue="All"
-                          value={group}
-                          onValueChange={setGroup}
-                        >
-                          <TabsList>
-                            <TabsTrigger value="All">
-                              <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
-                                {users.length}
-                              </Badge>
-                              All
-                            </TabsTrigger>
-                            <TabsTrigger value="SPP">
-                              <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
-                                {
-                                  users.filter((user) => user.role === "SPP")
-                                    .length
-                                }
-                              </Badge>
-                              SPP
-                            </TabsTrigger>
-                            <TabsTrigger value="GST">
-                              <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
-                                {
-                                  users.filter((user) => user.role === "GST")
-                                    .length
-                                }
-                              </Badge>
-                              GST
-                            </TabsTrigger>
-                            <TabsTrigger value="Intern">
-                              <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
-                                {
-                                  users.filter((user) => user.role === "Intern")
-                                    .length
-                                }
-                              </Badge>
-                              Intern
-                            </TabsTrigger>
-                          </TabsList>
-                        </Tabs>
-                        <div className="overflow-x-auto w-full sm:w-auto">
+                        <div className="hidden sm:block">
                           <Tabs
-                            value={selectedMonth}
-                            onValueChange={setSelectedMonth}
+                            defaultValue="All"
+                            value={group}
+                            onValueChange={setGroup}
                           >
-                            <TabsList className="w-max sm:w-auto">
-                              {months.map((month) => (
-                                <TabsTrigger
-                                  key={month.getTime()}
-                                  value={getMonthFormat(month)}
-                                >
-                                  {getMonthFormat(month)}
-                                </TabsTrigger>
-                              ))}
+                            <TabsList>
+                              <TabsTrigger value="All">
+                                <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                                  {users.length}
+                                </Badge>
+                                All
+                              </TabsTrigger>
+                              <TabsTrigger value="SPP">
+                                <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                                  {
+                                    users.filter((user) => user.role === "SPP")
+                                      .length
+                                  }
+                                </Badge>
+                                SPP
+                              </TabsTrigger>
+                              <TabsTrigger value="GST">
+                                <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                                  {
+                                    users.filter((user) => user.role === "GST")
+                                      .length
+                                  }
+                                </Badge>
+                                GST
+                              </TabsTrigger>
+                              <TabsTrigger value="Intern">
+                                <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                                  {
+                                    users.filter(
+                                      (user) => user.role === "Intern",
+                                    ).length
+                                  }
+                                </Badge>
+                                Intern
+                              </TabsTrigger>
                             </TabsList>
                           </Tabs>
                         </div>
+                        <Tabs
+                          value={selectedMonth}
+                          onValueChange={setSelectedMonth}
+                        >
+                          <TabsList className="w-max sm:w-auto">
+                            {months.map((month) => (
+                              <TabsTrigger
+                                key={month.getTime()}
+                                value={getMonthFormat(month)}
+                              >
+                                {getMonthFormat(month)}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+                        </Tabs>
                       </div>
                     </CardHeader>
                     <CardContent className="md:px-4 px-0">

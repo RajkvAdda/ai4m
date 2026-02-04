@@ -8,7 +8,10 @@ export const Flex = React.forwardRef<
   <div
     ref={ref}
     role="flex"
-    className={cn("flex gap-4 items-center justify-start", className)}
+    className={cn(
+      "flex gap-2 sm:gap-4 flex-wrap items-center justify-start",
+      className,
+    )}
     {...props}
   />
 ));
