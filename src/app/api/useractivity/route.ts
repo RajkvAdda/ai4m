@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
     const date = searchParams.get("date");
+    const createdAt = searchParams.get("createdAt");
     const fromDate = searchParams.get("fromDate");
     const toDate = searchParams.get("toDate");
 
@@ -20,6 +21,11 @@ export async function GET(request: Request) {
     }
     if (date) {
       filter.date = date;
+    } else if (createdAt) {
+      const start = new Date(createdAt);
+      const end = new Date(createdAt);
+      end.setDate(end.getDate() + 1);
+      filter.createdAt = { $gte: start, $lt: end };
     } else {
       if (fromDate) {
         filter.date = { $gte: fromDate };

@@ -101,10 +101,10 @@ export async function DELETE(
     }
     UserActivity.create({
       userId: deleteResult.userId,
-      description: `Deleted seat booking ${deleteResult.startDate}`,
+      description: `Cancelled seat booking ${deleteResult.startDate}`,
       date: deleteResult.startDate,
       userName: deleteResult.userName,
-      status: "USER_DELETED_SEAT_BOOKING",
+      status: "USER_CANCELLED_BOOKING",
     });
     const booking = deleteResult.toObject();
     return NextResponse.json({

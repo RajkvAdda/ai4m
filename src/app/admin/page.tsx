@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Rooms from "./(rooms)/rooms";
 import Users from "./users";
-// import SeatDashboard from "./(seats)/seat-dashboard";
+import UserActivity from "./(seats)/user-activity";
 import SeatDashboard from "./seat-booking/seatbooking-dashboad";
 import { getMonthFormat, getPreviousAndNextMonths } from "@/lib/utils";
 import Seats from "./(seats)/seats";
@@ -143,11 +143,13 @@ export default function AdminPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="flex flex-wrap gap-2 items-center justify-between mb-3 sm:mb-4 overflow-x-auto">
           <TabsList className="w-max sm:w-auto">
-            {["Seat Booking", "Rooms", "Seats", "Users"].map((tab) => (
-              <TabsTrigger key={tab} value={tab}>
-                {tab}
-              </TabsTrigger>
-            ))}
+            {["Seat Booking", "Rooms", "Seats", "Users", "User Activity"].map(
+              (tab) => (
+                <TabsTrigger key={tab} value={tab}>
+                  {tab}
+                </TabsTrigger>
+              ),
+            )}
           </TabsList>
         </div>
         <TabsContent value="Seat Booking">
@@ -174,6 +176,9 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="Users">
           <Users users={users} />
+        </TabsContent>
+        <TabsContent value="User Activity">
+          <UserActivity users={users} />
         </TabsContent>
       </Tabs>
     </>
