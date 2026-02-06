@@ -18,6 +18,7 @@ import {
   BookA,
   CalendarDays,
   TrendingUp,
+  Activity,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ISeat, SeatType, ISeatBooking } from "@/types/seat";
@@ -41,6 +42,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
 import { Badge } from "@/components/ui/badge";
 import { BookingCalendar } from "../admin/seat-booking/booking-calendar";
+import UserActivity from "../admin/(seats)/user-activity";
 
 const seatIcons: Record<SeatType, React.ReactNode> = {
   table: <TableRowsSplit className="h-6 w-6" />,
@@ -479,6 +481,10 @@ export default function Seats() {
                     <BookA className="h-4 w-4 mr-2" />
                     My Bookings
                   </TabsTrigger>
+                  <TabsTrigger value="user_activity">
+                    <Activity className="h-4 w-4 mr-2" />
+                    User Activity
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="team_calendar" className="space-y-4">
@@ -637,6 +643,9 @@ export default function Seats() {
 
                 <TabsContent value="booking">
                   <UserCalender userId={session?.user?.id} seats={seats} />
+                </TabsContent>
+                <TabsContent value="user_activity">
+                  <UserActivity users={users} date={new Date()} />
                 </TabsContent>
               </Tabs>
             </div>

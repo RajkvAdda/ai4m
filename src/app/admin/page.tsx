@@ -9,12 +9,28 @@ import Rooms from "./(rooms)/rooms";
 import Users from "./users";
 import UserActivity from "./(seats)/user-activity";
 import SeatDashboard from "./seat-booking/seatbooking-dashboad";
-import { getMonthFormat, getPreviousAndNextMonths } from "@/lib/utils";
+import {
+  getDateFormat,
+  getMonthFormat,
+  getPreviousAndNextMonths,
+  getTodayOrNextDate,
+} from "@/lib/utils";
 import Seats from "./(seats)/seats";
 import { IRoom } from "@/types/room";
 import { ISeat } from "@/types/seat";
 import { IUser } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { da } from "date-fns/locale";
+import { set } from "mongoose";
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -22,7 +38,7 @@ export default function AdminPage() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [seats, setSeats] = useState<ISeat[]>([]);
   const [users, setUsers] = useState<IUser[]>([]);
-
+  const [date, setDate] = useState(new Date());
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const { status } = useSession();
@@ -126,9 +142,6 @@ export default function AdminPage() {
   };
 
   const months = getPreviousAndNextMonths();
-  const [selectedMonth, setSelectedMonth] = React.useState(
-    getMonthFormat(months[1]),
-  );
 
   if (loading)
     return (
@@ -151,14 +164,20 @@ export default function AdminPage() {
               ),
             )}
           </TabsList>
+          {activeTab === "User Activity" && (
+            <div>
+              <Input
+                id="booking-date"
+                type="date"
+                className="border rounded px-3 py-2"
+                value={date ? getDateFormat(date) : ""}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+          )}
         </div>
         <TabsContent value="Seat Booking">
-          <SeatDashboard
-            seats={seats}
-            months={months}
-            users={users}
-            selectedMonth={selectedMonth}
-          />
+          <SeatDashboard seats={seats} months={months} users={users} />
         </TabsContent>
         <TabsContent value="Rooms">
           <Rooms
@@ -178,7 +197,7 @@ export default function AdminPage() {
           <Users users={users} />
         </TabsContent>
         <TabsContent value="User Activity">
-          <UserActivity users={users} />
+          <UserActivity users={users} date={date} />
         </TabsContent>
       </Tabs>
     </>

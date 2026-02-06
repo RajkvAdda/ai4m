@@ -10,38 +10,31 @@ import {
 import React, { useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { IUser } from "@/types/user";
-import { ISeat, ISeatBooking } from "@/types/seat";
-import { Badge } from "@/components/ui/badge";
-import { Activity } from "lucide-react";
-import { H5, H6 } from "@/components/ui/typography";
+import { H6 } from "@/components/ui/typography";
 import { IUserActivity } from "@/types/userActivity";
 
 export default function UserActivity({
-  seats,
-  months,
-  selectedMonth,
+  date,
   users,
 }: {
-  seats: ISeat[];
-  months: Date[];
-  selectedMonth: string;
+  date: string;
   users: IUser[];
 }) {
   const [userActivity, setUserActivity] = React.useState<IUser[]>([]);
-  const [date, setDate] = React.useState(getDateFormat(new Date()));
   const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
     const fetchUserActivity = async () => {
-      setUserActivity([]);
       setLoading(true);
       try {
-        const res = await fetch(`/api/useractivity?createdAt=${date}`);
+        console.log("Fetching user activity for date:", date);
+        const res = await fetch(
+          `/api/useractivity?createdAt=${getDateFormat(date, "yyyy-MM-dd")}`,
+        );
         if (!res.ok) return;
 
         const data = await res.json();
         setUserActivity(data?.data);
-      } catch (_err) {
       } finally {
         setLoading(false);
       }
