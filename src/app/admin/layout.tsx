@@ -23,6 +23,7 @@ export default function AdminLayout({
       router.push("/auth/login");
     } else if (
       session?.user.email !== "kumarshivaray@gmail.com" &&
+      // loginEmail !== "kumarshivaray@gmail.com" &&
       session?.user.email !== "naveenbgowda@gmail.com"
     ) {
       router.push("/");

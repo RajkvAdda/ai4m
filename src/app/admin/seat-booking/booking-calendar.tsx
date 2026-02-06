@@ -348,11 +348,19 @@ export function BookingCalendar({
                           onDoubleClick={() => {
                             // please check here they can not toogle prevous date
 
-                            if (dateOnly < todayOnly || weekend || loading) {
+                            if (dateOnly < todayOnly || loading) {
                               toast({
                                 title: "Action Not Allowed",
                                 description:
                                   "You cannot change status for past dates.",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            if (isUserView && weekend) {
+                              toast({
+                                title: "Action Not Allowed",
+                                description: "You cannot book on weekends.",
                                 variant: "destructive",
                               });
                               return;
@@ -465,6 +473,7 @@ function TableCell({
   ) => void;
   userActivity: IUserActivity[] | undefined;
   isStatusDisabled: boolean;
+  isTodayDate: boolean;
 }) {
   const Cell = ({
     className,
@@ -479,18 +488,18 @@ function TableCell({
         !isBooked &&
           !weekend &&
           "bg-gray-200 hover:bg-gray-300 hover:scale-105",
-        weekend && "bg-gray-300 cursor-not-allowed opacity-50",
+        weekend && "bg-gray-300 opacity-50",
+        weekend && isStatusDisabled && "cursor-not-allowed",
         className,
         isBooked &&
-          !weekend &&
           "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
         loading && "cursor-wait",
       )}
     >
-      {isBooked && !weekend ? (
+      {isBooked ? (
         <div className="flex flex-col items-center">
           <span className="text-white text-[10px] sm:text-xs font-semibold">
-            Booked
+            {weekend ? "Support" : "Booked"}
           </span>
         </div>
       ) : weekend ? (
