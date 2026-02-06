@@ -147,7 +147,7 @@ function ActivityList({ activities }: { activities: IUserActivity[] }) {
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Duplicate bookings for seamless infinite scroll */}
-      {[...activities, ...(activities?.length > 8 ? activities : [])].map(
+      {[...activities, ...(activities?.length > 4 ? activities : [])].map(
         (activity, index) => {
           return (
             <div
