@@ -331,6 +331,10 @@ export function BookingCalendar({
                           activity.userId === user.id &&
                           activity.date === getDateFormat(date),
                       );
+                      const dateOnly = new Date(date);
+                      dateOnly.setHours(0, 0, 0, 0);
+                      const todayOnly = new Date();
+                      todayOnly.setHours(0, 0, 0, 0);
 
                       return (
                         <td
@@ -343,11 +347,8 @@ export function BookingCalendar({
                           )}
                           onDoubleClick={() => {
                             // please check here they can not toogle prevous date
-                            if (
-                              new Date(date) < new Date() ||
-                              weekend ||
-                              loading
-                            ) {
+
+                            if (dateOnly < todayOnly || weekend || loading) {
                               toast({
                                 title: "Action Not Allowed",
                                 description:
@@ -371,7 +372,7 @@ export function BookingCalendar({
                             userActivity={userActivity}
                             isTodayDate={isTodayDate}
                             isStatusDisabled={
-                              new Date(date) < new Date()
+                              dateOnly < todayOnly
                                 ? true
                                 : isUserView
                                   ? user.id === session?.user?.id
