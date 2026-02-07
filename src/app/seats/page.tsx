@@ -473,18 +473,9 @@ export default function Seats() {
               </div>
               <Tabs defaultValue="team_calendar" className="space-y-4">
                 <TabsList>
-                  <TabsTrigger value="team_calendar">
-                    <CalendarDays className="h-4 w-4 mr-2" />
-                    Team Calendar
-                  </TabsTrigger>
-                  <TabsTrigger value="booking">
-                    <BookA className="h-4 w-4 mr-2" />
-                    My Bookings
-                  </TabsTrigger>
-                  <TabsTrigger value="user_activity">
-                    <Activity className="h-4 w-4 mr-2" />
-                    User Activity
-                  </TabsTrigger>
+                  <TabsTrigger value="team_calendar">Calendar</TabsTrigger>
+                  <TabsTrigger value="booking">Bookings</TabsTrigger>
+                  <TabsTrigger value="user_activity">Activity</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="team_calendar" className="space-y-4">

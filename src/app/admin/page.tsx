@@ -165,14 +165,16 @@ export default function AdminPage() {
             )}
           </TabsList>
           {activeTab === "User Activity" && (
-            <div>
-              <Input
-                id="booking-date"
-                type="date"
-                className="border rounded px-3 py-2"
-                value={date ? getDateFormat(date) : ""}
-                onChange={(e) => setDate(e.target.value)}
-              />
+            <div className="flex-1 flex items-center justify-end gap-2">
+              <div className="w-fit">
+                <Input
+                  id="booking-date"
+                  type="date"
+                  className="border rounded px-3 py-2"
+                  value={date ? getDateFormat(date) : ""}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
             </div>
           )}
         </div>

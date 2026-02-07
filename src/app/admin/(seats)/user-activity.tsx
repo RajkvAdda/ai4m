@@ -1,11 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  cn,
-  getDateFormat,
-  getMonthDays,
-  getMonthFormat,
-  getNameFistKey,
-} from "@/lib/utils";
+import { cn, getDateFormat, getNameFistKey } from "@/lib/utils";
 
 import React, { useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,7 +14,7 @@ export default function UserActivity({
   date: string;
   users: IUser[];
 }) {
-  const [userActivity, setUserActivity] = React.useState<IUser[]>([]);
+  const [userActivity, setUserActivity] = React.useState<IUserActivity[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
@@ -29,7 +23,7 @@ export default function UserActivity({
       try {
         console.log("Fetching user activity for date:", date);
         const res = await fetch(
-          `/api/useractivity?createdAt=${getDateFormat(date, "yyyy-MM-dd")}`,
+          `/api/useractivity?createdAt=${getDateFormat(new Date(date), "yyyy-MM-dd")}`,
         );
         if (!res.ok) return;
 
@@ -42,7 +36,9 @@ export default function UserActivity({
     if (date) fetchUserActivity();
   }, [date]);
 
-  const groupedByUserName = userActivity.reduce((acc: any, activity) => {
+  const groupedByUserName = userActivity.reduce<
+    Record<string, IUserActivity[]>
+  >((acc, activity) => {
     const user = users.find((u) => u.id === activity.userId);
     const userName = user?.name || "Unknown User";
     if (!acc[userName]) {
@@ -84,7 +80,12 @@ export default function UserActivity({
                             {getNameFistKey(user?.name)}{" "}
                           </AvatarFallback>
                         </Avatar>
-                        <H6>{userName}</H6>
+                        <div className="truncate max-w-[100px] sm:max-w-none">
+                          <H6>{userName}</H6>
+                        </div>
+                        <div className="truncate max-w-[100px] sm:max-w-none">
+                          <H6>{userName}</H6>
+                        </div>
                       </td>
                       <td className="p-2">
                         {activities.length > 0 ? (
@@ -123,12 +124,23 @@ function ActivityList({ activities }: { activities: IUserActivity[] }) {
     let animationId: number;
     let scrollPosition = 0;
 
+    const isMobile =
+      window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+
     const scroll = () => {
-      scrollPosition += 0.5;
-      if (scrollPosition >= scrollElement.scrollWidth / 2) {
-        scrollPosition = 0;
+      if (isMobile) {
+        scrollPosition += 0.5;
+        if (scrollPosition >= scrollElement.scrollHeight / 2) {
+          scrollPosition = 0;
+        }
+        scrollElement.scrollTop = scrollPosition;
+      } else {
+        scrollPosition += 0.5;
+        if (scrollPosition >= scrollElement.scrollWidth / 2) {
+          scrollPosition = 0;
+        }
+        scrollElement.scrollLeft = scrollPosition;
       }
-      scrollElement.scrollLeft = scrollPosition;
       animationId = requestAnimationFrame(scroll);
     };
 
@@ -142,12 +154,12 @@ function ActivityList({ activities }: { activities: IUserActivity[] }) {
   return (
     <div
       ref={scrollRef}
-      className="flex gap-3 overflow-x-hidden"
+      className="flex sm:flex-row flex-col gap-3 overflow-x-hidden  max-h-[120px]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Duplicate bookings for seamless infinite scroll */}
-      {[...activities, ...(activities?.length > 4 ? activities : [])].map(
+      {[...activities, ...(activities?.length > 3 ? activities : [])].map(
         (activity, index) => {
           return (
             <div
@@ -161,12 +173,10 @@ function ActivityList({ activities }: { activities: IUserActivity[] }) {
                   "bg-green-100 border-green-300",
               )}
             >
-              <div className="flex flex-col text-xs">
-                <span className="text-gray-500 text-sm">
-                  {`${activity.status.replaceAll("_", " ")} for date `}
-                  <b>{getDateFormat(new Date(activity.date))}</b>
-                </span>
-              </div>
+              <span className="text-gray-500 text-sm">
+                {`${activity.status.replaceAll("_", " ")} for date `}
+                <b>{getDateFormat(new Date(activity.date))}</b>
+              </span>
             </div>
           );
         },
