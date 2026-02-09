@@ -83,9 +83,6 @@ export default function UserActivity({
                         <div className="truncate max-w-[100px] sm:max-w-none">
                           <H6>{userName}</H6>
                         </div>
-                        <div className="truncate max-w-[100px] sm:max-w-none">
-                          <H6>{userName}</H6>
-                        </div>
                       </td>
                       <td className="p-2">
                         {activities.length > 0 ? (
