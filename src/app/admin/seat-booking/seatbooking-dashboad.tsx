@@ -125,6 +125,10 @@ export default function SeatBookingPage() {
               userId,
               date,
               userType: "ADMIN",
+              status:
+                date === getTodayDate()
+                  ? "ADMIN_MORE_SHOW"
+                  : "ADMIN_BOOKED_SEAT",
             }),
           });
 

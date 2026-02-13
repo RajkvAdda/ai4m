@@ -119,7 +119,7 @@ export async function POST(request: Request) {
         userName: user.name,
         startDate: date,
         endDate: date,
-        status: `booked_by_admin`,
+        status: body?.status || `${userType}_BOOKED_SEAT`,
       });
 
       await newBooking.save();

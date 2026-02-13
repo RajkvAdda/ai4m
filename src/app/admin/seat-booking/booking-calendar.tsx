@@ -324,6 +324,7 @@ export function BookingCalendar({
                       );
 
                       const isBooked = !!booking;
+                      const isMoreShow = booking?.status.includes("MORE_SHOW");
                       const weekend = isWeekend(date);
                       const isTodayDate = isToday(new Date(date));
                       const userActivity = userActivities.filter(
@@ -376,6 +377,7 @@ export function BookingCalendar({
                             loading={loading}
                             user={user}
                             date={date}
+                            isMoreShow={isMoreShow}
                             handleStatus={handleStatus}
                             userActivity={userActivity}
                             isTodayDate={isTodayDate}
@@ -459,6 +461,7 @@ function TableCell({
   userActivity,
   isStatusDisabled,
   isTodayDate,
+  isMoreShow,
 }: {
   isBooked: boolean;
   weekend: boolean;
@@ -474,6 +477,7 @@ function TableCell({
   userActivity: IUserActivity[] | undefined;
   isStatusDisabled: boolean;
   isTodayDate: boolean;
+  isMoreShow: boolean;
 }) {
   const Cell = ({
     className,
@@ -493,13 +497,15 @@ function TableCell({
         className,
         isBooked &&
           "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
+        isMoreShow &&
+          "animate-bounce bg-gradient-to-br from-indigo-300 to-indigo-400 ",
         loading && "cursor-wait",
       )}
     >
       {isBooked ? (
         <div className="flex flex-col items-center">
           <span className="text-white text-[10px] sm:text-xs font-semibold">
-            {weekend ? "Support" : "Booked"}
+            {weekend ? "Support" : isMoreShow ? "More Show" : "Booked"}
           </span>
         </div>
       ) : weekend ? (
@@ -633,20 +639,22 @@ function TableCell({
           Status: WFH
         </ContextMenuItem>
         {isTodayDate && (
-          <ContextMenuItem
-            onClick={() => {
-              handleStatus(
-                user,
-                date,
-                location.href.includes("admin")
-                  ? "NO-SHOW_BY_ADMIN"
-                  : "NO-SHOW_BY_USER",
-                "Marked NO-SHOW",
-              );
-            }}
-          >
-            Status: NO-SHOW
-          </ContextMenuItem>
+          <>
+            <ContextMenuItem
+              onClick={() => {
+                handleStatus(
+                  user,
+                  date,
+                  location.href.includes("admin")
+                    ? "NO-SHOW_BY_ADMIN"
+                    : "NO-SHOW_BY_USER",
+                  "Marked NO-SHOW",
+                );
+              }}
+            >
+              Status: NO-SHOW
+            </ContextMenuItem>
+          </>
         )}
       </ContextMenuContent>
     </ContextMenu>
