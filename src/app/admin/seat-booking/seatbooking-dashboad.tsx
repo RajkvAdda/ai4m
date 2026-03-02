@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { BookingForm } from "./booking-form";
 import { BookingCalendar } from "./booking-calendar";
 import {
@@ -31,92 +37,202 @@ import {
 } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { ISeat } from "@/types/seat";
 
-export default function SeatBookingPage() {
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const ROLE_ORDER: Record<string, number> = { SPP: 1, GST: 2, Intern: 3 };
+
+const DEBOUNCE_DELAY_MS = 1000;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function compareByRole(a: User, b: User): number {
+  const roleDiff =
+    (ROLE_ORDER[a.role as string] ?? 999) -
+    (ROLE_ORDER[b.role as string] ?? 999);
+  if (roleDiff !== 0) return roleDiff;
+  return (a.name ?? "").localeCompare(b.name ?? "");
+}
+
+// ─── StatCard sub-component ───────────────────────────────────────────────────
+
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  subtitle: string;
+  colorScheme: "blue" | "green" | "purple";
+  isLoading: boolean;
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  subtitle,
+  colorScheme,
+  isLoading,
+}: StatCardProps) {
+  const colors = {
+    blue: {
+      card: "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200",
+      title: "text-blue-700",
+      value: "text-blue-900",
+      sub: "text-blue-600",
+    },
+    green: {
+      card: "bg-gradient-to-br from-green-50 to-green-100 border-green-200",
+      title: "text-green-700",
+      value: "text-green-900",
+      sub: "text-green-600",
+    },
+    purple: {
+      card: "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200",
+      title: "text-purple-700",
+      value: "text-purple-900",
+      sub: "text-purple-600",
+    },
+  }[colorScheme];
+
+  return (
+    <Card className={cn(colors.card, isLoading && "animate-pulse")}>
+      <CardHeader className="pb-2 sm:pb-3">
+        <CardTitle
+          className={cn(
+            "text-xs sm:text-sm font-medium flex items-center gap-2",
+            colors.title,
+          )}
+        >
+          {icon}
+          {label}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className={cn("text-2xl sm:text-3xl font-bold", colors.value)}>
+          {value}
+        </div>
+        <p className={cn("text-xs mt-1", colors.sub)}>{subtitle}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── LegendItem sub-component ─────────────────────────────────────────────────
+
+function LegendItem({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className={cn("h-4 w-4 rounded", color)} />
+      <span className="text-xs text-gray-600">{label}</span>
+    </div>
+  );
+}
+
+// ─── Dashboard stats type ─────────────────────────────────────────────────────
+
+interface DashboardStats {
+  totalSeats: number;
+  bookedToday: number;
+  totalUsers: number;
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function SeatBookingDashboard() {
   const { toast } = useToast();
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
-  const [searchUser, setSearchUser] = useState<string>("");
+
+  const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
-  const [group, setGroup] = useState<string>("All");
+  const [activeGroup, setActiveGroup] = useState<string>("All");
+
   const months = getPreviousAndNextMonths();
-  const [selectedMonth, setSelectedMonth] = React.useState(
-    getMonthFormat(months[1]),
-  );
-  const [stats, setStats] = useState({
+  const [selectedMonth, setSelectedMonth] = useState(getMonthFormat(months[1]));
+
+  const [stats, setStats] = useState<DashboardStats>({
     totalSeats: 0,
     bookedToday: 0,
     totalUsers: 0,
   });
 
-  const monthNumber = months.findIndex(
-    (month) => getMonthFormat(month) === selectedMonth,
-  );
+  // Derive month-related values from selectedMonth
+  const { days, fromDate, toDate } = useMemo(() => {
+    const monthIndex = months.findIndex(
+      (month) => getMonthFormat(month) === selectedMonth,
+    );
+    const monthDays = getMonthDays(months[monthIndex].getMonth());
+    return {
+      days: monthDays,
+      fromDate: getDateFormat(monthDays[0]),
+      toDate: getDateFormat(monthDays[monthDays.length - 1]),
+    };
+  }, [selectedMonth, months]);
 
-  const days = getMonthDays(months[monthNumber].getMonth());
-  const fromDate = getDateFormat(days[0]);
-  const toDate = getDateFormat(days[days.length - 1]);
+  // ── Data fetching ────────────────────────────────────────────────────────────
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const [seatsRes, usersRes, bookingsRes] = await Promise.all([
+        fetch("/api/seats"),
+        fetch("/api/users?role=SPP,GST,Intern"),
+        fetch(`/api/seatbookings?startDate=${getTodayDate()}`),
+      ]);
+
+      const [seatsData, usersData, bookingsData] = await Promise.all([
+        seatsRes.json(),
+        usersRes.json(),
+        bookingsRes.json(),
+      ]);
+
+      const totalSeats: number =
+        (seatsData as ISeat[])?.reduce(
+          (sum, seat) => sum + seat.units * seat.seatsPerUnit,
+          0,
+        ) ?? 0;
+
+      const fetchedUsers: User[] = usersData?.data ?? usersData ?? [];
+      const bookedToday: number =
+        bookingsData?.data?.length ?? bookingsData?.length ?? 0;
+
+      setUsers(fetchedUsers);
+      setStats({ totalSeats, bookedToday, totalUsers: fetchedUsers.length });
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+    }
+  }, []);
 
   useEffect(() => {
     fetchStats();
-  }, [refreshKey]);
+  }, [fetchStats, refreshKey]);
 
-  const fetchStats = async () => {
-    try {
-      const [seatsResponse, usersResponse, bookingsResponse] =
-        await Promise.all([
-          fetch("/api/seats"),
-          fetch("/api/users?role=SPP,GST,Intern"),
-          fetch(`/api/seatbookings?startDate=${getTodayDate()}`),
-        ]);
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
 
-      const [seatsData, usersData, bookingsData] = await Promise.all([
-        seatsResponse.json(),
-        usersResponse.json(),
-        bookingsResponse.json(),
-      ]);
-
-      const totalSeats =
-        seatsData?.reduce(
-          (sum: number, seat: any) => sum + seat.units * seat.seatsPerUnit,
-          0,
-        ) || 0;
-
-      setUsers(usersData?.data || usersData || []);
-      const totalUsers = usersData?.data?.length || usersData?.length || 0;
-      const bookedToday =
-        bookingsData?.data?.length || bookingsData?.length || 0;
-
-      console.log({ totalSeats, bookedToday, totalUsers, bookingsData });
-      setStats({ totalSeats, bookedToday, totalUsers });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  };
+  // ── Event handlers ───────────────────────────────────────────────────────────
 
   const handleCellClick = useCallback(
     async (userId: string, date: string) => {
-      // Clear any existing debounce timer
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
-      // If already processing, ignore the click
       if (isProcessingRef.current) {
         toast({
-          title: "Please wait...",
+          title: "Please wait…",
           description: "Processing previous request",
           variant: "default",
         });
         return;
       }
 
-      // Set up debounce timer (300ms delay)
       debounceTimerRef.current = setTimeout(async () => {
         isProcessingRef.current = true;
-
         try {
           const response = await fetch("/api/admin/toggle-booking", {
             method: "POST",
@@ -133,23 +249,20 @@ export default function SeatBookingPage() {
           });
 
           if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || "Failed to toggle booking");
+            const errorBody = await response.json();
+            throw new Error(errorBody.error || "Failed to toggle booking");
           }
 
           const result = await response.json();
           if (result?.message) {
-            toast({
-              title: result.message,
-              variant: "default",
-            });
+            toast({ title: result.message, variant: "default" });
           }
 
           setRefreshKey((prev) => prev + 1);
         } catch (error) {
-          console.error("Toggle booking error:", error);
           const message =
             error instanceof Error ? error.message : "Failed to update booking";
+          console.error("Toggle booking error:", message);
           toast({
             title: "Error",
             description: message,
@@ -158,41 +271,64 @@ export default function SeatBookingPage() {
         } finally {
           isProcessingRef.current = false;
         }
-      }, 1000);
+      }, DEBOUNCE_DELAY_MS);
     },
     [toast],
   );
 
-  // Cleanup debounce timer on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
-
-  const handleBookingSuccess = () => {
+  const handleBookingSuccess = useCallback(() => {
     setRefreshKey((prev) => prev + 1);
-    toast({
-      title: "Booking updated successfully!",
-      variant: "success",
-    });
-  };
+    toast({ title: "Booking updated successfully!", variant: "success" });
+  }, [toast]);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setRefreshKey((prev) => prev + 1);
-    toast({
-      title: "Calendar refreshed!",
-      variant: "success",
-    });
-  };
+    toast({ title: "Calendar refreshed!", variant: "success" });
+  }, [toast]);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setSearchQuery(e.target.value.toLowerCase()),
+    [],
+  );
+
+  // ── Derived data ─────────────────────────────────────────────────────────────
+
+  const filteredAndSortedUsers = useMemo(
+    () =>
+      users
+        .filter(
+          (user) =>
+            (activeGroup === "All" || user.role === activeGroup) &&
+            (!searchQuery || user.name?.toLowerCase().includes(searchQuery)),
+        )
+        .sort(compareByRole),
+    [users, activeGroup, searchQuery],
+  );
+
+  const usersSortedByRole = useMemo(
+    () => [...users].sort(compareByRole),
+    [users],
+  );
+
+  const userCountByRole = useMemo(
+    () => ({
+      SPP: users.filter((u) => u.role === "SPP").length,
+      GST: users.filter((u) => u.role === "GST").length,
+      Intern: users.filter((u) => u.role === "Intern").length,
+    }),
+    [users],
+  );
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+
+  const isStatsLoading = stats.totalSeats === 0;
 
   return (
     <Card className="p-0">
       <CardContent className="p-0">
         <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-          {/* Header */}
+          {/* ── Header ── */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3">
@@ -213,74 +349,35 @@ export default function SeatBookingPage() {
             </Button>
           </div>
 
-          {/* Stats Cards */}
+          {/* ── Stats Cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            <Card
-              className={cn(
-                "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200",
-                stats?.totalSeats === 0 && "animate-pulse",
-              )}
-            >
-              <CardHeader className="pb-2 sm:pb-3">
-                <CardTitle className="text-xs sm:text-sm font-medium text-blue-700 flex items-center gap-2">
-                  <Armchair className="h-4 w-4" />
-                  Total Seats
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl sm:text-3xl font-bold text-blue-900">
-                  {stats.totalSeats}
-                </div>
-                <p className="text-xs text-blue-600 mt-1">Available capacity</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className={cn(
-                "bg-gradient-to-br from-green-50 to-green-100 border-green-200",
-                stats?.totalSeats === 0 && "animate-pulse",
-              )}
-            >
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" />
-                  Booked Today
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-900">
-                  {stats.bookedToday}
-                </div>
-                <p className="text-xs text-green-600 mt-1">
-                  {stats.totalSeats - stats.bookedToday} seats available
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className={cn(
-                "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200",
-                stats?.totalUsers === 0 && "animate-pulse",
-              )}
-            >
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-purple-700 flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Total Users
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-purple-900">
-                  {stats.totalUsers}
-                </div>
-                <p className="text-xs text-purple-600 mt-1">
-                  Registered members role (SPP, GST, Intern)
-                </p>
-              </CardContent>
-            </Card>
+            <StatCard
+              icon={<Armchair className="h-4 w-4" />}
+              label="Total Seats"
+              value={stats.totalSeats}
+              subtitle="Available capacity"
+              colorScheme="blue"
+              isLoading={isStatsLoading}
+            />
+            <StatCard
+              icon={<CalendarDays className="h-4 w-4" />}
+              label="Booked Today"
+              value={stats.bookedToday}
+              subtitle={`${stats.totalSeats - stats.bookedToday} seats available`}
+              colorScheme="green"
+              isLoading={isStatsLoading}
+            />
+            <StatCard
+              icon={<Users className="h-4 w-4" />}
+              label="Total Users"
+              value={stats.totalUsers}
+              subtitle="Registered members (SPP, GST, Intern)"
+              colorScheme="purple"
+              isLoading={stats.totalUsers === 0}
+            />
           </div>
 
-          {/* Main Content */}
+          {/* ── Main Content ── */}
           <Tabs defaultValue="calendar" className="space-y-4">
             <TabsList>
               <TabsTrigger value="calendar">
@@ -293,6 +390,7 @@ export default function SeatBookingPage() {
               </TabsTrigger>
             </TabsList>
 
+            {/* Calendar Tab */}
             <TabsContent value="calendar" className="space-y-4">
               <Card>
                 <CardHeader className="md:px-4 px-0.5">
@@ -306,44 +404,31 @@ export default function SeatBookingPage() {
                         Click on any cell to book or cancel a seat for a user
                       </CardDescription>
                       <div className="flex flex-wrap gap-2 sm:gap-4 items-center mt-2">
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded bg-gradient-to-br from-green-400 to-green-500"></div>
-                          <span className="text-xs text-gray-600">Booked</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded bg-gray-200"></div>
-                          <span className="text-xs text-gray-600">
-                            Available
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded bg-yellow-100"></div>
-                          <span className="text-xs text-yellow-400">
-                            Weekend
-                          </span>
-                        </div>
+                        <LegendItem
+                          color="bg-gradient-to-br from-green-400 to-green-500"
+                          label="Booked"
+                        />
+                        <LegendItem color="bg-gray-200" label="Available" />
+                        <LegendItem color="bg-yellow-100" label="Weekend" />
                       </div>
                     </div>
+
+                    {/* Search */}
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <input
                         type="text"
-                        value={searchUser}
-                        placeholder="Search by name..."
+                        value={searchQuery}
+                        placeholder="Search by name…"
                         className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full sm:w-auto"
-                        onChange={(e) => {
-                          const searchTerm = e.target.value.toLowerCase();
-                          if (searchTerm) {
-                            setSearchUser(searchTerm);
-                          } else {
-                            setSearchUser("");
-                          }
-                        }}
+                        onChange={handleSearchChange}
                       />
                     </div>
+
+                    {/* Group filter */}
                     <Tabs
                       defaultValue="All"
-                      value={group}
-                      onValueChange={setGroup}
+                      value={activeGroup}
+                      onValueChange={setActiveGroup}
                     >
                       <TabsList>
                         <TabsTrigger value="All">
@@ -352,30 +437,19 @@ export default function SeatBookingPage() {
                           </Badge>
                           All
                         </TabsTrigger>
-                        <TabsTrigger value="SPP">
-                          <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
-                            {users.filter((user) => user.role === "SPP").length}
-                          </Badge>
-                          SPP
-                        </TabsTrigger>
-                        <TabsTrigger value="GST">
-                          <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
-                            {users.filter((user) => user.role === "GST").length}
-                          </Badge>
-                          GST
-                        </TabsTrigger>
-                        <TabsTrigger value="Intern">
-                          <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
-                            {
-                              users.filter((user) => user.role === "Intern")
-                                .length
-                            }
-                          </Badge>
-                          Intern
-                        </TabsTrigger>
+                        {(["SPP", "GST", "Intern"] as const).map((role) => (
+                          <TabsTrigger key={role} value={role}>
+                            <Badge className="h-5 min-w-5 rounded-full px-1 font-mono tabular-nums mr-2">
+                              {userCountByRole[role]}
+                            </Badge>
+                            {role}
+                          </TabsTrigger>
+                        ))}
                       </TabsList>
                     </Tabs>
-                    <div className="overflow-x-auto ">
+
+                    {/* Month selector */}
+                    <div className="overflow-x-auto">
                       <Tabs
                         value={selectedMonth}
                         onValueChange={setSelectedMonth}
@@ -394,6 +468,7 @@ export default function SeatBookingPage() {
                     </div>
                   </div>
                 </CardHeader>
+
                 <CardContent className="md:px-4 px-0.5">
                   <BookingCalendar
                     startDate={fromDate}
@@ -401,42 +476,18 @@ export default function SeatBookingPage() {
                     days={days}
                     refreshKey={refreshKey}
                     stats={stats}
-                    users={users
-                      .filter(
-                        (user) =>
-                          (group === "All" || user.role === group) &&
-                          (user.name?.toLowerCase().includes(searchUser) ||
-                            !searchUser),
-                      )
-                      .sort((a, b) => {
-                        const roleOrder = { SPP: 1, GST: 2, Intern: 3 };
-                        const roleComparison =
-                          (roleOrder[a.role as keyof typeof roleOrder] || 999) -
-                          (roleOrder[b.role as keyof typeof roleOrder] || 999);
-
-                        if (roleComparison !== 0) {
-                          return roleComparison;
-                        }
-
-                        // If roles are the same, sort by name
-                        return (a.name || "").localeCompare(b.name || "");
-                      })}
+                    users={filteredAndSortedUsers}
                     onCellClick={handleCellClick}
                   />
                 </CardContent>
               </Card>
             </TabsContent>
 
+            {/* Bulk Booking Tab */}
             <TabsContent value="configure">
               <BookingForm
                 onSuccess={handleBookingSuccess}
-                users={users.sort((a, b) => {
-                  const roleOrder = { SPP: 1, GST: 2, Intern: 3 };
-                  return (
-                    (roleOrder[a.role as keyof typeof roleOrder] || 999) -
-                    (roleOrder[b.role as keyof typeof roleOrder] || 999)
-                  );
-                })}
+                users={usersSortedByRole}
                 fromDate={fromDate}
                 toDate={toDate}
               />

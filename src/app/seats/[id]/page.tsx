@@ -35,7 +35,6 @@ export default async function SeatDetailsPage({
   if (!seat) {
     notFound();
   }
-  console.log("ej-date", seat, sp?.date);
   return <SeatDetails seat={seat} date={sp?.date as string} />;
 }
 

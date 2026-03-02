@@ -29,7 +29,6 @@ export function getTodayOrNextDate(afterHour: number = 19) {
 
   if (currentHour > afterHour) {
     const nextDay = addDays(now, 1);
-    console.log("rj-time", now, currentHour, nextDay);
     return format(nextDay, "yyyy-MM-dd");
   }
 
@@ -90,7 +89,7 @@ export function getIsBeforeDate(date1: string, date2: string) {
   return new Date(date1) <= new Date(date2);
 }
 
-export const formatTime = (t) => {
+export const formatTime = (t: string | null | undefined): string => {
   if (!t) {
     return "-";
   }
@@ -147,6 +146,34 @@ export function getUpcomingWednesday(): Date {
 
   return upcomingWednesday;
 }
+// Day names indexed 0 (Sunday) – 6 (Saturday)
+export const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+const SEAT_ALLOWED_ROLES = ["SPP", "GST", "Intern"] as const;
+
+const SEAT_ALLOWED_DAYS: Record<string, readonly string[]> = {
+  SPP: DAY_NAMES.filter((d) => d !== "Saturday" && d !== "Sunday"),
+  GST: DAY_NAMES.filter((d) => d !== "Saturday" && d !== "Sunday"),
+  Intern: DAY_NAMES.filter((d) => d !== "Saturday" && d !== "Sunday"),
+  User: [],
+};
+
+/** Returns true when the given role may book a seat on the given date. */
+export function checkSeatAccessAllowed(role: string, date: string): boolean {
+  if (!role || !(SEAT_ALLOWED_ROLES as readonly string[]).includes(role))
+    return false;
+  const dayName = DAY_NAMES[new Date(date).getDay()];
+  return SEAT_ALLOWED_DAYS[role]?.includes(dayName) ?? false;
+}
+
 // e.g., "Wed Jan 22 2026"
 export function getWeekNumber(date: Date): number {
   const firstDayOfYear = new Date(date.getFullYear(), 0, 1);

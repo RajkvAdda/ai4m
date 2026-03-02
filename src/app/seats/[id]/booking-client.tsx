@@ -16,6 +16,7 @@ import {
   getIsBeforeDate,
   getNameFistKey,
   getTodayOrNextDate,
+  checkSeatAccessAllowed,
 } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
@@ -54,32 +55,13 @@ export default function BookingClient({
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
-  const [existingBooking, setexistingBooking] = useState<string | null>(null);
+  const [existingBooking, setExistingBooking] = useState<string | null>(null);
   const [bookedSeats, setBookedSeats] = useState<ISeatBooking[]>([]);
 
-  // --- Start of New Code ---
+  // Access control state
   const [role, setRole] = useState<string>("");
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
-  const [isAfter5PM, setIsAfter5PM] = useState<boolean>(false);
   const [accessAllowed, setAccessAllowed] = useState<boolean>(false);
-
-  const dayNames = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-
-  const getWeekNumber = (date: Date): number => {
-    const oneJan = new Date(date.getFullYear(), 0, 1);
-    const numberOfDays = Math.floor(
-      (date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000),
-    );
-    return Math.ceil((numberOfDays + oneJan.getDay() + 1) / 7);
-  };
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -103,52 +85,20 @@ export default function BookingClient({
     fetchUserRole();
   }, [session?.user?.id]);
 
-  const today = new Date(selectedDate);
-
-  const dayName = dayNames[today.getDay()];
-
   useEffect(() => {
-    const checkAccess = () => {
-      if (!role) return false;
-      if (role !== "SPP" && role !== "GST" && role !== "Intern") return false;
-      const week = getWeekNumber(new Date(selectedDate));
-      const isOddWeek = week % 2 === 1;
-
-      const allowedDays: Record<string, string[]> = {
-        SPP: [
-          ...dayNames.filter((day) => day !== "Saturday" && day !== "Sunday"),
-        ],
-        GST: [
-          ...dayNames.filter((day) => day !== "Saturday" && day !== "Sunday"),
-        ],
-        // SPP: !isOddWeek
-        //   ? ["Monday", "Tuesday", "Wednesday"]
-        //   : ["Monday", "Tuesday"],
-        // GST: isOddWeek
-        //   ? ["Wednesday", "Thursday", "Friday"]
-        //   : ["Thursday", "Friday"],
-        User: [],
-        Intern: [
-          ...dayNames.filter((day) => day !== "Saturday" && day !== "Sunday"),
-        ],
-      };
-
-      setAccessAllowed(allowedDays[role]?.includes(dayName));
-    };
-
-    checkAccess();
-  }, [selectedDate, role, dayName, dayNames]);
+    setAccessAllowed(checkSeatAccessAllowed(role, selectedDate));
+  }, [selectedDate, role]);
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      setexistingBooking(null);
+      setExistingBooking(null);
       const res = await fetch(`/api/seatbookings?date=${selectedDate}`);
       const bookings: ISeatBooking[] = await res.json();
       const booked: ISeatBooking[] = [];
       bookings?.data.forEach((b) => {
         if (b?.userId == session?.user?.id) {
-          setexistingBooking((b?._id as string) || "");
+          setExistingBooking((b?._id as string) || "");
         }
         if (b?.seatId == seatDetails?.id) booked.push(b);
       });
@@ -175,7 +125,6 @@ export default function BookingClient({
   }
 
   const handleBooking = async (seat = selectedSeat) => {
-    // --- New check added here ---
     if (!accessAllowed) {
       toast({
         title: "Permission Denied",
@@ -184,7 +133,6 @@ export default function BookingClient({
       });
       return;
     }
-    // --- End of new check ---
 
     if (!seat) return;
     setIsPending(true);
@@ -201,7 +149,6 @@ export default function BookingClient({
       if (existingBooking) {
         await deleteBooking(existingBooking);
       }
-      console.log("seat.id", seat);
       const res = await fetch(`/api/seatbookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

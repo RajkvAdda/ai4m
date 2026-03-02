@@ -15,10 +15,7 @@ import {
   ArrowRight,
   Rows,
   TableRowsSplit,
-  BookA,
-  CalendarDays,
   TrendingUp,
-  Activity,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ISeat, SeatType, ISeatBooking } from "@/types/seat";
@@ -27,6 +24,8 @@ import {
   getMonthDays,
   getMonthFormat,
   getPreviousAndNextMonths,
+  DAY_NAMES,
+  checkSeatAccessAllowed,
 } from "@/lib/utils";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
@@ -36,7 +35,7 @@ import UserAvator from "@/components/user-avator";
 import { useSession } from "next-auth/react";
 import { IUser } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { Flex } from "@/components/ui/flex";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
@@ -55,6 +54,26 @@ const seatDescriptions: Record<SeatType, string> = {
   row: "Individual row-style seating",
   free_area: "Open area for flexible work",
 };
+
+function AccessRestrictedAlert({
+  role,
+  dayName,
+}: {
+  role: string;
+  dayName: string;
+}) {
+  let message = "Access restricted: Please check your role.";
+  if (role === "SPP") {
+    message = `Access restricted: SPP users may only book on weekdays (Mon–Fri). Today is ${dayName}.`;
+  } else if (role === "GST") {
+    message = `Access restricted: GST users may only book on weekdays (Mon–Fri). Today is ${dayName}.`;
+  } else if (role === "Intern") {
+    message = `Access restricted: Intern users may only book on weekdays (Mon–Fri). Today is ${dayName}.`;
+  }
+  return (
+    <Alert className="mb-8 border-yellow-500 text-yellow-500">{message}</Alert>
+  );
+}
 
 function SeatCard({
   seat,
@@ -137,7 +156,6 @@ export default function Seats() {
   const [role, setRole] = useState<string>("");
   const [isRoleLoading, setIsRoleLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAfter5PM, setIsAfter5PM] = useState<boolean>(false);
   const [searchUser, setSearchUser] = useState<string>("");
   const [group, setGroup] = useState<string>("All");
   const [users, setUsers] = useState<IUser[]>([]);
@@ -147,71 +165,13 @@ export default function Seats() {
   const { toast } = useToast();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
-  console.log(role, "role-123");
 
-  const today = new Date(selectedDate);
-  const dayNames = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const dayName = dayNames[today.getDay()];
+  const dayName = DAY_NAMES[new Date(selectedDate).getDay()];
 
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-
-      const currentHour = now.getHours();
-      const currentMinutes = now.getMinutes();
-
-      const isAfter7AM = currentHour >= 7;
-      setIsAfter5PM(isAfter7AM);
-
-      console.log(
-        isAfter7AM,
-        `${currentHour}:${currentMinutes} IST`,
-        "currentTime",
-      );
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  function getWeekNumber(date: Date): number {
-    const oneJan = new Date(date.getFullYear(), 0, 1);
-    const numberOfDays = Math.floor(
-      (date.getTime() - oneJan.getTime()) / (24 * 60 * 60 * 1000),
-    );
-    return Math.ceil((numberOfDays + oneJan.getDay() + 1) / 7);
-  }
-
-  const isAccessAllowed = () => {
-    if (!role) return false;
-    if (role !== "SPP" && role !== "GST" && role !== "Intern") return false;
-    const week = getWeekNumber(new Date(selectedDate));
-    const isOddWeek = week % 2 === 1;
-
-    const allowedDays: Record<string, string[]> = {
-      SPP: [...dayNames],
-      GST: [...dayNames],
-      // SPP: !isOddWeek
-      //   ? ["Monday", "Tuesday", "Wednesday"]
-      //   : ["Monday", "Tuesday"],
-      // GST: isOddWeek
-      //   ? ["Wednesday", "Thursday", "Friday"]
-      //   : ["Thursday", "Friday"],
-      User: [],
-      Intern: [...dayNames],
-    };
-
-    return allowedDays[role]?.includes(dayName);
-  };
+  const isAccessAllowed = useMemo(
+    () => checkSeatAccessAllowed(role, selectedDate),
+    [role, selectedDate],
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -425,27 +385,8 @@ export default function Seats() {
         </div>
       ) : (
         <>
-          {!isAccessAllowed() && session?.user?.id && (
-            <Alert className="mb-8 border-yellow-500 text-yellow-500">
-              {(() => {
-                const week = getWeekNumber(new Date(selectedDate));
-                const isOddWeek = week % 2 === 1;
-
-                if (role === "SPP") {
-                  return `Access restricted: SPP users can only book on Monday, Tuesday${
-                    !isOddWeek ? ", and Wednesday (this week)" : ""
-                  }. If you need to book on other days, you can book after 7 AM.`;
-                }
-
-                if (role === "GST") {
-                  return `Access restricted: GST users can only book on Thursday, Friday${
-                    isOddWeek ? ", and Wednesday (this week)" : ""
-                  }. If you need to book on other days, you can book after 7 AM.`;
-                }
-
-                return "Access restricted: Please check your role.";
-              })()}
-            </Alert>
+          {!isAccessAllowed && session?.user?.id && (
+            <AccessRestrictedAlert role={role} dayName={dayName} />
           )}
 
           {loading ? (
@@ -462,7 +403,7 @@ export default function Seats() {
                     seat={seat}
                     selectedDate={selectedDate}
                     bookingCount={getBookingCount(seat._id)}
-                    isAccessAllowed={isAccessAllowed()}
+                    isAccessAllowed={isAccessAllowed}
                   />
                 ))}
               </div>
@@ -594,8 +535,6 @@ export default function Seats() {
                             (acc, seat) => acc + (seat.seatsPerUnit || 0),
                             0,
                           ),
-                          bookedToday: bookings.length,
-                          totalUsers: users.length,
                         }}
                         refreshKey={refreshKey}
                         users={users
@@ -631,7 +570,10 @@ export default function Seats() {
                   <UserCalender userId={session?.user?.id} seats={seats} />
                 </TabsContent>
                 <TabsContent value="user_activity">
-                  <UserActivity users={users} date={new Date()} />
+                  <UserActivity
+                    users={users}
+                    date={new Date().toISOString().split("T")[0]}
+                  />
                 </TabsContent>
               </Tabs>
             </div>
