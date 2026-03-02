@@ -32,20 +32,46 @@ function findAvailableSeat(
   return null;
 }
 
+/**
+ * Returns the latest UserActivity per userId for the given date,
+ * keeping only users whose most recent status is still WAITING.
+ * This is needed because we create new records instead of updating,
+ * so a user may have multiple WAITING entries — only the latest counts.
+ */
+async function getActiveWaitingList(date: string) {
+  return UserActivity.aggregate([
+    { $match: { date } },
+    { $sort: { createdAt: -1 } },
+    {
+      $group: {
+        _id: "$userId",
+        latestStatus: { $first: "$status" },
+        doc: { $first: "$$ROOT" },
+      },
+    },
+    {
+      $match: {
+        latestStatus: { $regex: /^WAITING\(\d+\)_USER$/ },
+      },
+    },
+    { $replaceRoot: { newRoot: "$doc" } },
+  ]);
+}
+
 /** Add a USER to the waiting list (max 5); returns a NextResponse */
 async function addToWaitingList(
   userId: string,
   userName: string,
   date: string,
 ): Promise<NextResponse> {
-  // Guard: already on the waiting list for this date?
-  const alreadyWaiting = await UserActivity.findOne({
-    userId,
-    date,
-    status: { $regex: /^WAITING\(\d+\)_USER$/ },
-  });
-  if (alreadyWaiting) {
-    const pos = parseWaitingPosition(alreadyWaiting.status);
+  // Guard: check the latest activity for this user+date — if it's still WAITING, they're already queued
+  const latestActivity = await UserActivity.findOne(
+    { userId, date },
+    {},
+    { sort: { createdAt: -1 } },
+  );
+  if (latestActivity && parseWaitingPosition(latestActivity.status) !== null) {
+    const pos = parseWaitingPosition(latestActivity.status);
     return NextResponse.json(
       {
         message: `Already on waiting list at position ${pos}`,
@@ -56,10 +82,8 @@ async function addToWaitingList(
     );
   }
 
-  const waitingActivities = await UserActivity.find({
-    date,
-    status: { $regex: /^WAITING\(\d+\)_USER$/ },
-  });
+  // Count distinct users currently in WAITING state (latest record per user)
+  const waitingActivities = await getActiveWaitingList(date);
 
   if (waitingActivities.length >= MAX_WAITING) {
     return NextResponse.json({ error: "No seats available" }, { status: 400 });
@@ -126,18 +150,19 @@ export async function POST(request: Request) {
       });
 
       // ── Promote first WAITING user for this date ──────────────────────────
-      const waitingActivities = await UserActivity.find({
-        date,
-        status: { $regex: /^WAITING\(\d+\)_USER$/ },
-      });
+      // Use aggregation so we only see each user's latest status — avoids
+      // counting stale WAITING records from previous position shifts.
+      const waitingActivities = await getActiveWaitingList(date);
 
       if (waitingActivities.length > 0) {
         // Sort by waiting position ascending
-        const sorted = waitingActivities.sort((a, b) => {
-          const posA = parseWaitingPosition(a.status) ?? 999;
-          const posB = parseWaitingPosition(b.status) ?? 999;
-          return posA - posB;
-        });
+        const sorted = waitingActivities.sort(
+          (a: { status: string }, b: { status: string }) => {
+            const posA = parseWaitingPosition(a.status) ?? 999;
+            const posB = parseWaitingPosition(b.status) ?? 999;
+            return posA - posB;
+          },
+        );
 
         const first = sorted[0]; // position-1 user
 
