@@ -5,7 +5,83 @@ import { Seat } from "@/modals/(Seat)/Seat";
 import { User } from "@/modals/User";
 import { UserActivity } from "@/modals/UserActivity";
 
-interface SeatBookingDocument {
+const MAX_WAITING = 5;
+
+/** Parse position from status like "WAITING(3)_USER" → 3, or null if not a waiting status */
+function parseWaitingPosition(status: string): number | null {
+  const match = status.match(/^WAITING\((\d+)\)_USER$/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/** Return the first unoccupied seat from the pool, or null */
+function findAvailableSeat(
+  seats: { _id: unknown; units: number; seatsPerUnit: number }[],
+  existingBookings: { seatId: string; seatNumber: number }[],
+): { seatId: string; seatNumber: number } | null {
+  for (const seat of seats) {
+    const totalSeats = seat.units * seat.seatsPerUnit;
+    for (let i = 1; i <= totalSeats; i++) {
+      const isOccupied = existingBookings.some(
+        (b) => b.seatId === seat._id.toString() && b.seatNumber === i,
+      );
+      if (!isOccupied) {
+        return { seatId: seat._id.toString(), seatNumber: i };
+      }
+    }
+  }
+  return null;
+}
+
+/** Add a USER to the waiting list (max 5); returns a NextResponse */
+async function addToWaitingList(
+  userId: string,
+  userName: string,
+  date: string,
+): Promise<NextResponse> {
+  // Guard: already on the waiting list for this date?
+  const alreadyWaiting = await UserActivity.findOne({
+    userId,
+    date,
+    status: { $regex: /^WAITING\(\d+\)_USER$/ },
+  });
+  if (alreadyWaiting) {
+    const pos = parseWaitingPosition(alreadyWaiting.status);
+    return NextResponse.json(
+      {
+        message: `Already on waiting list at position ${pos}`,
+        action: "waiting",
+        position: pos,
+      },
+      { status: 200 },
+    );
+  }
+
+  const waitingActivities = await UserActivity.find({
+    date,
+    status: { $regex: /^WAITING\(\d+\)_USER$/ },
+  });
+
+  if (waitingActivities.length >= MAX_WAITING) {
+    return NextResponse.json({ error: "No seats available" }, { status: 400 });
+  }
+
+  const waitingPosition = waitingActivities.length + 1;
+  await UserActivity.create({
+    userId,
+    userName,
+    date,
+    status: `WAITING(${waitingPosition})_USER`,
+    description: `Created: Added to waiting list at position ${waitingPosition} for ${date}`,
+  });
+
+  return NextResponse.json({
+    message: `No seats available. Added to waiting list at position ${waitingPosition}`,
+    action: "waiting",
+    position: waitingPosition,
+  });
+}
+
+interface _SeatBookingDocument {
   _id: string;
   seatId: string;
   seatNumber: number;
@@ -41,13 +117,68 @@ export async function POST(request: Request) {
     if (existingBooking) {
       // Delete the booking (unbook)
       await SeatBooking.deleteOne({ _id: existingBooking._id });
-      UserActivity.create({
+      await UserActivity.create({
         userId: existingBooking.userId,
+        userName: existingBooking.userName,
         description: `Cancelled seat booking ${existingBooking.startDate}`,
         date: existingBooking.startDate,
-        userName: existingBooking.userName,
         status: `${userType}_CANCELLED_BOOKING`,
       });
+
+      // ── Promote first WAITING user for this date ──────────────────────────
+      const waitingActivities = await UserActivity.find({
+        date,
+        status: { $regex: /^WAITING\(\d+\)_USER$/ },
+      });
+
+      if (waitingActivities.length > 0) {
+        // Sort by waiting position ascending
+        const sorted = waitingActivities.sort((a, b) => {
+          const posA = parseWaitingPosition(a.status) ?? 999;
+          const posB = parseWaitingPosition(b.status) ?? 999;
+          return posA - posB;
+        });
+
+        const first = sorted[0]; // position-1 user
+
+        const seats = await Seat.find();
+        const currentBookings = await SeatBooking.find({
+          startDate: date,
+          endDate: date,
+        });
+        const assignedSeat = findAvailableSeat(seats, currentBookings);
+
+        if (assignedSeat) {
+          // Create booking for first waiting user
+          const newBooking = new SeatBooking({
+            seatId: assignedSeat.seatId,
+            seatNumber: assignedSeat.seatNumber,
+            userId: first.userId,
+            userName: first.userName,
+            startDate: date,
+            endDate: date,
+            status: `USER_BOOKED_SEAT`,
+          });
+          await newBooking.save();
+
+          // Update first waiting user's activity → booked
+          await UserActivity.findByIdAndUpdate(first._id, {
+            status: `USER_BOOKED_SEAT`,
+            description: `Updated: Seat booked from waiting list for ${date}`,
+          });
+
+          // Shift remaining waiting users' positions down by 1
+          for (let i = 1; i < sorted.length; i++) {
+            const activity = sorted[i];
+            const currentPos = parseWaitingPosition(activity.status) ?? i + 1;
+            const newPos = currentPos - 1;
+            await UserActivity.findByIdAndUpdate(activity._id, {
+              status: `WAITING(${newPos})_USER`,
+              description: `Updated: Waiting position updated to ${newPos} for ${date}`,
+            });
+          }
+        }
+      }
 
       return NextResponse.json({
         message: "Booking cancelled",
@@ -75,10 +206,13 @@ export async function POST(request: Request) {
       });
 
       if (existingBookings.length >= totalCapacity) {
-        return NextResponse.json(
-          { error: "No seats available for this date" },
-          { status: 400 },
-        );
+        // if (userType === "USER") {
+        return addToWaitingList(user.id, user.name, date);
+        // }
+        // return NextResponse.json(
+        //   { error: "No seats available for this date" },
+        //   { status: 400 },
+        // );
       }
 
       // Find available seat
@@ -106,10 +240,13 @@ export async function POST(request: Request) {
       }
 
       if (!assignedSeat) {
-        return NextResponse.json(
-          { error: "No seats available" },
-          { status: 400 },
-        );
+        // if (userType === "USER") {
+        return addToWaitingList(user.id, user.name, date);
+
+        // return NextResponse.json(
+        //   { error: "No seats available" },
+        //   { status: 400 },
+        // );
       }
 
       const newBooking = new SeatBooking({
@@ -123,7 +260,7 @@ export async function POST(request: Request) {
       });
 
       await newBooking.save();
-      UserActivity.create({
+      await UserActivity.create({
         userId: newBooking.userId,
         description: `Created seat booking ${newBooking.startDate}`,
         date: newBooking.startDate,

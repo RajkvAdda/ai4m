@@ -332,6 +332,9 @@ export function BookingCalendar({
                           activity.userId === user.id &&
                           activity.date === getDateFormat(date),
                       );
+                      const isWaiting = userActivity.some((activity) =>
+                        /^WAITING\(\d+\)_USER$/.test(activity.status),
+                      );
                       const dateOnly = new Date(date);
                       dateOnly.setHours(0, 0, 0, 0);
                       const todayOnly = new Date();
@@ -377,6 +380,7 @@ export function BookingCalendar({
                             loading={loading}
                             user={user}
                             date={date}
+                            isWaiting={isWaiting}
                             isMoreShow={isMoreShow}
                             handleStatus={handleStatus}
                             userActivity={userActivity}
@@ -461,6 +465,7 @@ function TableCell({
   userActivity,
   isStatusDisabled,
   isTodayDate,
+  isWaiting,
   isMoreShow,
 }: {
   isBooked: boolean;
@@ -477,8 +482,10 @@ function TableCell({
   userActivity: IUserActivity[] | undefined;
   isStatusDisabled: boolean;
   isTodayDate: boolean;
+  isWaiting: boolean;
   isMoreShow: boolean;
 }) {
+  if (isWaiting) console.log("waiting status:", userActivity);
   const Cell = ({
     className,
     children,
@@ -499,6 +506,8 @@ function TableCell({
           "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
         isMoreShow &&
           "animate-bounce bg-gradient-to-br from-indigo-300 to-indigo-400 ",
+        isWaiting &&
+          "animate-pulse bg-gradient-to-br from-yellow-300 to-yellow-400 ",
         loading && "cursor-wait",
       )}
     >
@@ -525,6 +534,7 @@ function TableCell({
           return a._id < b._id ? 1 : -1;
         })[0]
       : undefined;
+
   return (
     <ContextMenu>
       <ContextMenuTrigger disabled={isBooked || weekend || isStatusDisabled}>

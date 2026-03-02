@@ -16,14 +16,13 @@ export default function AdminLayout({
   const { status, data: session } = useSession();
 
   const loginEmail = "kumarshivaray@gmail.com";
-  // console.log("AdminLayout session:", session);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
     } else if (
       session?.user.email !== "kumarshivaray@gmail.com" &&
-      // loginEmail !== "kumarshivaray@gmail.com" &&
+      loginEmail !== "kumarshivaray@gmail.com" &&
       session?.user.email !== "naveenbgowda@gmail.com"
     ) {
       router.push("/");

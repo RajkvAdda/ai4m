@@ -353,14 +353,9 @@ export default function Seats() {
 
           const result = await response.json();
 
-          if (result.action === "booked") {
+          if (result?.message) {
             toast({
-              title: "Seat booked successfully!",
-              variant: "default",
-            });
-          } else {
-            toast({
-              title: "Booking cancelled",
+              title: result.message,
               variant: "default",
             });
           }
