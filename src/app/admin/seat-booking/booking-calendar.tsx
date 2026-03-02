@@ -332,9 +332,9 @@ export function BookingCalendar({
                           activity.userId === user.id &&
                           activity.date === getDateFormat(date),
                       );
-                      const isWaiting = userActivity.some((activity) =>
-                        /^WAITING\(\d+\)_USER$/.test(activity.status),
-                      );
+                      const isWaiting =
+                        userActivity?.[0] &&
+                        /^WAITING\(\d+\)_USER$/.test(userActivity[0].status);
                       const dateOnly = new Date(date);
                       dateOnly.setHours(0, 0, 0, 0);
                       const todayOnly = new Date();

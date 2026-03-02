@@ -157,13 +157,16 @@ export async function POST(request: Request) {
             userName: first.userName,
             startDate: date,
             endDate: date,
-            status: `USER_BOOKED_SEAT`,
+            status: `AUTO_BOOKED_SEAT`,
           });
           await newBooking.save();
 
-          // Update first waiting user's activity → booked
-          await UserActivity.findByIdAndUpdate(first._id, {
-            status: `USER_BOOKED_SEAT`,
+          // Create new activity for first waiting user → booked
+          await UserActivity.create({
+            userId: first.userId,
+            userName: first.userName,
+            date,
+            status: `AUTO_BOOKED_SEAT`,
             description: `Updated: Seat booked from waiting list for ${date}`,
           });
 
@@ -172,7 +175,10 @@ export async function POST(request: Request) {
             const activity = sorted[i];
             const currentPos = parseWaitingPosition(activity.status) ?? i + 1;
             const newPos = currentPos - 1;
-            await UserActivity.findByIdAndUpdate(activity._id, {
+            await UserActivity.create({
+              userId: activity.userId,
+              userName: activity.userName,
+              date,
               status: `WAITING(${newPos})_USER`,
               description: `Updated: Waiting position updated to ${newPos} for ${date}`,
             });
