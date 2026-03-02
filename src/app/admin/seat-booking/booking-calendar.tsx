@@ -5,7 +5,7 @@ import { format, formatDate, isToday } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader } from "lucide-react";
+import { CalendarOff, Loader } from "lucide-react";
 import { cn, displayDateTime, getDateFormat, isSameDay } from "@/lib/utils";
 import { IUser } from "@/types/user";
 import {
@@ -57,6 +57,8 @@ export function BookingCalendar({
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [userActivities, setUserActivities] = useState<IUserActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [markingHoliday, setMarkingHoliday] = useState<string | null>(null);
   const todayRef = useRef<HTMLTableCellElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -189,6 +191,44 @@ export function BookingCalendar({
     });
   }
 
+  const handleMarkAsHoliday = async (date: Date) => {
+    const dateKey = getDateFormat(date);
+    const dateBookings = bookings.filter((b) =>
+      isSameDay(new Date(b.startDate), date),
+    );
+
+    if (dateBookings.length === 0) {
+      toast({
+        title: "No Bookings",
+        description: `No bookings found for ${getDateDisplay(date)}.`,
+      });
+      return;
+    }
+
+    setMarkingHoliday(dateKey);
+    try {
+      const results = await Promise.allSettled(
+        dateBookings.map((booking) =>
+          fetch(`/api/seatbookings/${booking._id}`, { method: "DELETE" }),
+        ),
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      toast({
+        title: "Holiday Marked",
+        description: `${succeeded} booking(s) cancelled for ${getDateDisplay(date)}.`,
+      });
+      fetchBookings();
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to cancel bookings.",
+        variant: "destructive",
+      });
+    } finally {
+      setMarkingHoliday(null);
+    }
+  };
+
   console.log("bookings:", bookings);
   console.log("userActivities:", userActivities);
 
@@ -219,12 +259,16 @@ export function BookingCalendar({
                   {days.map((date) => {
                     const dateKey = getDateFormat(date);
                     const isTodayDate = isToday(date);
+                    const isHovered = hoveredDate === dateKey;
+                    const isMarkingThis = markingHoliday === dateKey;
                     return (
                       <th
                         key={dateKey}
                         ref={isTodayDate ? todayRef : null}
+                        onMouseEnter={() => setHoveredDate(dateKey)}
+                        onMouseLeave={() => setHoveredDate(null)}
                         className={cn(
-                          "p-1 sm:p-2 text-center border-l border-gray-200 min-w-[50px] sm:min-w-[80px]",
+                          "p-1 sm:p-2 text-center border-l border-gray-200 min-w-[50px] sm:min-w-[80px] transition-colors",
                           isWeekend(date) && "bg-yellow-50",
                           isTodayDate && "bg-green-100 relative",
                         )}
@@ -259,6 +303,25 @@ export function BookingCalendar({
                             >
                               Today
                             </Badge>
+                          )}
+                          {!isUserView && (isHovered || isMarkingThis) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkAsHoliday(date);
+                              }}
+                              disabled={isMarkingThis}
+                              title="Cancel all bookings for this date"
+                              className={cn(
+                                "flex items-center gap-0.5 text-[9px] sm:text-[10px] font-semibold px-1 py-0.5 rounded-md transition-colors",
+                                isMarkingThis
+                                  ? "bg-red-300 text-white cursor-wait"
+                                  : "bg-red-500 hover:bg-red-600 text-white cursor-pointer",
+                              )}
+                            >
+                              <CalendarOff className="w-2.5 h-2.5" />
+                              {isMarkingThis ? "..." : "Holiday"}
+                            </button>
                           )}
                         </div>
                       </th>
@@ -339,6 +402,8 @@ export function BookingCalendar({
                       dateOnly.setHours(0, 0, 0, 0);
                       const todayOnly = new Date();
                       todayOnly.setHours(0, 0, 0, 0);
+                      const isHoliday =
+                        getDayBookingTotal(date) > 0 ? false : true;
 
                       return (
                         <td
@@ -348,6 +413,10 @@ export function BookingCalendar({
                             weekend && "bg-yellow-50",
                             isTodayDate && "bg-green-100",
                             loading && "pointer-events-none opacity-75",
+                            isHoliday &&
+                              !isBooked &&
+                              !weekend &&
+                              "bg-orange-200",
                           )}
                           onDoubleClick={() => {
                             // please check here they can not toogle prevous date
@@ -385,6 +454,7 @@ export function BookingCalendar({
                             handleStatus={handleStatus}
                             userActivity={userActivity}
                             isTodayDate={isTodayDate}
+                            isHoliday={isHoliday}
                             isStatusDisabled={
                               dateOnly < todayOnly
                                 ? true
@@ -467,6 +537,7 @@ function TableCell({
   isTodayDate,
   isWaiting,
   isMoreShow,
+  isHoliday,
 }: {
   isBooked: boolean;
   weekend: boolean;
@@ -484,6 +555,7 @@ function TableCell({
   isTodayDate: boolean;
   isWaiting: boolean;
   isMoreShow: boolean;
+  isHoliday: boolean;
 }) {
   if (isWaiting) console.log("waiting status:", userActivity);
   const Cell = ({
@@ -509,9 +581,16 @@ function TableCell({
         isWaiting &&
           "animate-pulse bg-gradient-to-br from-yellow-300 to-yellow-400 ",
         loading && "cursor-wait",
+        isHoliday && !isBooked && !weekend && "bg-orange-300",
       )}
     >
-      {isBooked ? (
+      {isHoliday ? (
+        <div>
+          <span className="text-white text-[10px] sm:text-xs font-semibold">
+            Holiday
+          </span>
+        </div>
+      ) : isBooked ? (
         <div className="flex flex-col items-center">
           <span className="text-white text-[10px] sm:text-xs font-semibold">
             {weekend ? "Support" : isMoreShow ? "More Show" : "Booked"}

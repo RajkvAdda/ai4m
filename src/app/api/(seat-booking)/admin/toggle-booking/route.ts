@@ -237,13 +237,13 @@ export async function POST(request: Request) {
       });
 
       if (existingBookings.length >= totalCapacity) {
-        // if (userType === "USER") {
-        return addToWaitingList(user.id, user.name, date);
-        // }
-        // return NextResponse.json(
-        //   { error: "No seats available for this date" },
-        //   { status: 400 },
-        // );
+        if (userType === "USER") {
+          return addToWaitingList(user.id, user.name, date);
+        }
+        return NextResponse.json(
+          { error: "No seats available for this date" },
+          { status: 400 },
+        );
       }
 
       // Find available seat
@@ -271,13 +271,13 @@ export async function POST(request: Request) {
       }
 
       if (!assignedSeat) {
-        // if (userType === "USER") {
-        return addToWaitingList(user.id, user.name, date);
-
-        // return NextResponse.json(
-        //   { error: "No seats available" },
-        //   { status: 400 },
-        // );
+        if (userType === "USER") {
+          return addToWaitingList(user.id, user.name, date);
+        }
+        return NextResponse.json(
+          { error: "No seats available" },
+          { status: 400 },
+        );
       }
 
       const newBooking = new SeatBooking({
