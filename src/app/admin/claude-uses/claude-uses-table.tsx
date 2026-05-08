@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -20,8 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit2, Trash2, Search, ArrowUpDown, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Search, ArrowUpDown } from "lucide-react";
 import type { NormalizedRecord } from "./page";
 
 type SortKey =
@@ -35,6 +33,7 @@ type SortKey =
 type SortDir = "asc" | "desc";
 
 function formatTokens(n: number) {
+
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + "M";
   if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
   return n.toString();
@@ -61,19 +60,14 @@ function getModelMeta(model: string) {
 
 interface Props {
   records: NormalizedRecord[];
-  onEdit: (r: NormalizedRecord) => void;
-  onAdd: () => void;
-  onDeleted: () => void;
 }
 
-export default function ClaudeUsesTable({ records, onEdit, onAdd, onDeleted }: Props) {
-  const { toast } = useToast();
+export default function ClaudeUsesTable({ records }: Props) {
   const [search, setSearch] = useState("");
   const [platformFilter, setPlatformFilter] = useState("all");
   const [modelFilter, setModelFilter] = useState("all");
   const [sortKey, setSortKey] = useState<SortKey>("total_cost");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const platforms = useMemo(
     () => Array.from(new Set(records.map((r) => r.platform).filter(Boolean))),
@@ -118,25 +112,6 @@ export default function ClaudeUsesTable({ records, onEdit, onAdd, onDeleted }: P
     }
   };
 
-  const handleDelete = async (username: string, id: string) => {
-    if (!window.confirm(`Delete record for "${username}"?`)) return;
-    setDeletingId(id);
-    try {
-      const res = await fetch(`/api/claudeUses?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-      const json = await res.json();
-      if (res.ok) {
-        toast({ title: "Deleted", description: json.message });
-        onDeleted();
-      } else {
-        toast({ title: "Error", description: json.error, variant: "destructive" });
-      }
-    } catch {
-      toast({ title: "Network error", variant: "destructive" });
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   const SortBtn = ({ col }: { col: SortKey }) => (
     <button
       onClick={() => toggleSort(col)}
@@ -149,18 +124,12 @@ export default function ClaudeUsesTable({ records, onEdit, onAdd, onDeleted }: P
   return (
     <Card className="border shadow-sm">
       <CardHeader className="pb-3">
-        <div className="flex flex-wrap gap-2 items-center justify-between">
-          <CardTitle className="text-sm font-semibold">
-            All Records{" "}
-            <Badge variant="secondary" className="ml-1">
-              {filtered.length}
-            </Badge>
-          </CardTitle>
-          <Button size="sm" onClick={onAdd} className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Add Usage
-          </Button>
-        </div>
+        <CardTitle className="text-sm font-semibold">
+          All Records{" "}
+          <Badge variant="secondary" className="ml-1">
+            {filtered.length}
+          </Badge>
+        </CardTitle>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mt-2">
@@ -230,13 +199,12 @@ export default function ClaudeUsesTable({ records, onEdit, onAdd, onDeleted }: P
                 <TableHead className="whitespace-nowrap">
                   <span className="flex items-center gap-1">Recorded At <SortBtn col="sent_at" /></span>
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-10 text-muted-foreground text-sm">
+                  <TableCell colSpan={9} className="text-center py-10 text-muted-foreground text-sm">
                     No records found
                   </TableCell>
                 </TableRow>
@@ -260,47 +228,20 @@ export default function ClaudeUsesTable({ records, onEdit, onAdd, onDeleted }: P
                           </span>
                         ) : "—"}
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm text-indigo-600 dark:text-indigo-400">
+                      <TableCell className="text-right font-mono text-sm text-indigo-600">
                         {formatTokens(r.input_tokens)}
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm text-cyan-600 dark:text-cyan-400">
+                      <TableCell className="text-right font-mono text-sm text-cyan-600">
                         {formatTokens(r.output_tokens)}
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm text-violet-600 dark:text-violet-400 font-semibold">
+                      <TableCell className="text-right font-mono text-sm text-violet-600 font-semibold">
                         {formatTokens(totalTokens)}
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm text-amber-600 dark:text-amber-400 font-semibold">
+                      <TableCell className="text-right font-mono text-sm text-amber-600 font-semibold">
                         ${r.total_cost.toFixed(4)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                         {r.sent_at ? new Date(r.sent_at).toLocaleString() : "—"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
-                            onClick={() => onEdit(r)}
-                            title="Edit"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(r.username, r._id)}
-                            disabled={deletingId === r._id}
-                            title="Delete"
-                          >
-                            {deletingId === r._id ? (
-                              <span className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-                        </div>
                       </TableCell>
                     </TableRow>
                   );

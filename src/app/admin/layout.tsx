@@ -15,7 +15,7 @@ export default function AdminLayout({
 
   const { status, data: session } = useSession();
 
-  const loginEmail = typeof window !== "undefined" ? localStorage.getItem("loginEmail") || "raj@gmail.com" : null;
+  const loginEmail = typeof window !== "undefined" ? localStorage.getItem("loginEmail") || "" : null;
 
   useEffect(() => {
     if (status === "unauthenticated") {

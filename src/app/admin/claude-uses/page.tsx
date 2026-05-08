@@ -4,11 +4,44 @@ import React, { useCallback, useEffect, useState } from "react";
 import { IClaudeUses } from "@/types/claudeUses";
 import ClaudeUsesCharts from "./claude-uses-charts";
 import ClaudeUsesTable from "./claude-uses-table";
-import ClaudeUsesForm from "./claude-uses-form";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { BrainCircuit, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Rich data sub-types
+export type DailyByModel = {
+  day: string;
+  model: string;
+  input: number;
+  output: number;
+  cache_read: number;
+  cache_creation: number;
+  turns: number;
+};
+
+export type HourlyByModel = {
+  day: string;
+  hour: number;
+  model: string;
+  output: number;
+  turns: number;
+};
+
+export type SessionRecord = {
+  session_id: string;
+  project: string;
+  branch: string;
+  last: string;
+  last_date: string;
+  duration_min: number;
+  model: string;
+  turns: number;
+  input: number;
+  output: number;
+  cache_read: number;
+  cache_creation: number;
+};
 
 // Shape exposed to child components after normalization
 export type NormalizedRecord = {
@@ -17,10 +50,16 @@ export type NormalizedRecord = {
   host: string;
   platform: string;
   sent_at?: string;
+  // legacy flat fields (backwards compat)
   input_tokens: number;
   output_tokens: number;
   total_cost: number;
   model_type: string;
+  // rich fields
+  all_models: string[];
+  daily_by_model: DailyByModel[];
+  hourly_by_model: HourlyByModel[];
+  sessions_all: SessionRecord[];
   createdAt?: string;
   updatedAt?: string;
 };
@@ -37,6 +76,10 @@ function normalize(r: IClaudeUses): NormalizedRecord {
     output_tokens: Number(d.output_tokens ?? 0),
     total_cost: Number(d.total_cost ?? 0),
     model_type: String(d.model_type ?? ""),
+    all_models: Array.isArray(d.all_models) ? d.all_models : [],
+    daily_by_model: Array.isArray(d.daily_by_model) ? d.daily_by_model : [],
+    hourly_by_model: Array.isArray(d.hourly_by_model) ? d.hourly_by_model : [],
+    sessions_all: Array.isArray(d.sessions_all) ? d.sessions_all : [],
     createdAt: r.createdAt as any,
     updatedAt: r.updatedAt as any,
   };
@@ -45,8 +88,6 @@ function normalize(r: IClaudeUses): NormalizedRecord {
 export default function ClaudeUsesPage() {
   const [records, setRecords] = useState<NormalizedRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editRecord, setEditRecord] = useState<NormalizedRecord | null>(null);
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -66,21 +107,6 @@ export default function ClaudeUsesPage() {
     fetchRecords();
   }, [fetchRecords]);
 
-  const handleEdit = (r: NormalizedRecord) => {
-    setEditRecord(r);
-    setFormOpen(true);
-  };
-
-  const handleAdd = () => {
-    setEditRecord(null);
-    setFormOpen(true);
-  };
-
-  const handleFormClose = () => {
-    setFormOpen(false);
-    setEditRecord(null);
-  };
-
   if (loading)
     return (
       <div className="flex items-center justify-center mt-10 p-10">
@@ -94,7 +120,7 @@ export default function ClaudeUsesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40">
+          <div className="p-2 rounded-lg bg-indigo-50">
             <BrainCircuit className="h-5 w-5 text-indigo-500" />
           </div>
           <div>
@@ -121,24 +147,11 @@ export default function ClaudeUsesPage() {
 
       <Separator />
 
-      {/* Charts & Stats */}
+      {/* Analytics Dashboard */}
       <ClaudeUsesCharts records={records} />
 
-      {/* Table */}
-      <ClaudeUsesTable
-        records={records}
-        onEdit={handleEdit}
-        onAdd={handleAdd}
-        onDeleted={fetchRecords}
-      />
-
-      {/* Add / Edit Form */}
-      <ClaudeUsesForm
-        open={formOpen}
-        onClose={handleFormClose}
-        onSaved={fetchRecords}
-        editRecord={editRecord}
-      />
+      {/* Records Table */}
+      <ClaudeUsesTable records={records} />
     </div>
   );
 }
