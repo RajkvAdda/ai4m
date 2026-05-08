@@ -15,19 +15,19 @@ export default function AdminLayout({
 
   const { status, data: session } = useSession();
 
-  const loginEmail = "kumarshivaray@gmail.com";
+  const loginEmail = typeof window !== "undefined" ? localStorage.getItem("loginEmail") || "raj@gmail.com" : null;
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
     } else if (
       session?.user.email !== "kumarshivaray@gmail.com" &&
-      // loginEmail !== "kumarshivaray@gmail.com" &&
+      loginEmail !== "raj@gmail.com" &&
       session?.user.email !== "naveenbgowda@gmail.com"
     ) {
       router.push("/");
     }
-  }, [router, status, session]);
+  }, [router, status, session, loginEmail]);
   return (
     <div className="min-h-screen flex flex-col p-1 sm:p-4 md:p-8">
       <main className="flex-1">
