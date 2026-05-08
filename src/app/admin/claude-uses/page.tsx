@@ -4,10 +4,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import { IClaudeUses } from "@/types/claudeUses";
 import ClaudeUsesCharts from "./claude-uses-charts";
 import ClaudeUsesTable from "./claude-uses-table";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { BrainCircuit, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrainCircuit, RefreshCw } from "lucide-react";
 
 // Rich data sub-types
 export type DailyByModel = {
@@ -88,6 +87,8 @@ function normalize(r: IClaudeUses): NormalizedRecord {
 export default function ClaudeUsesPage() {
   const [records, setRecords] = useState<NormalizedRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState(30);
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -96,6 +97,8 @@ export default function ClaudeUsesPage() {
       const json = await res.json();
       const raw: IClaudeUses[] = json.data ?? [];
       setRecords(raw.map(normalize));
+      setLastUpdated(new Date());
+      setCountdown(30);
     } catch {
       // silent
     } finally {
@@ -107,50 +110,70 @@ export default function ClaudeUsesPage() {
     fetchRecords();
   }, [fetchRecords]);
 
-  if (loading)
+  // Auto-refresh countdown — only starts after first load
+  useEffect(() => {
+    if (!lastUpdated) return;
+    const t = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          fetchRecords();
+          return 30;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [fetchRecords, lastUpdated]);
+
+  if (loading && records.length === 0)
     return (
       <div className="flex items-center justify-center mt-10 p-10">
-        <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mr-2"></span>
+        <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mr-2" />
         <span className="text-lg font-semibold">Loading...</span>
       </div>
     );
 
   return (
-    <div className="space-y-6 pb-10">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-indigo-50">
-            <BrainCircuit className="h-5 w-5 text-indigo-500" />
+    <div className="space-y-4 pb-10">
+      {/* ── Dashboard Header ───────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-gray-200 rounded-xl px-5 py-3 shadow-sm">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="p-2 rounded-lg bg-indigo-50 shrink-0">
+            <BrainCircuit className="h-5 w-5 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-lg font-bold leading-tight">Claude Usage</h1>
-            <p className="text-xs text-muted-foreground">
-              Token consumption &amp; charges per user
+            <h1 className="text-sm font-bold leading-tight text-gray-900 tracking-tight">
+              Claude Code Usage Dashboard
+            </h1>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {lastUpdated
+                ? `Updated: ${lastUpdated.toLocaleString()} · Auto-refresh in ${countdown}s`
+                : "Fetching data…"}
             </p>
           </div>
-          <Badge variant="secondary" className="ml-1">
+          <Badge variant="secondary" className="text-xs ml-1">
             {records.length} user{records.length !== 1 ? "s" : ""}
           </Badge>
+          {loading && (
+            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              Refreshing…
+            </span>
+          )}
         </div>
         <Button
           size="sm"
           variant="outline"
           onClick={fetchRecords}
-          className="gap-1.5"
           disabled={loading}
+          className="gap-1.5 h-8 shrink-0"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-          Refresh
+          Rescan
         </Button>
       </div>
 
-      <Separator />
-
-      {/* Analytics Dashboard */}
       <ClaudeUsesCharts records={records} />
-
-      {/* Records Table */}
       <ClaudeUsesTable records={records} />
     </div>
   );

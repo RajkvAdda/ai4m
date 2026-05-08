@@ -6,14 +6,15 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
   Legend,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   Users, DollarSign, Zap, Database, Activity, Clock,
-  Layers, BarChart2, GitBranch, Globe, TrendingUp,
+  Layers, BarChart2, GitBranch, Globe, TrendingUp, Download,
+  Monitor, ChevronLeft,
 } from "lucide-react";
 import type { NormalizedRecord, DailyByModel, HourlyByModel, SessionRecord } from "./page";
 
@@ -108,6 +109,25 @@ function costColor(cost: number) {
   return "text-red-600";
 }
 
+// ─── CSV export ───────────────────────────────────────────────────────────────
+function downloadCsv(rows: Record<string, any>[], filename: string) {
+  if (!rows.length) return;
+  const keys = Object.keys(rows[0]);
+  const csv = [
+    keys.join(","),
+    ...rows.map((r) => keys.map((k) => JSON.stringify(r[k] ?? "")).join(",")),
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ─── Chart Tooltip ────────────────────────────────────────────────────────────
 function ChartTooltip({ active, payload, label, isCost = false }: any) {
   if (!active || !payload?.length) return null;
@@ -176,10 +196,13 @@ const STACK_COLORS = {
   input: "#6366f1", output: "#22d3ee", cache_read: "#10b981", cache_creation: "#f59e0b",
 };
 const DATE_RANGES = [
-  { label: "7d", value: "7d" }, { label: "30d", value: "30d" },
-  { label: "90d", value: "90d" }, { label: "All", value: "all" },
-  { label: "This Week", value: "week" }, { label: "This Month", value: "month" },
+  { label: "This Week",  value: "week"      },
+  { label: "This Month", value: "month"     },
   { label: "Prev Month", value: "prevmonth" },
+  { label: "7d",         value: "7d"        },
+  { label: "30d",        value: "30d"       },
+  { label: "90d",        value: "90d"       },
+  { label: "All",        value: "all"       },
 ];
 
 type SessionWithUser = SessionRecord & { username: string };
@@ -190,7 +213,7 @@ interface Props { records: NormalizedRecord[] }
 export default function ClaudeUsesCharts({ records }: Props) {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers]   = useState<string[]>([]);
-  const [dateRange, setDateRange]           = useState("all");
+  const [dateRange, setDateRange]           = useState("30d");
 
   const allModels = useMemo(() => {
     const set = new Set<string>();
@@ -360,6 +383,7 @@ export default function ClaudeUsesCharts({ records }: Props) {
     [allSessions],
   );
 
+  // userSummaryData: always shows all users (ignores selectedUsers), respects date + model filters
   const userSummaryData = useMemo(() => {
     return records.map((r) => {
       const daily = r.daily_by_model.filter((d) => {
@@ -394,12 +418,18 @@ export default function ClaudeUsesCharts({ records }: Props) {
   );
 
   const maxUserCost = userSummaryData[0]?.cost ?? 1;
+  const xAxisInterval = Math.max(0, Math.floor(dailyChartData.length / 8) - 1);
+
+  // Single user being viewed
+  const singleUser = selectedUsers.length === 1
+    ? userSummaryData.find((u) => u.username === selectedUsers[0]) ?? null
+    : null;
 
   const toggleModel = (model: string) => setSelectedModels((prev) => prev.includes(model) ? prev.filter((m) => m !== model) : [...prev, model]);
-  const toggleUser  = (user: string)  => setSelectedUsers((prev)  => prev.includes(user)  ? prev.filter((u) => u !== user)  : [...prev, user]);
 
-  const activeUserCount  = selectedUsers.length > 0 ? selectedUsers.length : allUsers.length;
-  const xAxisInterval    = Math.max(0, Math.floor(dailyChartData.length / 8) - 1);
+  // Exclusive user tab selection (clicking again clears)
+  const selectUserTab = (user: string) =>
+    setSelectedUsers((prev) => prev.length === 1 && prev[0] === user ? [] : [user]);
 
   // ── Rank badge ───────────────────────────────────────────────────────────
   const rankBadge = (i: number) => (
@@ -413,18 +443,169 @@ export default function ClaudeUsesCharts({ records }: Props) {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+
+      {/* ── User Tabs ─────────────────────────────────────────────────────── */}
+      {allUsers.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 mr-1">VIEW</span>
+          {/* All Users tab */}
+          <button
+            onClick={() => setSelectedUsers([])}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              selectedUsers.length === 0
+                ? "bg-slate-800 text-white border-slate-800 shadow-sm"
+                : "bg-white text-gray-600 border-gray-200 hover:border-slate-400 hover:bg-slate-50"
+            }`}
+          >
+            <Users className="h-3 w-3 shrink-0" />
+            All Users
+            <span className={`ml-0.5 text-[10px] px-1 py-0 rounded-full font-bold ${selectedUsers.length === 0 ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>
+              {allUsers.length}
+            </span>
+          </button>
+
+          <div className="h-4 w-px bg-gray-200 shrink-0" />
+
+          {/* Per-user tabs */}
+          {allUsers.map((u, i) => {
+            const isActive = selectedUsers.length === 1 && selectedUsers[0] === u;
+            const userData = userSummaryData.find((d) => d.username === u);
+            return (
+              <button
+                key={u}
+                onClick={() => selectUserTab(u)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  isActive
+                    ? "text-white border-transparent shadow-sm"
+                    : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                }`}
+                style={isActive ? { backgroundColor: USER_COLORS[i % USER_COLORS.length], borderColor: USER_COLORS[i % USER_COLORS.length] } : {}}
+              >
+                <span
+                  className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isActive ? "bg-white/25 text-white" : "text-white"}`}
+                  style={!isActive ? { backgroundColor: USER_COLORS[i % USER_COLORS.length] } : {}}
+                >
+                  {u[0]?.toUpperCase()}
+                </span>
+                {u}
+                {userData && (
+                  <span className={`ml-0.5 text-[10px] px-1 rounded-full font-bold ${isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>
+                    ${userData.cost.toFixed(2)}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Compact Filter Bar (MODELS + RANGE) ───────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+        {allModels.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">MODELS</span>
+            {allModels.map((m, i) => (
+              <button
+                key={m}
+                onClick={() => toggleModel(m)}
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-all ${
+                  selectedModels.includes(m)
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50"
+                }`}
+              >
+                <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: MODEL_COLORS[i % MODEL_COLORS.length] }} />
+                {formatShort(m)}
+              </button>
+            ))}
+            <button
+              onClick={() => setSelectedModels([])}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-all ${
+                selectedModels.length === 0
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                  : "bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50"
+              }`}
+            >All</button>
+            {selectedModels.length > 0 && (
+              <button
+                onClick={() => setSelectedModels([])}
+                className="px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+              >None</button>
+            )}
+          </div>
+        )}
+
+        {allModels.length > 0 && (
+          <div className="h-4 w-px bg-gray-200 shrink-0 hidden sm:block" />
+        )}
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">RANGE</span>
+          {DATE_RANGES.map((r) => (
+            <button
+              key={r.value}
+              onClick={() => setDateRange(r.value)}
+              className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-all ${
+                dateRange === r.value
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50"
+              }`}
+            >{r.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Single User Profile Banner ─────────────────────────────────────── */}
+      {singleUser && (
+        <div className="flex flex-wrap items-center gap-4 bg-blue-50 border border-blue-200 rounded-xl px-5 py-3 shadow-sm">
+          <span
+            className="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+            style={{ backgroundColor: USER_COLORS[allUsers.indexOf(singleUser.username) % USER_COLORS.length] }}
+          >
+            {singleUser.username[0]?.toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="font-bold text-sm text-gray-900">{singleUser.username}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {singleUser.host || "—"} · {singleUser.platform || "—"} · Last active: {singleUser.lastActive}
+            </p>
+          </div>
+          <div className="flex gap-5 flex-wrap ml-2">
+            {[
+              { label: "Sessions",   value: singleUser.sessions.toString() },
+              { label: "Turns",      value: singleUser.turns.toLocaleString() },
+              { label: "Input",      value: formatTokens(singleUser.input) },
+              { label: "Output",     value: formatTokens(singleUser.output) },
+              { label: "Est. Cost",  value: `$${singleUser.cost.toFixed(2)}`, cls: costColor(singleUser.cost) },
+            ].map((s) => (
+              <div key={s.label} className="text-center">
+                <p className={`font-extrabold text-base leading-tight ${s.cls ?? "text-gray-900"}`}>{s.value}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex-1" />
+          <button
+            onClick={() => setSelectedUsers([])}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 border border-blue-300 px-3 py-1.5 rounded-full transition-all shrink-0"
+          >
+            <ChevronLeft className="h-3 w-3" />
+            All Users
+          </button>
+        </div>
+      )}
 
       {/* ── Stats Bar ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
-          { label: "Users",         value: activeUserCount.toString(),           sub: `of ${allUsers.length} registered`,   icon: Users,      accent: "bg-blue-500",   iconBg: "bg-blue-50",   iconColor: "text-blue-600"   },
-          { label: "Sessions",      value: stats.totalSessions.toLocaleString(), sub: "total sessions",                     icon: Activity,   accent: "bg-indigo-500", iconBg: "bg-indigo-50", iconColor: "text-indigo-600" },
-          { label: "Turns",         value: formatTokens(stats.totalTurns),       sub: "conversation turns",                 icon: Clock,      accent: "bg-emerald-500",iconBg: "bg-emerald-50",iconColor: "text-emerald-600"},
-          { label: "Input Tokens",  value: formatTokens(stats.totalInput),       sub: "prompt tokens",                      icon: Zap,        accent: "bg-cyan-500",   iconBg: "bg-cyan-50",   iconColor: "text-cyan-600"   },
-          { label: "Output Tokens", value: formatTokens(stats.totalOutput),      sub: "completion tokens",                  icon: TrendingUp, accent: "bg-teal-500",   iconBg: "bg-teal-50",   iconColor: "text-teal-600"   },
-          { label: "Cache Read",    value: formatTokens(stats.totalCacheRead),   sub: "from prompt cache",                  icon: Layers,     accent: "bg-violet-500", iconBg: "bg-violet-50", iconColor: "text-violet-600" },
-          { label: "Est. Cost",     value: "$" + stats.totalCost.toFixed(2),     sub: "all users combined",                 icon: DollarSign, accent: "bg-amber-500",  iconBg: "bg-amber-50",  iconColor: "text-amber-600"  },
+          { label: "Sessions",      value: stats.totalSessions.toLocaleString(), sub: "total sessions",        icon: Activity,   accent: "bg-indigo-500",  iconBg: "bg-indigo-50",  iconColor: "text-indigo-600"  },
+          { label: "Turns",         value: formatTokens(stats.totalTurns),       sub: "conversation turns",    icon: Clock,      accent: "bg-emerald-500", iconBg: "bg-emerald-50", iconColor: "text-emerald-600" },
+          { label: "Input Tokens",  value: formatTokens(stats.totalInput),       sub: "prompt tokens",         icon: Zap,        accent: "bg-cyan-500",    iconBg: "bg-cyan-50",    iconColor: "text-cyan-600"    },
+          { label: "Output Tokens", value: formatTokens(stats.totalOutput),      sub: "completion tokens",     icon: TrendingUp, accent: "bg-teal-500",    iconBg: "bg-teal-50",    iconColor: "text-teal-600"    },
+          { label: "Cache Read",    value: formatTokens(stats.totalCacheRead),   sub: "from prompt cache",     icon: Layers,     accent: "bg-violet-500",  iconBg: "bg-violet-50",  iconColor: "text-violet-600"  },
+          { label: "Cache Create",  value: formatTokens(stats.totalCacheCreation), sub: "cache write tokens",  icon: Database,   accent: "bg-amber-500",   iconBg: "bg-amber-50",   iconColor: "text-amber-600"   },
+          { label: "Est. Cost",     value: "$" + stats.totalCost.toFixed(2),     sub: singleUser ? `for ${singleUser.username}` : "all users combined", icon: DollarSign, accent: "bg-rose-500", iconBg: "bg-rose-50", iconColor: "text-rose-600" },
         ].map((s) => (
           <Card key={s.label} className="border-0 shadow-md overflow-hidden bg-white">
             <div className={`h-1 w-full ${s.accent}`} />
@@ -444,72 +625,23 @@ export default function ClaudeUsesCharts({ records }: Props) {
         ))}
       </div>
 
-      {/* ── Filters ───────────────────────────────────────────────────────── */}
-      <Card className="border shadow-sm bg-white">
-        <CardHeader className="pb-3 border-b">
-          <SectionHeader icon={BarChart2} iconBg="bg-slate-100" iconColor="text-slate-500" title="Filters" subtitle="Narrow down data by user, model and date range" />
-        </CardHeader>
-        <CardContent className="pt-3 space-y-3">
-          {allUsers.length > 1 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground w-14">Users</span>
-              {allUsers.map((u, i) => (
-                <button key={u} onClick={() => toggleUser(u)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all shadow-sm ${
-                    selectedUsers.includes(u) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
-                  }`}
-                >
-                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: USER_COLORS[i % USER_COLORS.length] }} />
-                  {u}
-                </button>
-              ))}
-              {selectedUsers.length > 0 && <button onClick={() => setSelectedUsers([])} className="text-xs text-blue-500 hover:underline ml-1">Clear</button>}
-            </div>
-          )}
-          {allModels.length > 0 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground w-14">Models</span>
-              {allModels.map((m, i) => (
-                <button key={m} onClick={() => toggleModel(m)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all shadow-sm ${
-                    selectedModels.includes(m) ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50"
-                  }`}
-                >
-                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: MODEL_COLORS[i % MODEL_COLORS.length] }} />
-                  {formatShort(m)}
-                </button>
-              ))}
-              {selectedModels.length > 0 && <button onClick={() => setSelectedModels([])} className="text-xs text-indigo-500 hover:underline ml-1">Clear</button>}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground w-14">Range</span>
-            <div className="flex flex-wrap gap-1.5">
-              {DATE_RANGES.map((r) => (
-                <button key={r.value} onClick={() => setDateRange(r.value)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
-                    dateRange === r.value ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50"
-                  }`}
-                >{r.label}</button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Users Overview ────────────────────────────────────────────────── */}
-      {userSummaryData.length > 0 && (
-        <Card className="border shadow-sm bg-white">
+      {/* ── Users Overview (only in All Users mode) ───────────────────────── */}
+      {selectedUsers.length === 0 && userSummaryData.length > 1 && (
+        <Card className="border border-gray-200 shadow-sm bg-white">
           <CardHeader className="pb-3 border-b">
             <SectionHeader
               icon={Users} iconBg="bg-blue-50" iconColor="text-blue-600"
               title="Users Overview"
-              subtitle={`${userSummaryData.length} user${userSummaryData.length !== 1 ? "s" : ""} · click a row to filter all charts`}
-              right={selectedUsers.length > 0 && (
-                <button onClick={() => setSelectedUsers([])} className="text-xs font-medium text-blue-600 hover:underline px-2 py-1 bg-blue-50 rounded-lg">
-                  Show all
+              subtitle={`${userSummaryData.length} users · click a row to drill into that user`}
+              right={
+                <button
+                  onClick={() => downloadCsv(userSummaryData, "users-overview.csv")}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-2 py-1 rounded-lg transition-all"
+                >
+                  <Download className="h-3 w-3" />
+                  CSV
                 </button>
-              )}
+              }
             />
           </CardHeader>
           <CardContent className="p-0">
@@ -533,28 +665,25 @@ export default function ClaudeUsesCharts({ records }: Props) {
                 </TableHeader>
                 <TableBody>
                   {userSummaryData.map((u, i) => {
-                    const isSelected = selectedUsers.includes(u.username);
+                    const userIdx = allUsers.indexOf(u.username);
                     return (
-                      <TableRow key={u.username} onClick={() => toggleUser(u.username)}
-                        className={`cursor-pointer transition-colors ${isSelected ? "bg-blue-50/80 hover:bg-blue-50" : i % 2 === 0 ? "bg-white hover:bg-slate-50" : "bg-slate-50/40 hover:bg-slate-50"}`}
+                      <TableRow
+                        key={u.username}
+                        onClick={() => selectUserTab(u.username)}
+                        className={`cursor-pointer transition-colors ${i % 2 === 0 ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/40 hover:bg-blue-50/40"}`}
                       >
                         <TableCell className="text-center py-3">{rankBadge(i)}</TableCell>
                         <TableCell className="py-3">
                           <div className="flex items-center gap-2">
-                            {isSelected && <span className="h-3 w-0.5 bg-blue-500 rounded-full" />}
-                            <span className="h-7 w-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: USER_COLORS[i % USER_COLORS.length] }}>
+                            <span className="h-7 w-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: USER_COLORS[userIdx % USER_COLORS.length] }}>
                               {u.username[0]?.toUpperCase()}
                             </span>
-                            <div>
-                              <p className="font-semibold text-sm leading-tight">{u.username}</p>
-                            </div>
+                            <p className="font-semibold text-sm">{u.username}</p>
                           </div>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground py-3">{u.host || "—"}</TableCell>
                         <TableCell className="py-3">
-                          {u.platform ? (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{u.platform}</Badge>
-                          ) : "—"}
+                          {u.platform ? <Badge variant="outline" className="text-[10px] px-1.5 py-0">{u.platform}</Badge> : "—"}
                         </TableCell>
                         <TableCell className="text-right font-mono text-sm py-3 font-semibold">{u.sessions}</TableCell>
                         <TableCell className="text-right font-mono text-sm py-3">{u.turns.toLocaleString()}</TableCell>
@@ -584,7 +713,7 @@ export default function ClaudeUsesCharts({ records }: Props) {
       <SectionLabel label="Charts & Analytics" />
 
       {/* ── Daily Token Usage ─────────────────────────────────────────────── */}
-      <Card className="border shadow-sm bg-white">
+      <Card className="border border-gray-200 shadow-sm bg-white">
         <CardHeader className="pb-3 border-b">
           <SectionHeader icon={BarChart2} iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Daily Token Usage" subtitle="Input · Output · Cache Read · Cache Create stacked" />
         </CardHeader>
@@ -610,7 +739,7 @@ export default function ClaudeUsesCharts({ records }: Props) {
       </Card>
 
       {/* ── Average Hourly Distribution ───────────────────────────────────── */}
-      <Card className="border shadow-sm bg-white">
+      <Card className="border border-gray-200 shadow-sm bg-white">
         <CardHeader className="pb-3 border-b">
           <SectionHeader icon={Clock} iconBg="bg-emerald-50" iconColor="text-emerald-600" title="Average Hourly Distribution" subtitle="Average output tokens per hour of day" />
         </CardHeader>
@@ -633,7 +762,7 @@ export default function ClaudeUsesCharts({ records }: Props) {
 
       {/* ── By Model + Top Users ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="border shadow-sm bg-white">
+        <Card className="border border-gray-200 shadow-sm bg-white">
           <CardHeader className="pb-3 border-b">
             <SectionHeader icon={Database} iconBg="bg-violet-50" iconColor="text-violet-600" title="By Model" subtitle="Token distribution per model" />
           </CardHeader>
@@ -671,9 +800,12 @@ export default function ClaudeUsesCharts({ records }: Props) {
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-white">
+        <Card className="border border-gray-200 shadow-sm bg-white">
           <CardHeader className="pb-3 border-b">
-            <SectionHeader icon={TrendingUp} iconBg="bg-amber-50" iconColor="text-amber-600" title="Top Users by Cost" subtitle="Estimated spend ranked by user" />
+            <SectionHeader icon={TrendingUp} iconBg="bg-amber-50" iconColor="text-amber-600"
+              title={singleUser ? "Usage by Project" : "Top Users by Cost"}
+              subtitle={singleUser ? `Projects used by ${singleUser.username}` : "Estimated spend ranked by user"}
+            />
           </CardHeader>
           <CardContent className="pt-4">
             {topUsersChart.length === 0 ? (
@@ -695,7 +827,7 @@ export default function ClaudeUsesCharts({ records }: Props) {
 
       {/* ── Top Projects ─────────────────────────────────────────────────── */}
       {topProjectsData.length > 0 && (
-        <Card className="border shadow-sm bg-white">
+        <Card className="border border-gray-200 shadow-sm bg-white">
           <CardHeader className="pb-3 border-b">
             <SectionHeader icon={Globe} iconBg="bg-cyan-50" iconColor="text-cyan-600" title="Top Projects by Tokens" subtitle={`Top ${topProjectsData.length} projects · Input + Output combined`} />
           </CardHeader>
@@ -716,10 +848,21 @@ export default function ClaudeUsesCharts({ records }: Props) {
       <SectionLabel label="Data Tables" />
 
       {/* ── Cost by Model ─────────────────────────────────────────────────── */}
-      <Card className="border shadow-sm bg-white">
+      <Card className="border border-gray-200 shadow-sm bg-white">
         <CardHeader className="pb-3 border-b">
           <SectionHeader icon={Database} iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Cost by Model"
-            right={<Badge variant="secondary" className="text-xs">{byModelData.length} models</Badge>}
+            right={
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs">{byModelData.length} models</Badge>
+                <button
+                  onClick={() => downloadCsv(byModelData.map(m => ({ model: m.model, turns: m.turns, input: m.input, output: m.output, cache_read: m.cache_read, cache_creation: m.cache_creation, cost: m.cost })), "cost-by-model.csv")}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-2 py-1 rounded-lg transition-all"
+                >
+                  <Download className="h-3 w-3" />
+                  CSV
+                </button>
+              </div>
+            }
           />
         </CardHeader>
         <CardContent className="p-0">
@@ -765,11 +908,24 @@ export default function ClaudeUsesCharts({ records }: Props) {
 
       {/* ── Recent Sessions ───────────────────────────────────────────────── */}
       {allSessions.length > 0 && (
-        <Card className="border shadow-sm bg-white">
+        <Card className="border border-gray-200 shadow-sm bg-white">
           <CardHeader className="pb-3 border-b">
-            <SectionHeader icon={Activity} iconBg="bg-emerald-50" iconColor="text-emerald-600" title="Recent Sessions"
+            <SectionHeader
+              icon={Activity} iconBg="bg-emerald-50" iconColor="text-emerald-600"
+              title="Recent Sessions"
               subtitle="Last 20 sessions sorted by date"
-              right={<Badge variant="secondary" className="text-xs">{allSessions.length} total</Badge>}
+              right={
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">{allSessions.length} total</Badge>
+                  <button
+                    onClick={() => downloadCsv(recentSessions.map(s => ({ session_id: s.session_id, user: s.username, project: s.project, branch: s.branch, last_date: s.last_date, duration_min: s.duration_min, model: s.model, turns: s.turns, input: s.input, output: s.output, cost: calcCost(s.input, s.output, s.cache_read, s.cache_creation, s.model) })), "recent-sessions.csv")}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-2 py-1 rounded-lg transition-all"
+                  >
+                    <Download className="h-3 w-3" />
+                    CSV
+                  </button>
+                </div>
+              }
             />
           </CardHeader>
           <CardContent className="p-0">
@@ -778,7 +934,7 @@ export default function ClaudeUsesCharts({ records }: Props) {
                 <TableHeader>
                   <TableRow className="bg-slate-50 hover:bg-slate-50">
                     <TableHead>Session</TableHead>
-                    <TableHead>User</TableHead>
+                    {selectedUsers.length === 0 && <TableHead>User</TableHead>}
                     <TableHead>Project</TableHead>
                     <TableHead>Branch</TableHead>
                     <TableHead>Last Active</TableHead>
@@ -800,7 +956,9 @@ export default function ClaudeUsesCharts({ records }: Props) {
                             {s.session_id ? s.session_id.slice(0, 8) : "—"}
                           </span>
                         </TableCell>
-                        <TableCell className="text-xs font-medium text-muted-foreground">{s.username || "—"}</TableCell>
+                        {selectedUsers.length === 0 && (
+                          <TableCell className="text-xs font-medium text-muted-foreground">{s.username || "—"}</TableCell>
+                        )}
                         <TableCell className="text-sm max-w-[130px] truncate font-medium">{s.project || "—"}</TableCell>
                         <TableCell>
                           {s.branch ? (
@@ -831,10 +989,21 @@ export default function ClaudeUsesCharts({ records }: Props) {
 
       {/* ── Cost by Project ───────────────────────────────────────────────── */}
       {costByProjectTable.length > 0 && (
-        <Card className="border shadow-sm bg-white">
+        <Card className="border border-gray-200 shadow-sm bg-white">
           <CardHeader className="pb-3 border-b">
             <SectionHeader icon={Globe} iconBg="bg-teal-50" iconColor="text-teal-600" title="Cost by Project"
-              right={<Badge variant="secondary" className="text-xs">{costByProjectTable.length} projects</Badge>}
+              right={
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">{costByProjectTable.length} projects</Badge>
+                  <button
+                    onClick={() => downloadCsv(costByProjectTable, "cost-by-project.csv")}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-2 py-1 rounded-lg transition-all"
+                  >
+                    <Download className="h-3 w-3" />
+                    CSV
+                  </button>
+                </div>
+              }
             />
           </CardHeader>
           <CardContent className="p-0">
@@ -876,10 +1045,21 @@ export default function ClaudeUsesCharts({ records }: Props) {
 
       {/* ── Cost by Project & Branch ──────────────────────────────────────── */}
       {costByProjectBranch.length > 0 && (
-        <Card className="border shadow-sm bg-white">
+        <Card className="border border-gray-200 shadow-sm bg-white">
           <CardHeader className="pb-3 border-b">
             <SectionHeader icon={GitBranch} iconBg="bg-violet-50" iconColor="text-violet-600" title="Cost by Project & Branch"
-              right={<Badge variant="secondary" className="text-xs">{costByProjectBranch.length} combinations</Badge>}
+              right={
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">{costByProjectBranch.length} combinations</Badge>
+                  <button
+                    onClick={() => downloadCsv(costByProjectBranch, "cost-by-project-branch.csv")}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-2 py-1 rounded-lg transition-all"
+                  >
+                    <Download className="h-3 w-3" />
+                    CSV
+                  </button>
+                </div>
+              }
             />
           </CardHeader>
           <CardContent className="p-0">
