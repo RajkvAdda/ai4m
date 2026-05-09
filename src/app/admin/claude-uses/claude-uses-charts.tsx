@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import {
   BarChart, Bar, CartesianGrid, XAxis, YAxis,
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
-  Legend, AreaChart, Area,
+  AreaChart, Area,
 } from "recharts";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import {
 import {
   Users, DollarSign, Zap, Database, Activity, Clock,
   Layers, BarChart2, GitBranch, Globe, TrendingUp, Download,
-  Monitor, ChevronLeft, Sparkles,
+  ChevronLeft, Sparkles,
 } from "lucide-react";
 import type { NormalizedRecord, DailyByModel, HourlyByModel, SessionRecord } from "./page";
 
@@ -195,9 +195,6 @@ const USER_COLORS = [
   "#3b82f6", "#8b5cf6", "#10b981", "#f59e0b",
   "#f43f5e", "#06b6d4", "#84cc16", "#6366f1",
 ];
-const STACK_COLORS = {
-  input: "#6366f1", output: "#22d3ee", cache_read: "#10b981", cache_creation: "#f59e0b",
-};
 const DATE_RANGES = [
   { label: "This Week",  value: "week"      },
   { label: "This Month", value: "month"     },
@@ -388,17 +385,6 @@ export default function ClaudeUsesCharts({ records }: Props) {
       map.set(key, v);
     }
     return Array.from(map.entries()).map(([project, v]) => ({ project, ...v, cost: calcCost(v.input, v.output, v.cache_read, v.cache_creation, "") })).sort((a, b) => b.cost - a.cost);
-  }, [allSessions]);
-
-  const costByProjectBranch = useMemo(() => {
-    const map = new Map<string, { input: number; output: number; cache_read: number; cache_creation: number; turns: number; sessions: number }>();
-    for (const s of allSessions) {
-      const key = `${s.project || "—"}|||${s.branch || "—"}`;
-      const v = map.get(key) ?? { input: 0, output: 0, cache_read: 0, cache_creation: 0, turns: 0, sessions: 0 };
-      v.input += s.input; v.output += s.output; v.cache_read += s.cache_read; v.cache_creation += s.cache_creation; v.turns += s.turns; v.sessions += 1;
-      map.set(key, v);
-    }
-    return Array.from(map.entries()).map(([key, v]) => { const [project, branch] = key.split("|||"); return { project, branch, ...v, cost: calcCost(v.input, v.output, v.cache_read, v.cache_creation, "") }; }).sort((a, b) => b.cost - a.cost);
   }, [allSessions]);
 
   const recentSessions = useMemo(
@@ -763,33 +749,23 @@ export default function ClaudeUsesCharts({ records }: Props) {
             <>
               <div className="flex items-center gap-4 mb-3 justify-end">
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "linear-gradient(135deg,#6366f1,#818cf8)" }} />
+                  <span className="h-2.5 w-2.5 rounded-sm bg-indigo-500" />
                   Output
                 </span>
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "linear-gradient(135deg,#06b6d4,#67e8f9)" }} />
+                  <span className="h-2.5 w-2.5 rounded-sm bg-cyan-400" />
                   Input
                 </span>
               </div>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={dailyChartData} margin={{ top: 4, right: 8, bottom: 44, left: 0 }}>
-                  <defs>
-                    <linearGradient id="gradOutput" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.02} />
-                    </linearGradient>
-                    <linearGradient id="gradInput" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#06b6d4" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
+                <BarChart data={dailyChartData} margin={{ top: 4, right: 8, bottom: 44, left: 0 }} barCategoryGap="30%">
                   <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#94a3b8" }} angle={-35} textAnchor="end" interval={xAxisInterval} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={formatTokens} width={48} axisLine={false} tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#6366f1", strokeWidth: 1, strokeDasharray: "4 4" }} />
-                  <Area dataKey="output" name="Output" type="monotone" stroke="#6366f1" strokeWidth={2} fill="url(#gradOutput)" dot={false} activeDot={{ r: 4, fill: "#6366f1" }} />
-                  <Area dataKey="input"  name="Input"  type="monotone" stroke="#06b6d4" strokeWidth={2} fill="url(#gradInput)"  dot={false} activeDot={{ r: 4, fill: "#06b6d4" }} />
-                </AreaChart>
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f1f5f9" }} />
+                  <Bar dataKey="output" name="Output" fill="#6366f1" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="input"  name="Input"  fill="#06b6d4" radius={[3, 3, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             </>
           )}
@@ -1101,70 +1077,6 @@ export default function ClaudeUsesCharts({ records }: Props) {
         </Card>
       )}
 
-      {/* ── Cost by Project & Branch ──────────────────────────────────────── */}
-      {costByProjectBranch.length > 0 && (
-        <Card className="border border-gray-200 shadow-sm bg-white">
-          <CardHeader className="pb-3 border-b">
-            <SectionHeader icon={GitBranch} iconBg="bg-violet-50" iconColor="text-violet-600" title="Cost by Project & Branch"
-              right={
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">{costByProjectBranch.length} combinations</Badge>
-                  <button
-                    onClick={() => downloadCsv(costByProjectBranch, "cost-by-project-branch.csv")}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-2 py-1 rounded-lg transition-all"
-                  >
-                    <Download className="h-3 w-3" />
-                    CSV
-                  </button>
-                </div>
-              }
-            />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50 hover:bg-slate-50">
-                    <TableHead className="w-8 text-center">#</TableHead>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Branch</TableHead>
-                    <TableHead className="text-right">Sessions</TableHead>
-                    <TableHead className="text-right">Turns</TableHead>
-                    <TableHead className="text-right">Input</TableHead>
-                    <TableHead className="text-right">Output</TableHead>
-                    <TableHead className="text-right">Cache Read</TableHead>
-                    <TableHead className="text-right">Cache Create</TableHead>
-                    <TableHead className="text-right">Est. Cost</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {costByProjectBranch.map((p, i) => (
-                    <TableRow key={i} className={i % 2 === 0 ? "bg-white hover:bg-slate-50" : "bg-slate-50/40 hover:bg-slate-50"}>
-                      <TableCell className="text-center">{rankBadge(i)}</TableCell>
-                      <TableCell className="font-semibold text-sm max-w-[160px] truncate">{p.project}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <GitBranch className="h-3 w-3 shrink-0" />
-                          <span className="truncate max-w-[90px]">{p.branch}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">{p.sessions}</TableCell>
-                      <TableCell className="text-right font-mono text-sm">{p.turns.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-mono text-sm text-indigo-600">{formatTokens(p.input)}</TableCell>
-                      <TableCell className="text-right font-mono text-sm text-cyan-600">{formatTokens(p.output)}</TableCell>
-                      <TableCell className="text-right font-mono text-sm text-teal-600">{formatTokens(p.cache_read)}</TableCell>
-                      <TableCell className="text-right font-mono text-sm text-amber-600">{formatTokens(p.cache_creation)}</TableCell>
-                      <TableCell className="text-right">
-                        <span className={`font-mono text-sm font-bold ${costColor(p.cost)}`}>${p.cost.toFixed(4)}</span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
