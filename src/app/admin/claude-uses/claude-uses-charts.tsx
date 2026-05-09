@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import {
   BarChart, Bar, CartesianGrid, XAxis, YAxis,
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
-  Legend,
+  Legend, AreaChart, Area,
 } from "recharts";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import {
 import {
   Users, DollarSign, Zap, Database, Activity, Clock,
   Layers, BarChart2, GitBranch, Globe, TrendingUp, Download,
-  Monitor, ChevronLeft,
+  Monitor, ChevronLeft, Sparkles,
 } from "lucide-react";
 import type { NormalizedRecord, DailyByModel, HourlyByModel, SessionRecord } from "./page";
 
@@ -152,10 +152,13 @@ function ChartTooltip({ active, payload, label, isCost = false }: any) {
 // ─── Section divider ─────────────────────────────────────────────────────────
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-3 py-1">
-      <div className="h-px flex-1 bg-border" />
-      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">{label}</span>
-      <div className="h-px flex-1 bg-border" />
+    <div className="flex items-center gap-3 py-0.5">
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-border" />
+      <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-full px-3 py-1">
+        <div className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</span>
+      </div>
+      <div className="h-px flex-1 bg-gradient-to-l from-transparent via-border to-border" />
     </div>
   );
 }
@@ -279,6 +282,26 @@ export default function ClaudeUsesCharts({ records }: Props) {
     }
     return result;
   }, [records, cutoff, cutoffEnd, selectedModels, selectedUsers]);
+
+  // Today's local date string (YYYY-MM-DD)
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+
+  // Today's activity (not date-range filtered) – for the live banner
+  const todayData = useMemo((): DailyByModel[] => {
+    const result: DailyByModel[] = [];
+    for (const r of records) {
+      if (selectedUsers.length > 0 && !selectedUsers.includes(r.username)) continue;
+      for (const d of r.daily_by_model) {
+        if (d.day !== todayStr) continue;
+        if (selectedModels.length > 0 && !selectedModels.includes(d.model)) continue;
+        result.push(d);
+      }
+    }
+    return result;
+  }, [records, selectedUsers, selectedModels, todayStr]);
 
   const stats = useMemo(() => {
     if (hasRichData) {
@@ -599,115 +622,131 @@ export default function ClaudeUsesCharts({ records }: Props) {
       {/* ── Stats Bar ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
-          { label: "Sessions",      value: stats.totalSessions.toLocaleString(), sub: "total sessions",        icon: Activity,   accent: "bg-indigo-500",  iconBg: "bg-indigo-50",  iconColor: "text-indigo-600"  },
-          { label: "Turns",         value: formatTokens(stats.totalTurns),       sub: "conversation turns",    icon: Clock,      accent: "bg-emerald-500", iconBg: "bg-emerald-50", iconColor: "text-emerald-600" },
-          { label: "Input Tokens",  value: formatTokens(stats.totalInput),       sub: "prompt tokens",         icon: Zap,        accent: "bg-cyan-500",    iconBg: "bg-cyan-50",    iconColor: "text-cyan-600"    },
-          { label: "Output Tokens", value: formatTokens(stats.totalOutput),      sub: "completion tokens",     icon: TrendingUp, accent: "bg-teal-500",    iconBg: "bg-teal-50",    iconColor: "text-teal-600"    },
-          { label: "Cache Read",    value: formatTokens(stats.totalCacheRead),   sub: "from prompt cache",     icon: Layers,     accent: "bg-violet-500",  iconBg: "bg-violet-50",  iconColor: "text-violet-600"  },
-          { label: "Cache Create",  value: formatTokens(stats.totalCacheCreation), sub: "cache write tokens",  icon: Database,   accent: "bg-amber-500",   iconBg: "bg-amber-50",   iconColor: "text-amber-600"   },
-          { label: "Est. Cost",     value: "$" + stats.totalCost.toFixed(2),     sub: singleUser ? `for ${singleUser.username}` : "all users combined", icon: DollarSign, accent: "bg-rose-500", iconBg: "bg-rose-50", iconColor: "text-rose-600" },
+          { label: "Sessions",      value: stats.totalSessions.toLocaleString(), sub: "total",          icon: Activity,   grad: "from-indigo-500 to-indigo-600",  iconBg: "bg-indigo-100/80",  iconColor: "text-indigo-700"  },
+          { label: "Turns",         value: formatTokens(stats.totalTurns),       sub: "conversations",  icon: Clock,      grad: "from-emerald-500 to-teal-600",   iconBg: "bg-emerald-100/80", iconColor: "text-emerald-700" },
+          { label: "Input",         value: formatTokens(stats.totalInput),       sub: "prompt tokens",  icon: Zap,        grad: "from-cyan-500 to-sky-600",       iconBg: "bg-cyan-100/80",    iconColor: "text-cyan-700"    },
+          { label: "Output",        value: formatTokens(stats.totalOutput),      sub: "tokens out",     icon: TrendingUp, grad: "from-teal-500 to-emerald-600",   iconBg: "bg-teal-100/80",    iconColor: "text-teal-700"    },
+          { label: "Cache Read",    value: formatTokens(stats.totalCacheRead),   sub: "from cache",     icon: Layers,     grad: "from-violet-500 to-purple-600",  iconBg: "bg-violet-100/80",  iconColor: "text-violet-700"  },
+          { label: "Cache Write",   value: formatTokens(stats.totalCacheCreation), sub: "cache built",  icon: Database,   grad: "from-amber-500 to-orange-500",   iconBg: "bg-amber-100/80",   iconColor: "text-amber-700"   },
+          { label: "Est. Cost",     value: "$" + stats.totalCost.toFixed(2),     sub: singleUser ? singleUser.username : "all users", icon: DollarSign, grad: "from-rose-500 to-pink-600", iconBg: "bg-rose-100/80", iconColor: "text-rose-700" },
         ].map((s) => (
-          <Card key={s.label} className="border-0 shadow-md overflow-hidden bg-white">
-            <div className={`h-1 w-full ${s.accent}`} />
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{s.label}</p>
-                  <p className="text-2xl font-extrabold mt-1 tabular-nums leading-none">{s.value}</p>
-                  <p className="text-[11px] text-muted-foreground mt-1 leading-tight">{s.sub}</p>
-                </div>
-                <div className={`p-2 rounded-xl shrink-0 ${s.iconBg}`}>
-                  <s.icon className={`h-5 w-5 ${s.iconColor}`} />
-                </div>
+          <div key={s.label} className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${s.grad} shadow-md p-4`}>
+            <div className="absolute -top-4 -right-4 w-16 h-16 bg-white/10 rounded-full" />
+            <div className="absolute -bottom-3 -left-3 w-10 h-10 bg-black/10 rounded-full" />
+            <div className="relative">
+              <div className={`inline-flex p-1.5 rounded-lg ${s.iconBg} mb-2`}>
+                <s.icon className={`h-3.5 w-3.5 ${s.iconColor}`} />
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-xl font-extrabold text-white tabular-nums leading-none">{s.value}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/70 mt-1">{s.label}</p>
+              <p className="text-[10px] text-white/50 mt-0.5 truncate">{s.sub}</p>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* ── Users Overview (only in All Users mode) ───────────────────────── */}
-      {selectedUsers.length === 0 && userSummaryData.length > 1 && (
-        <Card className="border border-gray-200 shadow-sm bg-white">
-          <CardHeader className="pb-3 border-b">
-            <SectionHeader
-              icon={Users} iconBg="bg-blue-50" iconColor="text-blue-600"
-              title="Users Overview"
-              subtitle={`${userSummaryData.length} users · click a row to drill into that user`}
-              right={
-                <button
-                  onClick={() => downloadCsv(userSummaryData, "users-overview.csv")}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-indigo-600 border border-gray-200 hover:border-indigo-300 px-2 py-1 rounded-lg transition-all"
-                >
-                  <Download className="h-3 w-3" />
-                  CSV
-                </button>
-              }
-            />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50 hover:bg-slate-50">
-                    <TableHead className="w-10 text-center">#</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Host</TableHead>
-                    <TableHead>Platform</TableHead>
-                    <TableHead className="text-right">Sessions</TableHead>
-                    <TableHead className="text-right">Turns</TableHead>
-                    <TableHead className="text-right">Input</TableHead>
-                    <TableHead className="text-right">Output</TableHead>
-                    <TableHead className="text-right">Cache</TableHead>
-                    <TableHead className="text-right min-w-[140px]">Est. Cost</TableHead>
-                    <TableHead>Models</TableHead>
-                    <TableHead>Last Active</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {userSummaryData.map((u, i) => {
-                    const userIdx = allUsers.indexOf(u.username);
-                    return (
-                      <TableRow
-                        key={u.username}
-                        onClick={() => selectUserTab(u.username)}
-                        className={`cursor-pointer transition-colors ${i % 2 === 0 ? "bg-white hover:bg-blue-50/40" : "bg-slate-50/40 hover:bg-blue-50/40"}`}
-                      >
-                        <TableCell className="text-center py-3">{rankBadge(i)}</TableCell>
-                        <TableCell className="py-3">
-                          <div className="flex items-center gap-2">
-                            <span className="h-7 w-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: USER_COLORS[userIdx % USER_COLORS.length] }}>
-                              {u.username[0]?.toUpperCase()}
-                            </span>
-                            <p className="font-semibold text-sm">{u.username}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground py-3">{u.host || "—"}</TableCell>
-                        <TableCell className="py-3">
-                          {u.platform ? <Badge variant="outline" className="text-[10px] px-1.5 py-0">{u.platform}</Badge> : "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm py-3 font-semibold">{u.sessions}</TableCell>
-                        <TableCell className="text-right font-mono text-sm py-3">{u.turns.toLocaleString()}</TableCell>
-                        <TableCell className="text-right font-mono text-sm py-3 text-indigo-600">{formatTokens(u.input)}</TableCell>
-                        <TableCell className="text-right font-mono text-sm py-3 text-cyan-600">{formatTokens(u.output)}</TableCell>
-                        <TableCell className="text-right font-mono text-sm py-3 text-teal-600">{formatTokens(u.cache_read + u.cache_creation)}</TableCell>
-                        <TableCell className="py-3">
-                          <div className="flex items-center justify-end gap-2">
-                            <div className="w-16 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                              <div className="h-1.5 rounded-full bg-amber-400 transition-all" style={{ width: `${Math.min(100, (u.cost / maxUserCost) * 100)}%` }} />
-                            </div>
-                            <span className={`font-mono text-sm font-bold ${costColor(u.cost)}`}>${u.cost.toFixed(2)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground py-3 max-w-[200px] truncate">{u.models}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground py-3 whitespace-nowrap">{u.lastActive}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+      {/* ── Today's Activity Banner ─────────────────────────────────────────── */}
+      {todayData.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl px-5 py-3 shadow-sm">
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+            </span>
+            <Sparkles className="h-4 w-4 text-emerald-600" />
+            <span className="text-sm font-bold text-emerald-800">Today's Activity</span>
+            <span className="font-mono text-xs text-emerald-600">{todayStr}</span>
+          </div>
+          <div className="h-4 w-px bg-emerald-200 shrink-0 hidden sm:block" />
+          {[
+            { label: "Turns",  value: todayData.reduce((s, d) => s + d.turns, 0).toLocaleString() },
+            { label: "Output", value: formatTokens(todayData.reduce((s, d) => s + d.output, 0)) },
+            { label: "Cost",   value: "$" + todayData.reduce((s, d) => s + calcCost(d.input, d.output, d.cache_read, d.cache_creation, d.model), 0).toFixed(3) },
+            { label: "Models", value: [...new Set(todayData.map((d) => formatShort(d.model)))].join(" · ") },
+          ].map((s) => (
+            <div key={s.label} className="flex items-center gap-1.5">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-emerald-600">{s.label}</span>
+              <span className="text-sm font-bold text-emerald-900">{s.value}</span>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
+      )}
+
+      {/* ── User Cards Grid (All Users mode) ───────────────────────────────── */}
+      {selectedUsers.length === 0 && userSummaryData.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {userSummaryData.map((u, i) => {
+            const userIdx = allUsers.indexOf(u.username);
+            return (
+              <div
+                key={u.username}
+                onClick={() => selectUserTab(u.username)}
+                className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all group"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="relative shrink-0">
+                      <div
+                        className="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm"
+                        style={{ backgroundColor: USER_COLORS[userIdx % USER_COLORS.length] }}
+                      >
+                        {u.username[0]?.toUpperCase()}
+                      </div>
+                      <span className={`absolute -top-1.5 -left-1.5 h-5 w-5 flex items-center justify-center rounded-full text-[9px] font-bold ${
+                        i === 0 ? "bg-yellow-100 text-yellow-700 ring-1 ring-yellow-300" :
+                        i === 1 ? "bg-gray-100 text-gray-600 ring-1 ring-gray-300" :
+                        i === 2 ? "bg-orange-100 text-orange-600 ring-1 ring-orange-300" :
+                        "bg-slate-100 text-slate-500 ring-1 ring-slate-200"
+                      }`}>{i + 1}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm leading-tight truncate group-hover:text-indigo-700 transition-colors">{u.username}</p>
+                      <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                        {u.platform && (
+                          <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0 rounded-full font-medium">{u.platform}</span>
+                        )}
+                        {u.host && <span className="text-[10px] text-muted-foreground truncate max-w-[70px]">{u.host}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`text-base font-extrabold tabular-nums leading-tight ${costColor(u.cost)}`}>
+                      ${u.cost.toFixed(2)}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">est. cost</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, maxUserCost > 0 ? (u.cost / maxUserCost) * 100 : 0)}%`,
+                      backgroundColor: USER_COLORS[userIdx % USER_COLORS.length],
+                    }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-1 mt-3 pt-3 border-t border-gray-100">
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-gray-900">{u.sessions}</p>
+                    <p className="text-[9px] text-muted-foreground">sessions</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-gray-900">{u.turns.toLocaleString()}</p>
+                    <p className="text-[9px] text-muted-foreground">turns</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-gray-900 truncate">
+                      {u.lastActive !== "—" ? u.lastActive.slice(5) : "—"}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">last seen</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
 
       <SectionLabel label="Charts & Analytics" />
@@ -715,25 +754,44 @@ export default function ClaudeUsesCharts({ records }: Props) {
       {/* ── Daily Token Usage ─────────────────────────────────────────────── */}
       <Card className="border border-gray-200 shadow-sm bg-white">
         <CardHeader className="pb-3 border-b">
-          <SectionHeader icon={BarChart2} iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Daily Token Usage" subtitle="Input · Output · Cache Read · Cache Create stacked" />
+          <SectionHeader icon={BarChart2} iconBg="bg-indigo-50" iconColor="text-indigo-600" title="Daily Token Usage" subtitle="Output & input tokens over time" />
         </CardHeader>
         <CardContent className="pt-4">
           {dailyChartData.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-12">No data for the selected range</p>
           ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dailyChartData} margin={{ top: 4, right: 8, bottom: 44, left: 0 }} barSize={dailyChartData.length > 20 ? 8 : 16}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#94a3b8" }} angle={-35} textAnchor="end" interval={xAxisInterval} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={formatTokens} width={48} axisLine={false} tickLine={false} />
-                <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(99,102,241,0.04)" }} />
-                <Legend iconType="square" iconSize={10} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                <Bar dataKey="input"          stackId="a" fill={STACK_COLORS.input}          name="Input" />
-                <Bar dataKey="output"         stackId="a" fill={STACK_COLORS.output}         name="Output" />
-                <Bar dataKey="cache_read"     stackId="a" fill={STACK_COLORS.cache_read}     name="Cache Read" />
-                <Bar dataKey="cache_creation" stackId="a" fill={STACK_COLORS.cache_creation} name="Cache Create" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <>
+              <div className="flex items-center gap-4 mb-3 justify-end">
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "linear-gradient(135deg,#6366f1,#818cf8)" }} />
+                  Output
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "linear-gradient(135deg,#06b6d4,#67e8f9)" }} />
+                  Input
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={dailyChartData} margin={{ top: 4, right: 8, bottom: 44, left: 0 }}>
+                  <defs>
+                    <linearGradient id="gradOutput" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="gradInput" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#06b6d4" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#94a3b8" }} angle={-35} textAnchor="end" interval={xAxisInterval} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={formatTokens} width={48} axisLine={false} tickLine={false} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#6366f1", strokeWidth: 1, strokeDasharray: "4 4" }} />
+                  <Area dataKey="output" name="Output" type="monotone" stroke="#6366f1" strokeWidth={2} fill="url(#gradOutput)" dot={false} activeDot={{ r: 4, fill: "#6366f1" }} />
+                  <Area dataKey="input"  name="Input"  type="monotone" stroke="#06b6d4" strokeWidth={2} fill="url(#gradInput)"  dot={false} activeDot={{ r: 4, fill: "#06b6d4" }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </>
           )}
         </CardContent>
       </Card>
