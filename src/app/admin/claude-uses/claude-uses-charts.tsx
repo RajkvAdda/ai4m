@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   BarChart, Bar, CartesianGrid, XAxis, YAxis,
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
-  AreaChart, Area,
 } from "recharts";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
