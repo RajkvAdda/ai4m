@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
+import { isAdminUser } from "@/lib/admin";
+import { getTodayDate } from "@/lib/utils";
 import { SeatBooking } from "@/modals/(Seat)/SeatBooking";
 import { Seat } from "@/modals/(Seat)/Seat";
 import { User } from "@/modals/User";
 import { UserActivity } from "@/modals/UserActivity";
+import { getToken } from "next-auth/jwt";
+import type { NextRequest } from "next/server";
 
 const MAX_WAITING = 5;
 
@@ -117,12 +121,21 @@ interface _SeatBookingDocument {
   status: string;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await connectToDatabase();
 
     const body = await request.json();
-    const { userId, date, userType } = body;
+    const { userId, date } = body;
 
     if (!userId || !date) {
       return NextResponse.json(
@@ -130,6 +143,27 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
+    const isAdmin = isAdminUser({
+      email: token.email,
+      role: typeof token.role === "string" ? token.role : null,
+    });
+
+    if (!isAdmin && token.id !== userId) {
+      return NextResponse.json(
+        { error: "You can only manage your own bookings" },
+        { status: 403 },
+      );
+    }
+
+    if (!isAdmin && date === getTodayDate()) {
+      return NextResponse.json(
+        { error: "Only admins can change today's booking details." },
+        { status: 403 },
+      );
+    }
+
+    const userType = isAdmin ? "ADMIN" : "USER";
 
     // Check if booking exists
     const existingBooking = await SeatBooking.findOne({
@@ -287,7 +321,9 @@ export async function POST(request: Request) {
         userName: user.name,
         startDate: date,
         endDate: date,
-        status: body?.status || `${userType}_BOOKED_SEAT`,
+        status: isAdmin
+          ? body?.status || `${userType}_BOOKED_SEAT`
+          : `${userType}_BOOKED_SEAT`,
       });
 
       await newBooking.save();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense, use } from "react";
+import { useEffect, useState, use } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -25,9 +25,7 @@ import { PasswordStrength } from "@/components/profile/password-strength";
 import { Save, ArrowLeft, Shield, Mail, User, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { IUser, userZodSchema } from "@/types/user";
-
-export const ROLES = ["SPP", "GST", "User", "Intern"];
+import { IUser, USER_ROLE_OPTIONS, userZodSchema } from "@/types/user";
 
 export default function EditProfilePage({
   params,
@@ -271,7 +269,7 @@ export default function EditProfilePage({
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLES.map((role) => (
+                    {USER_ROLE_OPTIONS.map((role) => (
                       <SelectItem key={role} value={role}>
                         {role}
                       </SelectItem>
@@ -420,23 +418,5 @@ export default function EditProfilePage({
         <p className="text-red-500 text-center mt-4">{fetchError}</p>
       )}
     </div>
-  );
-}
-
-// Wrap the component in Suspense for async params handling
-export function EditProfilePageWrapper(props: {
-  params: Promise<{ id: string }>;
-}) {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mr-2"></span>
-          <span className="text-lg font-semibold">Loading...</span>
-        </div>
-      }
-    >
-      <EditProfilePage {...props} />
-    </Suspense>
   );
 }

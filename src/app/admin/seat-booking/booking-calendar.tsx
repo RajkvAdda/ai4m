@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CalendarOff, Loader } from "lucide-react";
 import { cn, displayDateTime, getDateFormat, isSameDay } from "@/lib/utils";
+import { isAdminUser } from "@/lib/admin";
 import { IUser } from "@/types/user";
 import {
   ContextMenu,
@@ -44,7 +45,7 @@ interface BookingCalendarProps {
   users: IUser[];
   days: Date[];
   stats: CalendarStats;
-  isUserView: boolean;
+  isUserView?: boolean;
 }
 
 // ─── Pure helpers (no hooks) ──────────────────────────────────────────────────
@@ -78,19 +79,30 @@ export function BookingCalendar({
   users,
   days,
   stats,
-  isUserView,
+  isUserView = false,
 }: BookingCalendarProps) {
   const { toast } = useToast();
   const { data: session } = useSession();
+  const isAdmin = useMemo(
+    () =>
+      isAdminUser({
+        email: session?.user?.email,
+        role: session?.user?.role,
+      }),
+    [session?.user?.email, session?.user?.role],
+  );
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [userActivities, setUserActivities] = useState<IUserActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const [markingHoliday, setMarkingHoliday] = useState<string | null>(null);
 
   const todayRef = useRef<HTMLTableCellElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasLoadedOnceRef = useRef(false);
+  const autoScrolledRangeRef = useRef<string | null>(null);
 
   // ── Precomputed O(1) lookup maps ──────────────────────────────────────────
 
@@ -136,11 +148,22 @@ export function BookingCalendar({
 
   // Baseline midnight for "past date" comparisons
   const todayMidnight = useMemo(() => toMidnight(new Date()), []);
+  const rangeKey = useMemo(
+    () => `${getDateFormat(startDate)}:${getDateFormat(endDate)}`,
+    [startDate, endDate],
+  );
 
   // ── Data fetching ─────────────────────────────────────────────────────────
 
   const fetchCalendarData = async () => {
-    setLoading(true);
+    const showInitialLoader = !hasLoadedOnceRef.current;
+
+    if (showInitialLoader) {
+      setLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
+
     const start = format(startDate, "yyyy-MM-dd");
     const end = format(endDate, "yyyy-MM-dd");
     try {
@@ -159,10 +182,12 @@ export function BookingCalendar({
 
       setBookings(bookingsData?.data ?? []);
       setUserActivities(activitiesData?.data ?? []);
+      hasLoadedOnceRef.current = true;
     } catch (error) {
       console.error("Error fetching calendar data:", error);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -180,15 +205,21 @@ export function BookingCalendar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, refreshKey]);
 
-  // Scroll today's column into the centre of the viewport once data is loaded
+  // Scroll today's column into the centre once per visible date range.
   useEffect(() => {
-    if (!loading && todayRef.current && scrollContainerRef.current) {
+    if (
+      !loading &&
+      todayRef.current &&
+      scrollContainerRef.current &&
+      autoScrolledRangeRef.current !== rangeKey
+    ) {
       const { clientWidth } = scrollContainerRef.current;
       const { offsetLeft, offsetWidth } = todayRef.current;
       scrollContainerRef.current.scrollLeft =
         offsetLeft - clientWidth / 2 + offsetWidth / 2;
+      autoScrolledRangeRef.current = rangeKey;
     }
-  }, [loading, users]);
+  }, [loading, rangeKey]);
 
   // ── Event handlers ────────────────────────────────────────────────────────
 
@@ -207,6 +238,15 @@ export function BookingCalendar({
       return;
     }
 
+    if (!isAdmin && isToday(date)) {
+      toast({
+        title: "Action Not Allowed",
+        description: "Only admins can change today's booking details.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const response = await fetch("/api/useractivity", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -220,9 +260,10 @@ export function BookingCalendar({
     });
 
     if (!response.ok) {
+      const errorBody = await response.json().catch(() => null);
       toast({
         title: "Error",
-        description: "Failed to update status",
+        description: errorBody?.error || "Failed to update status",
         variant: "destructive",
       });
       return;
@@ -274,6 +315,12 @@ export function BookingCalendar({
 
   return (
     <div className="relative">
+      {isRefreshing && (
+        <div className="absolute right-3 top-3 z-40 rounded-md bg-white/90 px-2 py-1 shadow-sm border text-xs text-gray-600 flex items-center gap-2">
+          <Loader className="h-3.5 w-3.5 animate-spin" />
+          Updating...
+        </div>
+      )}
       <Card className={cn("p-0 transition-all duration-200")}>
         <div
           className="overflow-x-auto max-h-screen overflow-y-auto"
@@ -370,12 +417,14 @@ export function BookingCalendar({
                         activities[0] !== undefined &&
                         /^WAITING\(\d+\)_USER$/.test(activities[0].status);
                       const isPastDate = toMidnight(date) < todayMidnight;
+                      const isLockedForNonAdminToday = !isAdmin && isTodayDate;
                       const isHoliday =
                         !isBooked &&
                         !weekend &&
                         (dayTotalMap.get(dateKey) ?? 0) === 0;
                       const isStatusDisabled =
                         isPastDate ||
+                        isLockedForNonAdminToday ||
                         (isUserView ? user.id !== session?.user?.id : false);
 
                       return (
@@ -394,6 +443,15 @@ export function BookingCalendar({
                                 title: "Action Not Allowed",
                                 description:
                                   "You cannot change status for past dates.",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            if (isLockedForNonAdminToday) {
+                              toast({
+                                title: "Action Not Allowed",
+                                description:
+                                  "Only admins can change today's booking details.",
                                 variant: "destructive",
                               });
                               return;
@@ -422,6 +480,7 @@ export function BookingCalendar({
                             isTodayDate={isTodayDate}
                             isHoliday={isHoliday}
                             isStatusDisabled={isStatusDisabled}
+                            isAdminUser={isAdmin}
                           />
                         </td>
                       );
@@ -621,6 +680,7 @@ interface BookingCellProps {
   isWaiting: boolean;
   isMoreShow: boolean;
   isHoliday: boolean;
+  isAdminUser: boolean;
 }
 
 const STATUS_MENU_ITEMS: Array<{
@@ -663,10 +723,8 @@ function BookingCell({
   isWaiting,
   isMoreShow,
   isHoliday,
+  isAdminUser,
 }: BookingCellProps) {
-  const isAdmin =
-    typeof window !== "undefined" && location.href.includes("admin");
-
   // Sort activities once; most-recent first
   const sortedActivities = useMemo(
     () => [...userActivities].sort((a, b) => (a._id < b._id ? 1 : -1)),
@@ -776,7 +834,7 @@ function BookingCell({
                 onStatusChange(
                   user,
                   date,
-                  buildStatusKey(item.base, isAdmin),
+                  buildStatusKey(item.base, isAdminUser),
                   item.description,
                 )
               }

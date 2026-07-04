@@ -6,6 +6,8 @@ export const ROLES = [
   // { value: "viewer", label: "Viewer", color: "bg-gray-100 text-gray-800" },
 ];
 
+export const USER_ROLE_OPTIONS = ["SPP", "GST", "User", "Intern"] as const;
+
 export type IUser = {
   id: string;
   email: string;

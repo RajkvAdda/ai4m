@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { IUser } from "@/types/user";
+import { IUser, USER_ROLE_OPTIONS } from "@/types/user";
 import React, { use, useState } from "react";
 import { Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -39,7 +39,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ROLES } from "../users/[id]/page";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Users({ users }: { users: IUser[] }) {
@@ -203,7 +202,7 @@ export default function Users({ users }: { users: IUser[] }) {
                               <SelectValue placeholder="Select your role" />
                             </SelectTrigger>
                             <SelectContent>
-                              {ROLES.map((role) => (
+                              {USER_ROLE_OPTIONS.map((role) => (
                                 <SelectItem key={role} value={role}>
                                   {role}
                                 </SelectItem>

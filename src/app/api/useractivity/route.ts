@@ -2,7 +2,11 @@
 import { NextResponse } from "next/server";
 import { UserActivity } from "@/modals/UserActivity";
 import { connectToDatabase } from "@/lib/db";
+import { isAdminUser } from "@/lib/admin";
+import { getTodayDate } from "@/lib/utils";
 import { userActivityZodSchema } from "@/types/userActivity";
+import { getToken } from "next-auth/jwt";
+import type { NextRequest } from "next/server";
 
 export async function GET(request: Request) {
   try {
@@ -15,7 +19,7 @@ export async function GET(request: Request) {
     const fromDate = searchParams.get("fromDate");
     const toDate = searchParams.get("toDate");
 
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
     if (userId) {
       filter.userId = userId;
     }
@@ -49,13 +53,42 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const result = userActivityZodSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: result.error.issues }, { status: 400 });
     }
+
+    const isAdmin = isAdminUser({
+      email: token.email,
+      role: typeof token.role === "string" ? token.role : null,
+    });
+
+    if (!isAdmin && result.data.userId !== token.id) {
+      return NextResponse.json(
+        { error: "You can only manage your own booking details." },
+        { status: 403 },
+      );
+    }
+
+    if (!isAdmin && result.data.date === getTodayDate()) {
+      return NextResponse.json(
+        { error: "Only admins can change today's booking details." },
+        { status: 403 },
+      );
+    }
+
     await connectToDatabase();
     const newUserActivity = new UserActivity(result.data);
     await newUserActivity.save();
