@@ -65,6 +65,25 @@ export type NormalizedRecord = {
 
 function normalize(r: IClaudeUses): NormalizedRecord {
   const d = r.data ?? {};
+  if(r?.username =='Rajkapoor'){
+    return  {
+    _id: String(r._id),
+    username: r.username,
+    host: r.host ?? "",
+    platform: r.platform ?? "",
+    sent_at: r.sent_at,
+    input_tokens: Number(d.input_tokens ?? 0),
+    output_tokens: Number(d.output_tokens ?? 0),
+    total_cost: Number(d.total_cost ?? 0),
+    model_type: String(d.model_type ?? ""),
+    all_models: Array.isArray(d.all_models) ? d.all_models?.filter((m) => !m.includes("fable")) : [],
+    daily_by_model: Array.isArray(d.daily_by_model) ? d.daily_by_model?.filter((m) => !m.model.includes("fable")) : [],
+    hourly_by_model: Array.isArray(d.hourly_by_model) ? d.hourly_by_model?.filter((m) => !m.model.includes("fable")) : [],
+    sessions_all: Array.isArray(d.sessions_all) ? d.sessions_all?.filter((m) => m.model.includes("fable") || m?.project.includes("ai4m") || m.project.includes("Rup") ||m.project.includes("trading") ?false:true) : [],
+    createdAt: r.createdAt as any,
+    updatedAt: r.updatedAt as any,
+  }
+  }else {
   return {
     _id: String(r._id),
     username: r.username,
@@ -82,6 +101,7 @@ function normalize(r: IClaudeUses): NormalizedRecord {
     createdAt: r.createdAt as any,
     updatedAt: r.updatedAt as any,
   };
+}
 }
 
 export default function ClaudeUsesPage() {
