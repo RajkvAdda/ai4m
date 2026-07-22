@@ -42,6 +42,9 @@ import { ISeat } from "@/types/seat";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROLE_ORDER: Record<string, number> = { SPP: 1, GST: 2, Intern: 3 };
+const TRACKED_ROLES = ["SPP", "GST", "Intern"] as const;
+
+type TrackedRole = (typeof TRACKED_ROLES)[number];
 
 const DEBOUNCE_DELAY_MS = 1000;
 
@@ -60,10 +63,11 @@ function compareByRole(a: User, b: User): number {
 interface StatCardProps {
   icon: React.ReactNode;
   label: string;
-  value: number;
-  subtitle: string;
+  value: React.ReactNode;
+  subtitle: React.ReactNode;
   colorScheme: "blue" | "green" | "purple";
   isLoading: boolean;
+  valueClassName?: string;
 }
 
 function StatCard({
@@ -73,6 +77,7 @@ function StatCard({
   subtitle,
   colorScheme,
   isLoading,
+  valueClassName,
 }: StatCardProps) {
   const colors = {
     blue: {
@@ -109,7 +114,13 @@ function StatCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={cn("text-2xl sm:text-3xl font-bold", colors.value)}>
+        <div
+          className={cn(
+            "text-2xl sm:text-3xl font-bold",
+            colors.value,
+            valueClassName,
+          )}
+        >
           {value}
         </div>
         <p className={cn("text-xs mt-1", colors.sub)}>{subtitle}</p>
@@ -135,6 +146,7 @@ interface DashboardStats {
   totalSeats: number;
   bookedToday: number;
   totalUsers: number;
+  bookedTodayByRole: Record<TrackedRole, number>;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -157,6 +169,7 @@ export default function SeatBookingDashboard() {
     totalSeats: 0,
     bookedToday: 0,
     totalUsers: 0,
+    bookedTodayByRole: { SPP: 0, GST: 0, Intern: 0 },
   });
 
   // Derive month-related values from selectedMonth
@@ -195,11 +208,34 @@ export default function SeatBookingDashboard() {
         ) ?? 0;
 
       const fetchedUsers: User[] = usersData?.data ?? usersData ?? [];
-      const bookedToday: number =
-        bookingsData?.data?.length ?? bookingsData?.length ?? 0;
+      const fetchedBookings: Array<{ userId?: string | null }> | undefined =
+        bookingsData?.data ?? bookingsData ?? [];
+      const bookedToday: number = fetchedBookings?.length ?? 0;
+      const userRoleMap = new Map(
+        fetchedUsers.map((user) => [user.id, user.role] as const),
+      );
+      const bookedTodayByRole = TRACKED_ROLES.reduce(
+        (counts, role) => {
+          counts[role] = 0;
+          return counts;
+        },
+        { SPP: 0, GST: 0, Intern: 0 } as Record<TrackedRole, number>,
+      );
+
+      for (const booking of fetchedBookings ?? []) {
+        const role = booking.userId ? userRoleMap.get(booking.userId) : null;
+        if (role && role in bookedTodayByRole) {
+          bookedTodayByRole[role as TrackedRole] += 1;
+        }
+      }
 
       setUsers(fetchedUsers);
-      setStats({ totalSeats, bookedToday, totalUsers: fetchedUsers.length });
+      setStats({
+        totalSeats,
+        bookedToday,
+        totalUsers: fetchedUsers.length,
+        bookedTodayByRole,
+      });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
     }
@@ -320,6 +356,16 @@ export default function SeatBookingDashboard() {
     [users],
   );
 
+  const bookedTodaySummary = useMemo(() => {
+    const summary = TRACKED_ROLES.filter(
+      (role) => stats.bookedTodayByRole[role] > 0,
+    )
+      .map((role) => `${role} (${stats.bookedTodayByRole[role]})`)
+      .join(" + ");
+
+    return summary || "No bookings yet";
+  }, [stats.bookedTodayByRole]);
+
   // ── Render ───────────────────────────────────────────────────────────────────
 
   const isStatsLoading = stats.totalSeats === 0;
@@ -362,10 +408,11 @@ export default function SeatBookingDashboard() {
             <StatCard
               icon={<CalendarDays className="h-4 w-4" />}
               label="Booked Today"
-              value={stats.bookedToday}
-              subtitle={`${stats.totalSeats - stats.bookedToday} seats available`}
+              value={bookedTodaySummary}
+              subtitle={`${stats.bookedToday}/${stats.totalSeats} seats booked today`}
               colorScheme="green"
               isLoading={isStatsLoading}
+              valueClassName="text-sm sm:text-base leading-6 whitespace-normal"
             />
             <StatCard
               icon={<Users className="h-4 w-4" />}
