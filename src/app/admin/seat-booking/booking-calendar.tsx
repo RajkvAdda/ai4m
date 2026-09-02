@@ -5,7 +5,7 @@ import { format, isToday } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { CalendarOff, Loader } from "lucide-react";
+import { CalendarOff, Loader, Trash2 } from "lucide-react";
 import { cn, displayDateTime, getDateFormat, isSameDay } from "@/lib/utils";
 import { isAdminUser } from "@/lib/admin";
 import { IUser } from "@/types/user";
@@ -15,6 +15,11 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { IUserActivity } from "@/types/userActivity";
 import { HoverCard } from "@/components/ui/hover-card";
@@ -69,6 +74,68 @@ const toMidnight = (date: Date) => {
   return d;
 };
 
+// ─── ConfirmPopover ───────────────────────────────────────────────────────────
+
+/**
+ * Small anchored "are you sure?" popover, used in place of a full-screen modal
+ * for quick destructive confirmations. `open`/`onOpenChange` are optional — pass
+ * them when the trigger itself is conditionally rendered (e.g. shown on hover),
+ * so the parent can keep the trigger mounted while the popover is open.
+ */
+function ConfirmPopover({
+  trigger,
+  title,
+  description,
+  confirmLabel = "Confirm",
+  onConfirm,
+  open: openProp,
+  onOpenChange,
+}: {
+  trigger: React.ReactNode;
+  title: string;
+  description: React.ReactNode;
+  confirmLabel?: string;
+  onConfirm: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+        {trigger}
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-64 p-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-sm font-semibold text-gray-900">{title}</p>
+        <p className="mt-1 text-xs text-gray-600">{description}</p>
+        <div className="mt-3 flex justify-end gap-2">
+          <button
+            onClick={() => setOpen(false)}
+            className="rounded-md border px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              setOpen(false);
+              onConfirm();
+            }}
+            className="rounded-md bg-red-500 px-2 py-1 text-xs font-medium text-white hover:bg-red-600"
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 // ─── BookingCalendar ──────────────────────────────────────────────────────────
 
 export function BookingCalendar({
@@ -98,6 +165,11 @@ export function BookingCalendar({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const [markingHoliday, setMarkingHoliday] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
+  const [deleteConfirmUserId, setDeleteConfirmUserId] = useState<
+    string | null
+  >(null);
 
   const todayRef = useRef<HTMLTableCellElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -145,6 +217,38 @@ export function BookingCalendar({
     }
     return map;
   }, [bookings]);
+
+  /** userId → user-initiated (non-admin) booked/cancelled counts + activities, for the visible month */
+  const userBookCancelMap = useMemo(() => {
+    const map = new Map<
+      string,
+      { booked: number; cancelled: number; activities: IUserActivity[] }
+    >();
+    for (const a of userActivities) {
+      if (a.status !== "USER_BOOKED_SEAT" && a.status !== "USER_CANCELLED_BOOKING") {
+        continue;
+      }
+      const entry = map.get(a.userId) ?? {
+        booked: 0,
+        cancelled: 0,
+        activities: [],
+      };
+      if (a.status === "USER_BOOKED_SEAT") entry.booked += 1;
+      else entry.cancelled += 1;
+      entry.activities.push(a);
+      map.set(a.userId, entry);
+    }
+    for (const entry of map.values()) {
+      entry.activities.sort(
+        (a, b) =>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          new Date((a as any).createdAt).getTime() -
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          new Date((b as any).createdAt).getTime(),
+      );
+    }
+    return map;
+  }, [userActivities]);
 
   // Baseline midnight for "past date" comparisons
   const todayMidnight = useMemo(() => toMidnight(new Date()), []);
@@ -238,15 +342,6 @@ export function BookingCalendar({
       return;
     }
 
-    if (!isAdmin && isToday(date)) {
-      toast({
-        title: "Action Not Allowed",
-        description: "Only admins can change today's booking details.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const response = await fetch("/api/useractivity", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -311,6 +406,41 @@ export function BookingCalendar({
     }
   };
 
+  const handleDeleteAllForUser = async (user: IUser) => {
+    const userBookings = bookings.filter((b) => b.userId === user.id);
+
+    if (userBookings.length === 0) {
+      toast({
+        title: "No Bookings",
+        description: `No bookings found for ${user.name} in this month.`,
+      });
+      return;
+    }
+
+    setDeletingUserId(user.id);
+    try {
+      const results = await Promise.allSettled(
+        userBookings.map((b) =>
+          fetch(`/api/seatbookings/${b._id}`, { method: "DELETE" }),
+        ),
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      toast({
+        title: "Bookings Cancelled",
+        description: `${succeeded} booking(s) cancelled for ${user.name} this month.`,
+      });
+      await fetchCalendarData();
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to cancel bookings.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -355,6 +485,7 @@ export function BookingCalendar({
                         isHovered={hoveredDate === dateKey}
                         isMarkingHoliday={markingHoliday === dateKey}
                         isUserView={isUserView}
+                        isAdmin={isAdmin}
                         todayRef={todayRef}
                         onHoverEnter={() => setHoveredDate(dateKey)}
                         onHoverLeave={() => setHoveredDate(null)}
@@ -362,6 +493,16 @@ export function BookingCalendar({
                       />
                     );
                   })}
+
+                  {/* Book/Cancel column header */}
+                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-center min-w-[70px] sm:min-w-[90px]">
+                    <div className="flex flex-col gap-0.5 sm:gap-1">
+                      <span className="text-xs sm:text-sm font-semibold text-primary">
+                        Book/Cancel
+                      </span>
+                      <span className="text-xs text-gray-600">This Month</span>
+                    </div>
+                  </th>
 
                   {/* Total column header */}
                   <th className="sm:sticky right-0 z-20 bg-white border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center min-w-[60px] sm:min-w-[80px]">
@@ -378,7 +519,7 @@ export function BookingCalendar({
               <tbody>
                 {users.length === 0 && (
                   <tr className="animate-pulse">
-                    <td colSpan={days.length + 1} className="px-4 py-3">
+                    <td colSpan={days.length + 2} className="px-4 py-3">
                       <div className="flex items-center justify-center">
                         <Loader className="h-5 w-5 text-primary animate-spin" />
                       </div>
@@ -417,14 +558,12 @@ export function BookingCalendar({
                         activities[0] !== undefined &&
                         /^WAITING\(\d+\)_USER$/.test(activities[0].status);
                       const isPastDate = toMidnight(date) < todayMidnight;
-                      const isLockedForNonAdminToday = !isAdmin && isTodayDate;
                       const isHoliday =
                         !isBooked &&
                         !weekend &&
                         (dayTotalMap.get(dateKey) ?? 0) === 0;
                       const isStatusDisabled =
                         isPastDate ||
-                        isLockedForNonAdminToday ||
                         (isUserView ? user.id !== session?.user?.id : false);
 
                       return (
@@ -443,15 +582,6 @@ export function BookingCalendar({
                                 title: "Action Not Allowed",
                                 description:
                                   "You cannot change status for past dates.",
-                                variant: "destructive",
-                              });
-                              return;
-                            }
-                            if (isLockedForNonAdminToday) {
-                              toast({
-                                title: "Action Not Allowed",
-                                description:
-                                  "Only admins can change today's booking details.",
                                 variant: "destructive",
                               });
                               return;
@@ -486,15 +616,55 @@ export function BookingCalendar({
                       );
                     })}
 
+                    {/* Book/Cancel this month */}
+                    <td className="border-l-2 border-primary/20 px-2 py-0.5 text-center">
+                      <UserBookCancelCell
+                        user={user}
+                        entry={userBookCancelMap.get(user.id)}
+                      />
+                    </td>
+
                     {/* Row total */}
                     <td className="sm:sticky right-0 z-10 bg-inherit border-l-2 border-primary/20 px-2 py-0.5">
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center gap-1">
                         <Badge
                           variant="default"
                           className="text-sm font-bold bg-primary"
                         >
                           {userTotalMap.get(user.id) ?? 0}
                         </Badge>
+                        {isAdmin && !isUserView && (
+                          <ConfirmPopover
+                            title={`Cancel all bookings for ${user.name}?`}
+                            description={
+                              <>
+                                This will permanently cancel every booking for{" "}
+                                <strong>{user.name}</strong> in the currently
+                                displayed month. This action cannot be undone.
+                              </>
+                            }
+                            confirmLabel="Delete All"
+                            onConfirm={() => handleDeleteAllForUser(user)}
+                            trigger={
+                              <button
+                                disabled={deletingUserId === user.id}
+                                title={`Cancel all bookings for ${user.name} this month`}
+                                className={cn(
+                                  "flex items-center justify-center h-5 w-5 rounded-md transition-colors",
+                                  deletingUserId === user.id
+                                    ? "bg-red-300 text-white cursor-wait"
+                                    : "bg-red-500 hover:bg-red-600 text-white cursor-pointer",
+                                )}
+                              >
+                                {deletingUserId === user.id ? (
+                                  <Loader className="w-2.5 h-2.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-2.5 h-2.5" />
+                                )}
+                              </button>
+                            }
+                          />
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -529,6 +699,7 @@ export function BookingCalendar({
                       </td>
                     );
                   })}
+                  <td className="border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center" />
                   <td className="sm:sticky right-0 bg-gray-100 border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center">
                     <Badge
                       variant="default"
@@ -554,6 +725,7 @@ function DateHeaderCell({
   isHovered,
   isMarkingHoliday,
   isUserView,
+  isAdmin,
   todayRef,
   onHoverEnter,
   onHoverLeave,
@@ -563,6 +735,7 @@ function DateHeaderCell({
   isHovered: boolean;
   isMarkingHoliday: boolean;
   isUserView: boolean;
+  isAdmin: boolean;
   todayRef: React.RefObject<HTMLTableCellElement | null>;
   onHoverEnter: () => void;
   onHoverLeave: () => void;
@@ -570,6 +743,7 @@ function DateHeaderCell({
 }) {
   const isTodayDate = isToday(date);
   const weekend = isWeekend(date);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <th
@@ -606,27 +780,94 @@ function DateHeaderCell({
             Today
           </Badge>
         )}
-        {!isUserView && (isHovered || isMarkingHoliday) && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onMarkHoliday();
-            }}
-            disabled={isMarkingHoliday}
-            title="Cancel all bookings for this date"
-            className={cn(
-              "flex items-center gap-0.5 text-[9px] sm:text-[10px] font-semibold px-1 py-0.5 rounded-md transition-colors",
-              isMarkingHoliday
-                ? "bg-red-300 text-white cursor-wait"
-                : "bg-red-500 hover:bg-red-600 text-white cursor-pointer",
-            )}
-          >
-            <CalendarOff className="w-2.5 h-2.5" />
-            {isMarkingHoliday ? "..." : "Holiday"}
-          </button>
-        )}
+        {isAdmin &&
+          !isUserView &&
+          (isHovered || isMarkingHoliday || confirmOpen) && (
+            <ConfirmPopover
+              open={confirmOpen}
+              onOpenChange={setConfirmOpen}
+              title={`Cancel all bookings for ${formatDayMonth(date)}?`}
+              description="This will permanently cancel every booking for this date. This action cannot be undone."
+              confirmLabel="Mark Holiday"
+              onConfirm={onMarkHoliday}
+              trigger={
+                <button
+                  disabled={isMarkingHoliday}
+                  title="Cancel all bookings for this date"
+                  className={cn(
+                    "flex items-center gap-0.5 text-[9px] sm:text-[10px] font-semibold px-1 py-0.5 rounded-md transition-colors",
+                    isMarkingHoliday
+                      ? "bg-red-300 text-white cursor-wait"
+                      : "bg-red-500 hover:bg-red-600 text-white cursor-pointer",
+                  )}
+                >
+                  <CalendarOff className="w-2.5 h-2.5" />
+                  {isMarkingHoliday ? "..." : "Holiday"}
+                </button>
+              }
+            />
+          )}
       </div>
     </th>
+  );
+}
+
+// ─── UserBookCancelCell ───────────────────────────────────────────────────────
+
+function UserBookCancelCell({
+  user,
+  entry,
+}: {
+  user: IUser;
+  entry?: { booked: number; cancelled: number; activities: IUserActivity[] };
+}) {
+  const booked = entry?.booked ?? 0;
+  const cancelled = entry?.cancelled ?? 0;
+  const activities = entry?.activities ?? [];
+
+  return (
+    <HoverCard openDelay={10} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <Badge variant="outline" className="text-xs font-semibold cursor-default">
+          {booked}/{cancelled}
+        </Badge>
+      </HoverCardTrigger>
+      <HoverCardContent className="flex w-64 flex-col gap-0.5 bg-white rounded-2xl p-4 shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
+        <H5>{user.name}&apos;s Activity This Month</H5>
+        {activities.length === 0 ? (
+          <p className="text-xs text-gray-500">
+            No booking/cancel activity yet.
+          </p>
+        ) : (
+          activities.map((activity) => (
+            <div
+              key={String(activity._id)}
+              className="mb-1 bg-gradient-to-b from-gray-100 to-grey-50 p-2 rounded-lg border border-gray-200"
+            >
+              <p
+                className={cn(
+                  "text-xs font-medium",
+                  activity.status === "USER_BOOKED_SEAT"
+                    ? "text-green-700"
+                    : "text-red-700",
+                )}
+              >
+                {activity.status === "USER_BOOKED_SEAT"
+                  ? "Booked"
+                  : "Cancelled"}{" "}
+                · {activity.date}
+              </p>
+              <p className="text-xs text-gray-500">
+                {displayDateTime(
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  new Date((activity as any).createdAt) ?? null,
+                )}
+              </p>
+            </div>
+          ))
+        )}
+      </HoverCardContent>
+    </HoverCard>
   );
 }
 
@@ -689,26 +930,26 @@ const STATUS_MENU_ITEMS: Array<{
   description: string;
   todayOnly?: boolean;
 }> = [
-  { label: "Status: Leave", base: "LEAVE", description: "Marked leave" },
-  {
-    label: "Status: FH Leave",
-    base: "FH_LEAVE",
-    description: "Marked FH Leave",
-  },
-  {
-    label: "Status: SH Leave",
-    base: "SH_LEAVE",
-    description: "Marked SH Leave",
-  },
-  { label: "Status: WFO", base: "WFO", description: "Marked WFO" },
-  { label: "Status: WFH", base: "WFH", description: "Marked WFH" },
-  {
-    label: "Status: NO-SHOW",
-    base: "NO-SHOW",
-    description: "Marked NO-SHOW",
-    todayOnly: true,
-  },
-];
+    { label: "Status: Leave", base: "LEAVE", description: "Marked leave" },
+    {
+      label: "Status: FH Leave",
+      base: "FH_LEAVE",
+      description: "Marked FH Leave",
+    },
+    {
+      label: "Status: SH Leave",
+      base: "SH_LEAVE",
+      description: "Marked SH Leave",
+    },
+    { label: "Status: WFO", base: "WFO", description: "Marked WFO" },
+    { label: "Status: WFH", base: "WFH", description: "Marked WFH" },
+    {
+      label: "Status: NO-SHOW",
+      base: "NO-SHOW",
+      description: "Marked NO-SHOW",
+      todayOnly: true,
+    },
+  ];
 
 function BookingCell({
   isBooked,
@@ -743,17 +984,17 @@ function BookingCell({
       className={cn(
         "h-6 sm:h-7 rounded-lg flex items-center justify-center transition-all duration-200",
         !isBooked &&
-          !weekend &&
-          "bg-gray-200 hover:bg-gray-300 hover:scale-105",
+        !weekend &&
+        "bg-gray-200 hover:bg-gray-300 hover:scale-105",
         weekend && "bg-gray-300 opacity-50",
         weekend && isStatusDisabled && "cursor-not-allowed",
         className,
         isBooked &&
-          "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
+        "bg-gradient-to-br from-green-300 to-green-400 shadow-md hover:shadow-lg hover:scale-105",
         isMoreShow &&
-          "animate-bounce bg-gradient-to-br from-indigo-300 to-indigo-400",
+        "animate-bounce bg-gradient-to-br from-indigo-300 to-indigo-400",
         isWaiting &&
-          "animate-pulse bg-gradient-to-br from-yellow-300 to-yellow-400",
+        "animate-pulse bg-gradient-to-br from-yellow-300 to-yellow-400",
         loading && "cursor-wait",
         isHoliday && !isBooked && !weekend && "bg-orange-300",
       )}
@@ -788,11 +1029,11 @@ function BookingCell({
                 <StatusCell
                   className={cn(
                     latestActivity.status.includes("LEAVE") &&
-                      !isBooked &&
-                      "animate-pulse bg-red-200 rounded-lg",
+                    !isBooked &&
+                    "animate-pulse bg-red-200 rounded-lg",
                     latestActivity.status.includes("NO-SHOW") &&
-                      !isBooked &&
-                      "animate-bounce bg-orange-300 rounded-lg",
+                    !isBooked &&
+                    "animate-bounce bg-orange-300 rounded-lg",
                   )}
                 >
                   {latestActivity.status.split("_")?.[0] ?? "WFH"}

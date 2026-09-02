@@ -1,5 +1,6 @@
 "use client";
 import { SequenceEnum, useSequence } from "@/hooks/useSequence";
+import { isAdminUser } from "@/lib/admin";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -23,8 +24,7 @@ export default function RoomLayput({
   useEffect(() => {
     if (
       sequence == SequenceEnum.admin ||
-      session?.user.email == "kumarshivaray@gmail.com" ||
-      session?.user.email == "naveenbgowda@gmail.com"
+      isAdminUser({ email: session?.user.email, role: session?.user.role })
     ) {
       router.push("/admin");
     }

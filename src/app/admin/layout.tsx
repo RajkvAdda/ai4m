@@ -2,6 +2,7 @@
 import { Alert } from "@/components/ui/alert";
 import { BackButton } from "@/components/ui/button";
 import UserAvator from "@/components/user-avator";
+import { isAdminUser } from "@/lib/admin";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
@@ -21,9 +22,8 @@ export default function AdminLayout({
     if (status === "unauthenticated") {
       router.push("/auth/login");
     } else if (
-      session?.user.email !== "kumarshivaray@gmail.com" &&
-      loginEmail !== "raj@gmail.com" &&
-      session?.user.email !== "naveenbgowda@gmail.com"
+      !isAdminUser({ email: session?.user.email, role: session?.user.role }) &&
+      !isAdminUser({ email: loginEmail })
     ) {
       router.push("/");
     }

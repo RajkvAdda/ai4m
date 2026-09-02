@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { UserActivity } from "@/modals/UserActivity";
 import { connectToDatabase } from "@/lib/db";
 import { isAdminUser } from "@/lib/admin";
-import { getTodayDate } from "@/lib/utils";
 import { userActivityZodSchema } from "@/types/userActivity";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
@@ -78,13 +77,6 @@ export async function POST(request: NextRequest) {
     if (!isAdmin && result.data.userId !== token.id) {
       return NextResponse.json(
         { error: "You can only manage your own booking details." },
-        { status: 403 },
-      );
-    }
-
-    if (!isAdmin && result.data.date === getTodayDate()) {
-      return NextResponse.json(
-        { error: "Only admins can change today's booking details." },
         { status: 403 },
       );
     }

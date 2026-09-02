@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { isAdminUser } from "@/lib/admin";
-import { getTodayDate } from "@/lib/utils";
 import { SeatBooking } from "@/modals/(Seat)/SeatBooking";
 import { Seat } from "@/modals/(Seat)/Seat";
 import { User } from "@/modals/User";
@@ -152,13 +151,6 @@ export async function POST(request: NextRequest) {
     if (!isAdmin && token.id !== userId) {
       return NextResponse.json(
         { error: "You can only manage your own bookings" },
-        { status: 403 },
-      );
-    }
-
-    if (!isAdmin && date === getTodayDate()) {
-      return NextResponse.json(
-        { error: "Only admins can change today's booking details." },
         { status: 403 },
       );
     }

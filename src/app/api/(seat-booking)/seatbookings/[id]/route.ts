@@ -4,6 +4,9 @@ import { Types } from "mongoose";
 import { SeatBooking } from "@/modals/(Seat)/SeatBooking";
 import { SeatBookingZodSchema } from "@/types/seat";
 import { UserActivity } from "@/modals/UserActivity";
+import { isAdminUser } from "@/lib/admin";
+import { getToken } from "next-auth/jwt";
+import type { NextRequest } from "next/server";
 
 export async function GET(
   request: Request,
@@ -80,7 +83,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -99,12 +102,22 @@ export async function DELETE(
         { status: 404 },
       );
     }
+
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+    const isAdmin = isAdminUser({
+      email: token?.email,
+      role: typeof token?.role === "string" ? token.role : null,
+    });
+
     UserActivity.create({
       userId: deleteResult.userId,
       description: `Cancelled seat booking ${deleteResult.startDate}`,
       date: deleteResult.startDate,
       userName: deleteResult.userName,
-      status: "USER_CANCELLED_BOOKING",
+      status: `${isAdmin ? "ADMIN" : "USER"}_CANCELLED_BOOKING`,
     });
     const booking = deleteResult.toObject();
     return NextResponse.json({
