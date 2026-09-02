@@ -22,8 +22,11 @@ import {
 } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { IUserActivity } from "@/types/userActivity";
-import { HoverCard } from "@/components/ui/hover-card";
-import { HoverCardContent, HoverCardTrigger } from "@radix-ui/react-hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { H5 } from "@/components/ui/typography";
 import { useSession } from "next-auth/react";
 
@@ -495,17 +498,14 @@ export function BookingCalendar({
                   })}
 
                   {/* Book/Cancel column header */}
-                  <th className="px-2 sm:px-4 py-2 sm:py-3 text-center min-w-[70px] sm:min-w-[90px]">
-                    <div className="flex flex-col gap-0.5 sm:gap-1">
-                      <span className="text-xs sm:text-sm font-semibold text-primary">
-                        Book/Cancel
-                      </span>
-                      <span className="text-xs text-gray-600">This Month</span>
-                    </div>
+                  <th className="sm:sticky right-16 sm:right-21 z-20 bg-white border-l-2 border-primary/20 px-1 sm:px-2 py-2 sm:py-3 text-center w-13 sm:w-16">
+                    {/* <span className="text-[10px] sm:text-xs font-semibold text-primary">
+                      Book/Cancel
+                    </span> */}
                   </th>
 
                   {/* Total column header */}
-                  <th className="sm:sticky right-0 z-20 bg-white border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center min-w-[60px] sm:min-w-[80px]">
+                  <th className="sm:sticky right-0 z-20 bg-white border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center w-16 sm:w-21">
                     <div className="flex flex-col gap-0.5 sm:gap-1">
                       <span className="text-xs sm:text-sm font-semibold text-primary">
                         Total
@@ -617,7 +617,7 @@ export function BookingCalendar({
                     })}
 
                     {/* Book/Cancel this month */}
-                    <td className="border-l-2 border-primary/20 px-2 py-0.5 text-center">
+                    <td className="sm:sticky right-16 sm:right-21 z-10 bg-inherit border-l-2 border-primary/20 px-1 py-0.5 text-center w-13 sm:w-16">
                       <UserBookCancelCell
                         user={user}
                         entry={userBookCancelMap.get(user.id)}
@@ -625,7 +625,11 @@ export function BookingCalendar({
                     </td>
 
                     {/* Row total */}
-                    <td className="sm:sticky right-0 z-10 bg-inherit border-l-2 border-primary/20 px-2 py-0.5">
+                    <td
+                      onMouseEnter={() => setHoveredUserId(user.id)}
+                      onMouseLeave={() => setHoveredUserId(null)}
+                      className="sm:sticky right-0 z-10 bg-inherit border-l-2 border-primary/20 px-2 py-0.5 w-16 sm:w-21"
+                    >
                       <div className="flex items-center justify-center gap-1">
                         <Badge
                           variant="default"
@@ -633,38 +637,46 @@ export function BookingCalendar({
                         >
                           {userTotalMap.get(user.id) ?? 0}
                         </Badge>
-                        {isAdmin && !isUserView && (
-                          <ConfirmPopover
-                            title={`Cancel all bookings for ${user.name}?`}
-                            description={
-                              <>
-                                This will permanently cancel every booking for{" "}
-                                <strong>{user.name}</strong> in the currently
-                                displayed month. This action cannot be undone.
-                              </>
-                            }
-                            confirmLabel="Delete All"
-                            onConfirm={() => handleDeleteAllForUser(user)}
-                            trigger={
-                              <button
-                                disabled={deletingUserId === user.id}
-                                title={`Cancel all bookings for ${user.name} this month`}
-                                className={cn(
-                                  "flex items-center justify-center h-5 w-5 rounded-md transition-colors",
-                                  deletingUserId === user.id
-                                    ? "bg-red-300 text-white cursor-wait"
-                                    : "bg-red-500 hover:bg-red-600 text-white cursor-pointer",
-                                )}
-                              >
-                                {deletingUserId === user.id ? (
-                                  <Loader className="w-2.5 h-2.5 animate-spin" />
-                                ) : (
-                                  <Trash2 className="w-2.5 h-2.5" />
-                                )}
-                              </button>
-                            }
-                          />
-                        )}
+                        {isAdmin &&
+                          !isUserView &&
+                          (hoveredUserId === user.id ||
+                            deletingUserId === user.id ||
+                            deleteConfirmUserId === user.id) && (
+                            <ConfirmPopover
+                              open={deleteConfirmUserId === user.id}
+                              onOpenChange={(open) =>
+                                setDeleteConfirmUserId(open ? user.id : null)
+                              }
+                              title={`Cancel all bookings for ${user.name}?`}
+                              description={
+                                <>
+                                  This will permanently cancel every booking for{" "}
+                                  <strong>{user.name}</strong> in the currently
+                                  displayed month. This action cannot be undone.
+                                </>
+                              }
+                              confirmLabel="Delete All"
+                              onConfirm={() => handleDeleteAllForUser(user)}
+                              trigger={
+                                <button
+                                  disabled={deletingUserId === user.id}
+                                  title={`Cancel all bookings for ${user.name} this month`}
+                                  className={cn(
+                                    "flex items-center justify-center h-5 w-5 rounded-md transition-colors",
+                                    deletingUserId === user.id
+                                      ? "bg-red-300 text-white cursor-wait"
+                                      : "bg-red-500 hover:bg-red-600 text-white cursor-pointer",
+                                  )}
+                                >
+                                  {deletingUserId === user.id ? (
+                                    <Loader className="w-2.5 h-2.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-2.5 h-2.5" />
+                                  )}
+                                </button>
+                              }
+                            />
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -699,8 +711,8 @@ export function BookingCalendar({
                       </td>
                     );
                   })}
-                  <td className="border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center" />
-                  <td className="sm:sticky right-0 bg-gray-100 border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center">
+                  <td className="sm:sticky right-16 sm:right-21 z-10 bg-gray-100 border-l-2 border-primary/20 px-1 sm:px-2 py-2 sm:py-3 text-center w-13 sm:w-16" />
+                  <td className="sm:sticky right-0 z-10 bg-gray-100 border-l-2 border-primary/20 px-2 sm:px-4 py-2 sm:py-3 text-center w-16 sm:w-21">
                     <Badge
                       variant="default"
                       className="text-xs sm:text-sm font-bold bg-primary"
