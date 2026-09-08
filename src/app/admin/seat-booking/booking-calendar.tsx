@@ -77,6 +77,21 @@ const toMidnight = (date: Date) => {
   return d;
 };
 
+/**
+ * Matches seat book/cancel activity statuses counted in the "User's Activity This
+ * Month" widget: USER_ and AUTO_ (waiting-list promotion) prefixed only — admin-
+ * initiated book/cancel actions are intentionally excluded from this user-facing summary.
+ */
+const BOOK_CANCEL_STATUS_RE = /^(USER|AUTO)_(BOOKED_SEAT|CANCELLED_BOOKING)$/;
+
+/** "booked" for any *_BOOKED_SEAT status (including auto-booked from the waiting list), "cancelled" otherwise. */
+const getBookCancelKind = (status: string): "booked" | "cancelled" =>
+  status.endsWith("_CANCELLED_BOOKING") ? "cancelled" : "booked";
+
+/** Who performed the action, derived from the status prefix. */
+const getBookCancelActor = (status: string): "Auto" | "User" =>
+  status.startsWith("AUTO_") ? "Auto" : "User";
+
 // ─── ConfirmPopover ───────────────────────────────────────────────────────────
 
 /**
@@ -221,34 +236,53 @@ export function BookingCalendar({
     return map;
   }, [bookings]);
 
-  /** userId → user-initiated (non-admin) booked/cancelled counts + activities, for the visible month */
+  /**
+   * userId → booked/cancelled counts + activities, for the visible month.
+   * Includes user-, admin-, and auto- (waiting-list promotion) initiated book/cancel
+   * activity, and only counts the LATEST activity per day per user — a same-day
+   * book → cancel → book sequence should only count as its final state, not all three.
+   */
   const userBookCancelMap = useMemo(() => {
+    // userId → date → latest qualifying activity for that day
+    const latestByUserDate = new Map<string, Map<string, IUserActivity>>();
+
+    for (const a of userActivities) {
+      if (!BOOK_CANCEL_STATUS_RE.test(a.status)) continue;
+      let byDate = latestByUserDate.get(a.userId);
+      if (!byDate) {
+        byDate = new Map();
+        latestByUserDate.set(a.userId, byDate);
+      }
+      const existing = byDate.get(a.date);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const time = new Date((a as any).createdAt).getTime();
+      const existingTime = existing
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          new Date((existing as any).createdAt).getTime()
+        : -Infinity;
+      if (time >= existingTime) byDate.set(a.date, a);
+    }
+
     const map = new Map<
       string,
       { booked: number; cancelled: number; activities: IUserActivity[] }
     >();
-    for (const a of userActivities) {
-      if (a.status !== "USER_BOOKED_SEAT" && a.status !== "USER_CANCELLED_BOOKING") {
-        continue;
-      }
-      const entry = map.get(a.userId) ?? {
-        booked: 0,
-        cancelled: 0,
-        activities: [],
-      };
-      if (a.status === "USER_BOOKED_SEAT") entry.booked += 1;
-      else entry.cancelled += 1;
-      entry.activities.push(a);
-      map.set(a.userId, entry);
-    }
-    for (const entry of map.values()) {
-      entry.activities.sort(
+    for (const [userId, byDate] of latestByUserDate) {
+      const activities = Array.from(byDate.values()).sort(
         (a, b) =>
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           new Date((a as any).createdAt).getTime() -
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           new Date((b as any).createdAt).getTime(),
       );
+      const booked = activities.filter(
+        (a) => getBookCancelKind(a.status) === "booked",
+      ).length;
+      map.set(userId, {
+        booked,
+        cancelled: activities.length - booked,
+        activities,
+      });
     }
     return map;
   }, [userActivities]);
@@ -851,32 +885,36 @@ function UserBookCancelCell({
             No booking/cancel activity yet.
           </p>
         ) : (
-          activities.map((activity) => (
-            <div
-              key={String(activity._id)}
-              className="mb-1 bg-gradient-to-b from-gray-100 to-grey-50 p-2 rounded-lg border border-gray-200"
-            >
-              <p
-                className={cn(
-                  "text-xs font-medium",
-                  activity.status === "USER_BOOKED_SEAT"
-                    ? "text-green-700"
-                    : "text-red-700",
-                )}
+          activities.map((activity) => {
+            const kind = getBookCancelKind(activity.status);
+            const actor = getBookCancelActor(activity.status);
+            const label =
+              actor === "Auto"
+                ? "Auto Booked"
+                : `${actor} ${kind === "booked" ? "Booked" : "Cancelled"}`;
+
+            return (
+              <div
+                key={String(activity._id)}
+                className="mb-1 bg-gradient-to-b from-gray-100 to-grey-50 p-2 rounded-lg border border-gray-200"
               >
-                {activity.status === "USER_BOOKED_SEAT"
-                  ? "Booked"
-                  : "Cancelled"}{" "}
-                · {activity.date}
-              </p>
-              <p className="text-xs text-gray-500">
-                {displayDateTime(
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  new Date((activity as any).createdAt) ?? null,
-                )}
-              </p>
-            </div>
-          ))
+                <p
+                  className={cn(
+                    "text-xs font-medium",
+                    kind === "booked" ? "text-green-700" : "text-red-700",
+                  )}
+                >
+                  {label} · {activity.date}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {displayDateTime(
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    new Date((activity as any).createdAt) ?? null,
+                  )}
+                </p>
+              </div>
+            );
+          })
         )}
       </HoverCardContent>
     </HoverCard>
