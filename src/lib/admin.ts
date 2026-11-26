@@ -3,6 +3,7 @@ export const ADMIN_EMAILS = new Set([
   "naveenbgowda@gmail.com",
   "raj@gmail.com",
   "gajanandsp07@gmail.com",
+  "empess.pro@gmail.com",
 ]);
 
 export function isAdminUser(user?: {
